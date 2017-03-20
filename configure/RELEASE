@@ -22,6 +22,10 @@
 # Don't set your version to anything such as "test" that
 # could match a directory name.
 # ==========================================================
+#
+
+YAMLLOADER_VERSION=yamlLoader-git
+ASYN_MODULE_VERSION=R4.30-0.3.0
 
 # ==========================================================
 # Define module paths using pattern
@@ -29,6 +33,11 @@
 #  or
 # FOO = /Full/Path/To/Development/Version
 # ==========================================================
+#
+
+YAMLLOADER=$(EPICS_MODULES)/yamlLoader/$(YAMLLOADER_VERSION)
+ASYN=$(EPICS_MODULES)/asyn/$(ASYN_MODULE_VERSION)
+
 
 # =====================================================================
 # Set EPICS_BASE last so it appears last in the DB, DBD, INCLUDE, and LIB search paths
