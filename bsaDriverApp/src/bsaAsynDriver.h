@@ -1,0 +1,180 @@
+#ifndef BSA_ASYN_DRIVER_H
+#define BSA_ASYN_DRIVER_H
+
+
+#include <string.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <new>
+#include <arpa/inet.h>
+#include <sstream>
+
+#include <asynPortDriver.h>
+#include <epicsEvent.h>
+#include <epicsTypes.h>
+#include <epicsTime.h>
+#include <ellLib.h>
+
+#include <BsaField.hh>
+#include <Processor.hh>
+
+#define  MAX_BSA_ARRAY     64
+#define  MAX_BSA_LENGTH    20000
+
+
+class BsaField : public Bsa::Field {
+    public:
+        BsaField(char *name, int index, int p_num, int p_mean, int p_rms2);
+        const char *name() const { return _name.c_str(); }
+        const int get_p_num()  const { return _p_num; }
+        const int get_p_mean() const { return _p_mean; }
+        const int get_p_rms2() const { return _p_rms2; } 
+        
+    private:
+        std::string _name;
+        int _p_num;
+        int _p_mean;
+        int _p_rms2;
+    
+};
+
+
+class BsaPv : public Bsa::Pv {
+    public:
+        BsaPv(Bsa::Field &f);
+        const Bsa::Field& field() const { return _f; }
+        const char *name();
+        void clear();
+        void setTimestamp(unsigned sec, unsigned nsec);
+        void append();
+        void append(unsigned n, double mean, double rms2);
+        void flush();
+        
+    private:
+        Bsa::Field& _f;
+        unsigned _ts_sec;
+        unsigned _ts_nsec;
+        std::vector <unsigned> _n;
+        std::vector <double> _mean;
+        std::vector <double> _rms2;
+        
+        unsigned size, loc;
+        
+        // asyn parameter
+        int _p_num;
+        int _p_mean;
+        int _p_rms2;
+};
+
+
+class BsaPvArray : public Bsa::PvArray {
+    public:
+        BsaPvArray(unsigned array, const std::vector <Bsa::Pv*>& pvs, int p_pid_U, int p_pid_L);
+        unsigned array() const { return _array; }
+        void reset(unsigned sec, unsigned nsec);
+        void append(uint64_t pulseId);
+        std::vector <Bsa::Pv*> pvs();
+        void flush();
+
+    private:
+        unsigned    _array;
+        unsigned    _ts_sec;
+        unsigned    _ts_nsec;
+        std::vector <uint64_t> _pid;
+        std::vector <uint32_t> _pidU;
+        std::vector <uint32_t> _pidL;
+        
+        unsigned size, loc;
+        
+        const std::vector <Bsa::Pv*>& _pvs;
+        
+        int _p_pid_U;
+        int _p_pid_L;
+};
+
+
+
+
+
+
+
+
+typedef struct {
+    ELLNODE  node;
+    char     bsa_name[64];    // bsa name
+    char     bsa_type[32];    // bsa datatype
+    
+    int      firstParam;
+    int      p_num[MAX_BSA_ARRAY];           // asyn parameter for number of average, asynFloat64Array, RO
+    int      p_mean[MAX_BSA_ARRAY];          // asyn parameter for average value,     asynFloat64Array, RO
+    int      p_rms2[MAX_BSA_ARRAY];          // asyn parameter for rms2 value,        asynFloat64Array, RO
+    int      lastParam;
+    
+    char     pname_num[MAX_BSA_ARRAY][64];
+    char     pname_mean[MAX_BSA_ARRAY][64];
+    char     pname_rms2[MAX_BSA_ARRAY][64];
+
+    
+} bsaList_t;
+
+
+
+
+class bsaAsynDriver:asynPortDriver {
+
+public:
+
+#ifndef HAVE_YAML
+    bsaAsynDriver(const char *portName, const char *ipString, const int num_dynamic_params);
+#else
+    bsaAsynDriver(const char *portName, const char *path_reg, const char *path_ram, const int num_dynamic_params);
+#endif  /* HAVE_YAML */
+	  ~bsaAsynDriver();
+    void SetupAsynParams(void);
+    void SetupFields(void);
+    void SetupPvs(void);
+    void SetupPvArray(void);
+    
+    int  BsaRetreivePoll(void);
+    
+    asynStatus flush(double *pData, unsigned size, int param);
+    asynStatus flush(unsigned *pData, unsigned size, int param);
+    asynStatus flush(int *pData, unsigned size, int param);
+    
+	  asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
+   //	asynStatus writeInt32Array(asynUser *pasynUser, epicsInt32 *value, size_t nElements);
+   
+private:
+    Bsa::Processor* pProcessor;
+    std::vector <Bsa::Field*> fields[MAX_BSA_ARRAY]; 
+    std::vector <Bsa::Pv*> pvs[MAX_BSA_ARRAY];
+    std::vector <BsaPvArray*> pBsaPvArray;
+	
+	
+	
+protected:
+//
+// parameter section for asynPortDriver,
+// just static parameter should be listed here
+//
+
+    int firstBsaParam;
+	#define FIRST_BSA_PARAM    firstBsaParam
+    int p_pid_U[MAX_BSA_ARRAY];    // asynInt32Array, RO
+    int p_pid_L[MAX_BSA_ARRAY];    // asynInt32Array, RO
+	  int lastBsaParam;
+	#define LAST_BSA_PARAM     lastBsaParam
+};
+
+
+#define NUM_BSA_DET_PARAMS ((int) (&LAST_BSA_PARAM - &FIRST_BSA_PARAM -1))
+
+#define pidUString    "BSAPIDU_%d"
+#define pidLString    "BSAPIDL_%d"
+#define numString     "%s_BSANUM_%d"
+#define meanString    "%s_BSAMEAN_%d"
+#define rms2String    "%s_BSARMS2_%d"
+
+#endif  /* BSA_ASYN_DRIVER_H */
