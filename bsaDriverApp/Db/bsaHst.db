@@ -1,0 +1,65 @@
+#
+#    BSA History buffer database template
+#    macros: $(DEV), $(SECN), $(MDID)
+#    PV name                       asyn param                 field type  Description
+#    $(DEV):$(SECN)HST$(MDID)      $(SECN)_BSAMEAN_$(MDID)    DOUBLE      History buffer for BSA data (average)
+#    $(DEV):$(SECN)CNTHST$(MDID)   $(SECN)_BSANUM_$(MDID)     ULONG       Number of samples for average
+#    $(DEV):$(SECN)RMSHST$(MDID)   $(SECN)_BSARMS2_$(MDID)    DOUBLE      RMS
+#    $(DEV):$(SECN)PIDUHST$(MDID)  BSAPIDU_$(MDID)            ULONG       PulseId upper 32bits word
+#    $(DEV):$(SECN)PIDLHST$(MDID)  BSAPIDL_$(MDID)            ULONG       PulseId lower 32bits word
+
+record(waveform, "$(DEV):$(SECN)HST$(MDID)")
+{
+    field(DESC, "Hostory buffer")
+    field(DTYP, "asynFloat64ArrayIn")
+    field(INP,  "@asyn($(PORT), 0) $(SECN)_BSAMEAN_$(MDID)")
+    field(SCAN, "I/O Intr")
+    field(FTVL, "DOUBLE")
+    field(NELM, "$(MAXLENGTH)")
+    field(TSE,  "-2")
+}
+
+record(waveform, "$(DEV):$(SECN)CNTHST$(MDID)")
+{
+    field(DESC, "Number of Sample for Average")
+    field(DTYP, "asynInt32ArrayIn")
+    field(INP,  "@asyn($(PORT),0) $(SECN)_BSANUM_$(MDID)")
+    field(SCAN, "I/O Intr")
+    field(FTVL, "ULONG")
+    field(NELM, "$(MAXLENGTH)")
+    field(TSE,  "-2")
+}
+
+record(waveform, "$(DEV):$(SECN)RMSHST$(MDID)")
+{
+    field(DESC, "RMS History Buffer")
+    field(DTYP, "asynFloat64ArrayIn")
+    field(INP,  "@asyn($(PORT),0) $(SECN)_BSARMS2_$(MDID)")
+    field(SCAN, "I/O Intr")
+    field(FTVL, "DOUBLE")
+    field(NELM, "$(MAXLENGTH)")
+    field(TSE,  "-2")
+}
+
+record(waveform, "$(DEV):$(SECN)PIDUHST$(MDID)")
+{
+    field(DESC, "PulseId upper word")
+    field(DTYP, "asynInt32ArrayIn")
+    field(INP,  "@asyn($(PORT),0) BSAPIDU_$(MDID)")
+    field(SCAN, "I/O Intr")
+    field(FTVL, "ULONG")
+    field(NELM, "$(MAXLENGTH)")
+    field(TSE,  "-2")
+}
+
+record(waveform, "$(DEV):$(SECN)PIDLHST$(MDID)")
+{
+    field(DESC, "PulseId lower word")
+    field(DTYP, "asynInt32ArrayIn")
+    field(INP,  "@asyn($(PORT),0) BSAPIDL_$(MDID)")
+    field(SCAN, "I/O Intr")
+    field(FTVL, "ULONG")
+    field(NELM, "$(MAXLENGTH)")
+    field(TSE,  "-2")
+}
+
