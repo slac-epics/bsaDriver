@@ -77,6 +77,9 @@ class BsaPvArray : public Bsa::PvArray {
         void append(uint64_t pulseId);
         std::vector <Bsa::Pv*> pvs();
         void flush();
+        
+        unsigned get_ts_sec(void)  { return _ts_sec; }
+        unsigned get_ts_nsec(void) { return _ts_nsec; }
 
     private:
         unsigned    _array;

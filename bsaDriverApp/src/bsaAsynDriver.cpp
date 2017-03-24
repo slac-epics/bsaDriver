@@ -334,7 +334,9 @@ void bsaAsynDriver::SetupPvArray(void)
 
 int bsaAsynDriver::BsaRetreivePoll(void)
 {
+    epicsTimeStamp    _ts;
     uint64_t  pending;
+    
     while(1) {
         pending = pProcessor->pending();
         
@@ -342,6 +344,11 @@ int bsaAsynDriver::BsaRetreivePoll(void)
             if(!(pending & (1ULL << pBsaPvArray[i]->array()))) continue; /* nothing to flush */
             
             if(pProcessor->update(*pBsaPvArray[i])) {
+                // setup timestamp, assumed that the PV flushing should is serializized 
+                _ts.secPastEpoch  = pBsaPvArray[i]->get_ts_sec();
+                _ts.nsec          = pBsaPvArray[i]->get_ts_nsec();
+                setTimeStamp(&_ts);
+                
                 pBsaPvArray[i]->flush();
                 
                 for(int j = 0; j< pvs[i].size(); j++) {
