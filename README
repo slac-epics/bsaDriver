@@ -1,13 +1,14 @@
 #==============================================================
 #
-#  Name: README
+#  Name: bsaDriver
 #
 #  Rem:  
-#        EPICS IOC Application 
+#        EPICS driver module
+#        LCLS-II Timing System
 #
 #  Side: None
 #
-#  Auth: XX-Mar-2012,          (XX)
+#  Auth: 17-Mar-2017, Kukhee Kim      (KHKIM)
 #  Rev:  dd-mmm-yyyy, Reviewer's Name (USERNAME)
 #--------------------------------------------------------------
 #  Mod:
@@ -17,8 +18,118 @@
 #==============================================================
 #
 # NOTE:
-# Please do not type make here !!
-# This module is only a template used by makeBaseApp.pl to create an EPICS IOC Application
+
+This is an epics driver module to provide BSA interface for LCLS-II High Performance System (HPS)
+which is based on ATCA platform.
+It provides epics shell command to configure/setup the BSA names and also provides epics database
+templates for BSA PVs in epics ioc application.
+
+Requirements:
+
+- The epics ioc application should build with yamlLoader driver and with CPSW framework.
+- The yamlLoader driver should provide register hierarchy and path information.
+- The application firmware should have BSA functionallity
+
+yamlLoader Driver:
+
+- the yamlLoader driver should load up the hierarchy file before BSA initialization
+
+ex)  cpswLoadYamlFile("000TopLevel.yaml", "NetIODev", "", "10.0.3.105")
+
+- please, check up more details in README file in yamlLoader driver 
+
+
+Adding BSA names for the driver:
+
+- before the driver intialization, ioc application engineer should make BSA name list.
+- the order of the name should be matched with the BSA data order in application firmware.
+- the driver provides ioc shell command "addBsa(<BSA name string>, <BSA data type string>"),
+   ioc engineer can use the command to add up bsa name into the list
+- the driver proides ioc shell command "listBsa()" to print out the BSA name list,
+   ioc engineer could verify the bsa name list with the command
+   
+ex) 
+# ====================================
+# Setup BSA Driver
+# ====================================
+# add BSA PVs
+addBsa("PIDL",       "double")
+addBsa("PIDU",       "double")
+addBsa("TSL",        "double")
+addBsa("TSU",        "double")
+addBsa("RATES",      "double")
+addBsa("BEAMREQ",    "double")
+addBsa("BEAMNRG01",  "double")
+addBsa("BEAMNRG23",  "double")
+addBsa("MPSSTAT",    "double")
+addBsa("MPSCLASS01", "double")
+addBsa("MPSCLASS23", "double")
+
+ex) 
+vioc-b84-ev01>listBsa()
+Total 31 BSA(s) has(have) been registered
+        0       PIDL, double
+        1       PIDU, double
+        2       TSL, double
+        3       TSU, double
+        4       RATES, double
+        5       BEAMREQ, double
+        6       BEAMNRG01, double
+        7       BEAMNRG23, double
+        8       MPSSTAT, double
+        9       MPSCLASS01, double
+
+
+driver initialization:
+- the driver provide ioc shell command 
+  "bsaAsynDriverConfigure(<asyn port name for BSA>, <path for register space>, <path for dram space>)"
+  for the driver initialization
+- the driver initialization command should be called after completing the hierarchy loading by yamlLoader driver
+  and also after the BSA name list is built.
+- the register path and dram path should be consistance with the hierarcy files.
+  (in the example, ROOT path of hierarcy is NetIODev,
+   the register space is located at NetIODev/mmio/AmcCarrierTimingGenerator/AmcCarrierCore/AmcCarrierBsa,
+   and the stream dram is located at NetIODev/strm/AmcCarrierDRAM/dram.)
+
+ex)  bsaAsynDriverConfigure("bsaPort", "mmio/AmcCarrierTimingGenerator/AmcCarrierCore/AmcCarrierBsa","strm/AmcCarrierDRAM/dram")
+
+
+EPICS database template loading:
+
+- the driver module provide epics database template for the BSA history buffer PVs
+- the template has few macros to set up PV name, BSA name and BSA buffer length for the history buffer PVs
+- followings are an example BSA history buffer
+
+  $(DEV):$(SECN)HST<n>          ; BSA history for average value
+  $(DEV):$(SECN)CNTHST<n>       ; number of samples for an average value
+  $(DEV):$(SECN)RMSHST<n>       ; RMS value
+  $(DEV):$(SECN)PIDUHST<n>      ; pulse id upper word
+  $(DEV):$(SECN)PIDLHST<n>      ; pulse id lower word
+  
+  $(DEV)       ; macro
+  $(SCEN)      ; macro, bsa name, should be matched with the bsa name list
+  $(MAXLENGTH) ; macro, history buffer length, recommend to fix it to 20000
+  $(PORT)      ; macro, asyn port name for bsa driver, should be matched with the port name in the driver initialization
+  
+ex) 
+
+# BSA driver DB
+dbLoadRecords("db/bsa.db", "DEV=TPG:BSA,PORT=bsaPort,MAXLENGTH=20000,SECN=PIDU")
+dbLoadRecords("db/bsa.db", "DEV=TPG:BSA,PORT=bsaPort,MAXLENGTH=20000,SECN=PIDL")
+dbLoadRecords("db/bsa.db", "DEV=TPG:BSA,PORT=bsaPort,MAXLENGTH=20000,SECN=TSU")
+dbLoadRecords("db/bsa.db", "DEV=TPG:BSA,PORT=bsaPort,MAXLENGTH=20000,SECN=TSL")
+dbLoadRecords("db/bsa.db", "DEV=TPG:BSA,PORT=bsaPort,MAXLENGTH=20000,SECN=RATES")
+dbLoadRecords("db/bsa.db", "DEV=TPG:BSA,PORT=bsaPort,MAXLENGTH=20000,SECN=BEAMREQ")
+dbLoadRecords("db/bsa.db", "DEV=TPG:BSA,PORT=bsaPort,MAXLENGTH=20000,SECN=BEAMNRG01")
+dbLoadRecords("db/bsa.db", "DEV=TPG:BSA,PORT=bsaPort,MAXLENGTH=20000,SECN=BEAMNRG23")
+dbLoadRecords("db/bsa.db", "DEV=TPG:BSA,PORT=bsaPort,MAXLENGTH=20000,SECN=MPSSTAT")
+dbLoadRecords("db/bsa.db", "DEV=TPG:BSA,PORT=bsaPort,MAXLENGTH=20000,SECN=MPSCLASS01")
+dbLoadRecords("db/bsa.db", "DEV=TPG:BSA,PORT=bsaPort,MAXLENGTH=20000,SECN=MPSCLASS23")
+
+
+- the database template loading can be located before driver initialization
+
+
 
 
 # End of file
