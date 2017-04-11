@@ -6,13 +6,11 @@
 #       EPICS_MODULES
 # from one of the following options
 -include $(TOP)/RELEASE_SITE
-
-
-#EPICS_MODULES=$(MODULES_SITE_TOP)
+-include $(TOP)/../../RELEASE_SITE
 
 
 # Check that EPICS_MODULES was defined in a RELEASE_SITE file
-#-include $(TOP)/../../RELEASE_SITE.check
+-include $(TOP)/../../RELEASE_SITE.check
 
 # ==========================================================
 # Define the version strings for all needed modules
@@ -42,8 +40,5 @@ ASYN=$(EPICS_MODULES)/asyn/$(ASYN_MODULE_VERSION)
 # =====================================================================
 # Set EPICS_BASE last so it appears last in the DB, DBD, INCLUDE, and LIB search paths
 # ====================================================================
-EPICS_BASE=$(BASE_SITE_TOP)/$(BASE_MODULE_VERSION)
-
-# Location of Linux Kernel Modules:
-LINUX_KERNEL_MODULES=$(PACKAGE_SITE_TOP)/linuxKernel_Modules
+EPICS_BASE=$(EPICS_SITE_TOP)/base/$(BASE_MODULE_VERSION)
 
