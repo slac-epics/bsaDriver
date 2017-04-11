@@ -133,7 +133,7 @@ void BsaPv::flush()
 
 
 BsaPvArray::BsaPvArray(unsigned array, const std::vector <Bsa::Pv*>& pvs, int p_pid_U, int p_pid_L) 
-                       : _array(array), _pvs(pvs), _p_pid_U(p_pid_U), _p_pid_L(p_pid_L), size(0), loc(0)
+                       : _array(array), size(0), loc(0), _pvs(pvs), _p_pid_U(p_pid_U), _p_pid_L(p_pid_L)
 { 
 // reserve emory for better performance
     _pid.reserve(MAX_BSA_LENGTH *2); _pid.resize(MAX_BSA_LENGTH *2);   
@@ -183,7 +183,7 @@ void BsaPvArray::flush()
     _pidU.clear();
     _pidL.clear();
     
-    for(int i=0; i < size; i++) {
+    for(unsigned int i=0; i < size; i++) {
         _pidU.push_back(unsigned(_pid[MAX_BSA_LENGTH + loc - size + i] >> 32));
         _pidL.push_back(unsigned(_pid[MAX_BSA_LENGTH + loc - size + i]));
     
@@ -351,7 +351,7 @@ int bsaAsynDriver::BsaRetreivePoll(void)
                 
                 pBsaPvArray[i]->flush();
                 
-                for(int j = 0; j< pvs[i].size(); j++) {
+                for(unsigned int j = 0; j< pvs[i].size(); j++) {
                     pvs[i][j]->flush();
                 }
             }
