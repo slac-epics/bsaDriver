@@ -1,6 +1,7 @@
 #
 #    BSA History buffer database template
 #    macros: $(DEV), $(SECN), $(MDID)
+#    optional macro: $(BSAKEY), if we want to decouple PV name and BSA name 
 #    PV name                       asyn param                 field type  Description
 #    $(DEV):$(SECN)HST$(MDID)      $(SECN)_BSAMEAN_$(MDID)    DOUBLE      History buffer for BSA data (average)
 #    $(DEV):$(SECN)CNTHST$(MDID)   $(SECN)_BSANUM_$(MDID)     ULONG       Number of samples for average
@@ -12,7 +13,7 @@ record(waveform, "$(DEV):$(SECN)HST$(MDID)")
 {
     field(DESC, "Hostory buffer")
     field(DTYP, "asynFloat64ArrayIn")
-    field(INP,  "@asyn($(PORT), 0) $(SECN)_BSAMEAN_$(MDID)")
+    field(INP,  "@asyn($(PORT), 0) $(BSAKEY_PRIME)_BSAMEAN_$(MDID)")
     field(SCAN, "I/O Intr")
     field(FTVL, "DOUBLE")
     field(NELM, "$(MAXLENGTH)")
@@ -23,7 +24,7 @@ record(waveform, "$(DEV):$(SECN)CNTHST$(MDID)")
 {
     field(DESC, "Number of Sample for Average")
     field(DTYP, "asynInt32ArrayIn")
-    field(INP,  "@asyn($(PORT),0) $(SECN)_BSANUM_$(MDID)")
+    field(INP,  "@asyn($(PORT),0) $(BSAKEY_PRIME)_BSANUM_$(MDID)")
     field(SCAN, "I/O Intr")
     field(FTVL, "ULONG")
     field(NELM, "$(MAXLENGTH)")
@@ -34,7 +35,7 @@ record(waveform, "$(DEV):$(SECN)RMSHST$(MDID)")
 {
     field(DESC, "RMS History Buffer")
     field(DTYP, "asynFloat64ArrayIn")
-    field(INP,  "@asyn($(PORT),0) $(SECN)_BSARMS2_$(MDID)")
+    field(INP,  "@asyn($(PORT),0) $(BSAKEY_PRIME)_BSARMS2_$(MDID)")
     field(SCAN, "I/O Intr")
     field(FTVL, "DOUBLE")
     field(NELM, "$(MAXLENGTH)")

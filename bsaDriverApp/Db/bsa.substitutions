@@ -1,5 +1,6 @@
 
 file bsaHst.db {
+            {BSAKEY_PRIME = "\$(BSAKEY=\$(SECN))"}
     pattern {  MDID   }
 #
             {  "0"    }
