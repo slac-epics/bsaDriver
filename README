@@ -52,7 +52,7 @@ ex)
 # ====================================
 # Setup BSA Driver
 # ====================================
-# add BSA PVs
+# add BSA 
 addBsa("PIDL",       "double")
 addBsa("PIDU",       "double")
 addBsa("TSL",        "double")
@@ -86,7 +86,7 @@ driver initialization:
   for the driver initialization
 - the driver initialization command should be called after completing the hierarchy loading by yamlLoader driver
   and also after the BSA name list is built.
-- the register path and dram path should be consistance with the hierarcy files.
+- the register path and dram path should be consistent with the hierarcy files.
   (in the example, ROOT path of hierarcy is NetIODev,
    the register space is located at NetIODev/mmio/AmcCarrierTimingGenerator/AmcCarrierCore/AmcCarrierBsa,
    and the stream dram is located at NetIODev/strm/AmcCarrierDRAM/dram.)
@@ -106,30 +106,44 @@ EPICS database template loading:
   $(DEV):$(SECN)PIDUHST<n>      ; pulse id upper word
   $(DEV):$(SECN)PIDLHST<n>      ; pulse id lower word
   
-  $(DEV)       ; macro
-  $(SCEN)      ; macro, bsa name, should be matched with the bsa name list
-  $(MAXLENGTH) ; macro, history buffer length, recommend to fix it to 20000
-  $(PORT)      ; macro, asyn port name for bsa driver, should be matched with the port name in the driver initialization
+  $(DEV)         ; macro
+  $(SCEN)        ; macro, bsa PV name
+  $(BSAKEY)      ; macro, bsa key, it should be matched with the bsa name string in addBsa()
+  $(MAXLENGTH)   ; macro, history buffer length, recommend to fix it to 20000
+  $(PORT)        ; macro, asyn port name for bsa driver, should be matched with the port name in the driver initialization
   
 ex) 
 
 # BSA driver DB
-dbLoadRecords("db/bsa.db", "DEV=TPG:BSA,PORT=bsaPort,MAXLENGTH=20000,SECN=PIDU")
-dbLoadRecords("db/bsa.db", "DEV=TPG:BSA,PORT=bsaPort,MAXLENGTH=20000,SECN=PIDL")
-dbLoadRecords("db/bsa.db", "DEV=TPG:BSA,PORT=bsaPort,MAXLENGTH=20000,SECN=TSU")
-dbLoadRecords("db/bsa.db", "DEV=TPG:BSA,PORT=bsaPort,MAXLENGTH=20000,SECN=TSL")
-dbLoadRecords("db/bsa.db", "DEV=TPG:BSA,PORT=bsaPort,MAXLENGTH=20000,SECN=RATES")
-dbLoadRecords("db/bsa.db", "DEV=TPG:BSA,PORT=bsaPort,MAXLENGTH=20000,SECN=BEAMREQ")
-dbLoadRecords("db/bsa.db", "DEV=TPG:BSA,PORT=bsaPort,MAXLENGTH=20000,SECN=BEAMNRG01")
-dbLoadRecords("db/bsa.db", "DEV=TPG:BSA,PORT=bsaPort,MAXLENGTH=20000,SECN=BEAMNRG23")
-dbLoadRecords("db/bsa.db", "DEV=TPG:BSA,PORT=bsaPort,MAXLENGTH=20000,SECN=MPSSTAT")
-dbLoadRecords("db/bsa.db", "DEV=TPG:BSA,PORT=bsaPort,MAXLENGTH=20000,SECN=MPSCLASS01")
-dbLoadRecords("db/bsa.db", "DEV=TPG:BSA,PORT=bsaPort,MAXLENGTH=20000,SECN=MPSCLASS23")
-
+dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=PIDU,SECN=PIDU")
+dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=PIDL,SECN=PIDL")
+dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=TSU,SECN=TSU")
+dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=TSL,SECN=TSL")
+dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=RATES,SECN=RATES")
+dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=BEAMREQ,SECN=BEAMREQ")
+dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=BEAMNRG01,SECN=BEAMNRG01")
+dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=BEAMNRG23,SECN=BEAMNRG23")
+dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=MPSSTAT,SECN=MPSSTAT")
+dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=MPSCLASS01,SECN=MPSCLASS01")
 
 - the database template loading can be located before driver initialization
 
 
+Linear Conversion
+
+BSA database template has slope and offset PVs for each bsa name (bsakey).
+The linear conversion affect the followings:
+
+  bsa_data       = slope * raw_bsa_data + offset
+  bsa_rmsa_value = slope * raw_rms_value
+  
+  
+Slope and Offset PV names are:
+
+  $(DEV):$(SECN)_SLOPE
+  $(DEV):$(SECN)_OFFSET
+  
+These will be in autosave list.
 
 
 # End of file

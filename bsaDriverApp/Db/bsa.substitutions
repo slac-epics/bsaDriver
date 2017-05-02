@@ -1,76 +1,80 @@
+file bsaLinearConversion.db {
+    pattern { _NOTHING_DOTO_ }
+            { _NOTHING_TODO_ }
+}
 
 file bsaHst.db {
-    pattern {  MDID   BSAKEY_PRIME }
+    pattern {  MDID   }
 #
-            {  "0"    "\$(BSAKEY=\$(SECN))"}
-            {  "1"    "\$(BSAKEY=\$(SECN))"}
-            {  "2"    "\$(BSAKEY=\$(SECN))"}
-            {  "3"    "\$(BSAKEY=\$(SECN))"}
-            {  "4"    "\$(BSAKEY=\$(SECN))"}
-            {  "5"    "\$(BSAKEY=\$(SECN))"}
-            {  "6"    "\$(BSAKEY=\$(SECN))"}
-            {  "7"    "\$(BSAKEY=\$(SECN))"}
-            {  "8"    "\$(BSAKEY=\$(SECN))"}
-            {  "9"    "\$(BSAKEY=\$(SECN))"}
+            {  "0"    }
+            {  "1"    }
+            {  "2"    }
+            {  "3"    }
+            {  "4"    }
+            {  "5"    }
+            {  "6"    }
+            {  "7"    }
+            {  "8"    }
+            {  "9"    }
 #
-            {  "10"    "\$(BSAKEY=\$(SECN))"}
-            {  "11"    "\$(BSAKEY=\$(SECN))"}
-            {  "12"    "\$(BSAKEY=\$(SECN))"}
-            {  "13"    "\$(BSAKEY=\$(SECN))"}
-            {  "14"    "\$(BSAKEY=\$(SECN))"}
-            {  "15"    "\$(BSAKEY=\$(SECN))"}
-            {  "16"    "\$(BSAKEY=\$(SECN))"}
-            {  "17"    "\$(BSAKEY=\$(SECN))"}
-            {  "18"    "\$(BSAKEY=\$(SECN))"}
-            {  "19"    "\$(BSAKEY=\$(SECN))"}
+            {  "10"    }
+            {  "11"    }
+            {  "12"    }
+            {  "13"    }
+            {  "14"    }
+            {  "15"    }
+            {  "16"    }
+            {  "17"    }
+            {  "18"    }
+            {  "19"    }
 #
-            {  "20"    "\$(BSAKEY=\$(SECN))"}
-            {  "21"    "\$(BSAKEY=\$(SECN))"}
-            {  "22"    "\$(BSAKEY=\$(SECN))"}
-            {  "23"    "\$(BSAKEY=\$(SECN))"}
-            {  "24"    "\$(BSAKEY=\$(SECN))"}
-            {  "25"    "\$(BSAKEY=\$(SECN))"}
-            {  "26"    "\$(BSAKEY=\$(SECN))"}
-            {  "27"    "\$(BSAKEY=\$(SECN))"}
-            {  "28"    "\$(BSAKEY=\$(SECN))"}
-            {  "29"    "\$(BSAKEY=\$(SECN))"}
+            {  "20"    }
+            {  "21"    }
+            {  "22"    }
+            {  "23"    }
+            {  "24"    }
+            {  "25"    }
+            {  "26"    }
+            {  "27"    }
+            {  "28"    }
+            {  "29"    }
 #
-            {  "30"    "\$(BSAKEY=\$(SECN))"}
-            {  "31"    "\$(BSAKEY=\$(SECN))"}
-            {  "32"    "\$(BSAKEY=\$(SECN))"}
-            {  "33"    "\$(BSAKEY=\$(SECN))"}
-            {  "34"    "\$(BSAKEY=\$(SECN))"}
-            {  "35"    "\$(BSAKEY=\$(SECN))"}
-            {  "36"    "\$(BSAKEY=\$(SECN))"}
-            {  "37"    "\$(BSAKEY=\$(SECN))"}
-            {  "38"    "\$(BSAKEY=\$(SECN))"}
-            {  "39"    "\$(BSAKEY=\$(SECN))"}
+            {  "30"    }
+            {  "31"    }
+            {  "32"    }
+            {  "33"    }
+            {  "34"    }
+            {  "35"    }
+            {  "36"    }
+            {  "37"    }
+            {  "38"    }
+            {  "39"    }
 #
-            {  "40"    "\$(BSAKEY=\$(SECN))"}
-            {  "41"    "\$(BSAKEY=\$(SECN))"}
-            {  "42"    "\$(BSAKEY=\$(SECN))"}
-            {  "43"    "\$(BSAKEY=\$(SECN))"}
-            {  "44"    "\$(BSAKEY=\$(SECN))"}
-            {  "45"    "\$(BSAKEY=\$(SECN))"}
-            {  "46"    "\$(BSAKEY=\$(SECN))"}
-            {  "47"    "\$(BSAKEY=\$(SECN))"}
-            {  "48"    "\$(BSAKEY=\$(SECN))"}
-            {  "49"    "\$(BSAKEY=\$(SECN))"}
+            {  "40"    }
+            {  "41"    }
+            {  "42"    }
+            {  "43"    }
+            {  "44"    }
+            {  "45"    }
+            {  "46"    }
+            {  "47"    }
+            {  "48"    }
+            {  "49"    }
 #
-            {  "50"    "\$(BSAKEY=\$(SECN))"}
-            {  "51"    "\$(BSAKEY=\$(SECN))"}
-            {  "52"    "\$(BSAKEY=\$(SECN))"}
-            {  "53"    "\$(BSAKEY=\$(SECN))"}
-            {  "54"    "\$(BSAKEY=\$(SECN))"}
-            {  "55"    "\$(BSAKEY=\$(SECN))"}
-            {  "56"    "\$(BSAKEY=\$(SECN))"}
-            {  "57"    "\$(BSAKEY=\$(SECN))"}
-            {  "58"    "\$(BSAKEY=\$(SECN))"}
-            {  "59"    "\$(BSAKEY=\$(SECN))"}
+            {  "50"    }
+            {  "51"    }
+            {  "52"    }
+            {  "53"    }
+            {  "54"    }
+            {  "55"    }
+            {  "56"    }
+            {  "57"    }
+            {  "58"    }
+            {  "59"    }
 #
-            {  "60"    "\$(BSAKEY=\$(SECN))"}
-            {  "61"    "\$(BSAKEY=\$(SECN))"}
-            {  "62"    "\$(BSAKEY=\$(SECN))"}
-            {  "63"    "\$(BSAKEY=\$(SECN))"}
+            {  "60"    }
+            {  "61"    }
+            {  "62"    }
+            {  "63"    }
 #
 }

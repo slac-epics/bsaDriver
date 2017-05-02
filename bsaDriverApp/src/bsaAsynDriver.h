@@ -26,17 +26,25 @@
 
 class BsaField : public Bsa::Field {
     public:
-        BsaField(char *name, int index, int p_num, int p_mean, int p_rms2);
+        BsaField(char *name, int index, int p_num, int p_mean, int p_rms2, double * p_slope, double * p_offset);
         const char *name() const { return _name.c_str(); }
         const int get_p_num()  const { return _p_num; }
         const int get_p_mean() const { return _p_mean; }
-        const int get_p_rms2() const { return _p_rms2; } 
+        const int get_p_rms2() const { return _p_rms2; }
+        
+        double * get_p_slope() const { return _p_slope; }
+        double * get_p_offset() const { return _p_offset; } 
         
     private:
         std::string _name;
-        int _p_num;
-        int _p_mean;
-        int _p_rms2;
+        
+        int _p_num;    // asyn parameter index from bsa driver
+        int _p_mean;   // asyn parameter index from bsa driver
+        int _p_rms2;   // asyn parameter index from bsa driver
+        
+        double *_p_slope;    // slope data pointer from bsa driver
+        double *_p_offset;   // offset data pointer from bsa driver
+        
     
 };
 
@@ -62,10 +70,14 @@ class BsaPv : public Bsa::Pv {
         
         unsigned size, loc;
         
-        // asyn parameter
+        // asyn parameters from bsa driver
         int _p_num;
         int _p_mean;
         int _p_rms2;
+        
+        // slope and offset data pointer from bsa driver
+        double * _p_slope;
+        double * _p_offset;
 };
 
 
@@ -113,11 +125,19 @@ typedef struct {
     int      p_num[MAX_BSA_ARRAY];           // asyn parameter for number of average, asynFloat64Array, RO
     int      p_mean[MAX_BSA_ARRAY];          // asyn parameter for average value,     asynFloat64Array, RO
     int      p_rms2[MAX_BSA_ARRAY];          // asyn parameter for rms2 value,        asynFloat64Array, RO
+    int      p_slope;                        // asyn parameter for linear conversion, asynFloat64, RW
+    int      p_offset;                       // asyn parameter for linear conversion, asynFloat64, RW
     int      lastParam;
+    
+    double   slope;
+    double   offset;
     
     char     pname_num[MAX_BSA_ARRAY][64];
     char     pname_mean[MAX_BSA_ARRAY][64];
     char     pname_rms2[MAX_BSA_ARRAY][64];
+    
+    char     pname_slope[64];
+    char     pname_offset[64];
 
     
 } bsaList_t;
@@ -148,6 +168,7 @@ public:
     
 	  asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
    //	asynStatus writeInt32Array(asynUser *pasynUser, epicsInt32 *value, size_t nElements);
+    asynStatus writeFloat64(asynUser *pasynUser, epicsFloat64 value);
    
 private:
     Bsa::Processor* pProcessor;
@@ -179,5 +200,8 @@ protected:
 #define numString     "%s_BSANUM_%d"
 #define meanString    "%s_BSAMEAN_%d"
 #define rms2String    "%s_BSARMS2_%d"
+
+#define slopeString    "%s_slope"
+#define offsetString   "%s_offset"
 
 #endif  /* BSA_ASYN_DRIVER_H */

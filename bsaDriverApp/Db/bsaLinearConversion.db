@@ -1,0 +1,27 @@
+#
+#  BSA linear conversion relate database template
+#  macro: $(DEV), $(SECN): $(BSAKEY)
+#
+#  PV name                 asyn param name          field type    Description
+#  $(DEV):$(SECN)_SLOPE    $(BSAKEY)_slope    DOUBLE        linear conversion, slope
+#  $(DEV):$(SECN)_OFFSET   $(BSAKEY)_offset   DOUBLE        linear conversion, offset
+
+
+record(ao, "$(DEV):$(SECN)_SLOPE")
+{
+  field(DESC, "Slope for linear conv")
+  field(DTYP, "asynFloat64")
+  field(OUT,  "@asyn($(PORT),0) $(BSAKEY)_slope")
+  field(PINI, "YES")
+  info(autosaveFields, "VAL")
+}
+
+record(ao, "$(DEV):$(SECN)_OFFSET")
+{
+  field(DESC, "Offset for linear conv")
+  field(DTYP, "asynFloat64")
+  field(OUT,  "@asyn($(PORT),0) $(BSAKEY)_offset")
+  field(PINI, "YES")
+  info(autosaveFields, "VAL")
+}
+

@@ -48,15 +48,20 @@ static class bsaAsynDriver *pBsaDrv = NULL;
 
 static ELLLIST *pBsaEllList = NULL;
 
-BsaField::BsaField(char *name, int index, int p_num, int p_mean, int p_rms2)
+BsaField::BsaField(char *name, int index, int p_num, int p_mean, int p_rms2, double * p_slope, double * p_offset)
 {
     std::ostringstream o;
     o << name << index;
     _name = o.str();
     
+    // copy asyn paramter indexes from bsa driver
     _p_num  = p_num;
     _p_mean = p_mean;
     _p_rms2 = p_rms2;
+    
+    // copy slope and offset data pointer from bsa driver
+    _p_slope  = p_slope;
+    _p_offset = p_offset;
 }
 
 
@@ -64,9 +69,15 @@ BsaPv::BsaPv (Bsa::Field& f) : _f(f), _n(0), _mean(0), _rms2(0), size(0), loc(0)
 {
     BsaField *p = (BsaField *)&_f;
 
+   // copy asyn paramter indexes from field calss
     _p_num  = p->get_p_num();
     _p_mean = p->get_p_mean();
     _p_rms2 = p->get_p_rms2();
+    
+    // copy slope and offfset data pointer from field class
+    _p_slope  = p->get_p_slope();
+    _p_offset = p->get_p_offset();
+    
     
 // reserve memory for better performance
 // need to test to measure improvement   
@@ -113,9 +124,10 @@ void BsaPv::append()
 
 void BsaPv::append(unsigned n, double mean, double rms2)
 {
+        
     _n[loc]    = _n[loc + MAX_BSA_LENGTH]    = n;
-    _mean[loc] = _mean[loc + MAX_BSA_LENGTH] = mean;
-    _rms2[loc] = _rms2[loc + MAX_BSA_LENGTH] = rms2;
+    _mean[loc] = _mean[loc + MAX_BSA_LENGTH] = isnan(mean)? NAN: (*_p_slope * mean + *_p_offset);
+    _rms2[loc] = _rms2[loc + MAX_BSA_LENGTH] = isnan(rms2)? NAN: (*_p_slope * sqrt(rms2));
     
     if(++size >= MAX_BSA_LENGTH) size = MAX_BSA_LENGTH;
     if(++loc  >= MAX_BSA_LENGTH) loc  = 0;
@@ -296,6 +308,13 @@ void bsaAsynDriver::SetupAsynParams(void)
     
     }
     
+    bsaList_t *p = (bsaList_t *) ellFirst(pBsaEllList);
+    while (p) {
+        sprintf(param_name, slopeString,  p->bsa_name); createParam(param_name, asynParamFloat64, &p->p_slope);  strcpy(p->pname_slope,  param_name);
+        sprintf(param_name, offsetString, p->bsa_name); createParam(param_name, asynParamFloat64, &p->p_offset); strcpy(p->pname_offset, param_name);
+        p = (bsaList_t *) ellNext(&p->node);
+    }
+    
     
 }
 
@@ -308,7 +327,7 @@ void bsaAsynDriver::SetupFields(void)
     for(i = 0; i< MAX_BSA_ARRAY; i++) {
         p = (bsaList_t *) ellFirst(pBsaEllList);
         while(p) {
-            fields[i].push_back(new BsaField(p->bsa_name, i, p->p_num[i], p->p_mean[i], p->p_rms2[i]));
+            fields[i].push_back(new BsaField(p->bsa_name, i, p->p_num[i], p->p_mean[i], p->p_rms2[i], &p->slope, &p->offset));
             p = (bsaList_t *) ellNext(&p->node);
         }
     }
@@ -421,6 +440,46 @@ asynStatus bsaAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
 		            "%s:%s: function=%d, value=%d\n",
 				        driverName, functionName, function, value);
 				  
+    return status;
+}
+
+asynStatus bsaAsynDriver::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
+{
+    asynStatus status = asynSuccess;
+    int function = pasynUser->reason;
+    const char *functionName = "writeFloat64";
+    
+    /* set the parameter in the parameter library */
+    status = (asynStatus) setDoubleParam(function, value);
+    
+    
+    bsaList_t * p = (bsaList_t *) ellFirst(pBsaEllList);
+    while(p) {
+        if(function == p->p_slope) {
+            p->slope = value;
+            // printf("%s:%s slope %lf\n", p->bsa_name, p->bsa_type, value);
+        }
+        if(function == p->p_offset) {
+            p->offset = value;
+            // printf("%s:%s offset %lf\n", p->bsa_name, p->bsa_type,value);
+        }
+        
+        p = (bsaList_t *) ellNext(&p->node);
+    }
+    
+    /* Do callback so higher layer see any changes */
+    status = (asynStatus) callParamCallbacks();
+    
+    if(status)
+        epicsSnprintf(pasynUser->errorMessage, pasynUser->errorMessageSize,
+                      "%s:%s status=%d, function=%d, value=%lf",
+                      driverName, functionName, status, function, value);
+    else
+        asynPrint(pasynUser, ASYN_TRACEIO_DRIVER,
+                  "%s:%s: function=%d, value=%lf\n",
+                  driverName, functionName, function, value);
+    
+    
     return status;
 }
 
@@ -551,6 +610,9 @@ static void addBsaCallFunc(const iocshArgBuf *args)
         p->p_num[i]        = p->p_mean[i]        = p->p_rms2[i]        = -1;   // intialize to invalid parameter
         p->pname_num[i][0] = p->pname_mean[i][0] = p->pname_rms2[i][0] = '\0'; // make null string
     }
+    
+    p->slope  = 1.;   // setup default linear conversion, it will be override by epics PV
+    p->offset = 0.;   // setup drfault linear conversion, it will be override by epics PV
     
     ellAdd(pBsaEllList, &p->node);
     

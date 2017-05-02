@@ -1,5 +1,8 @@
 R0.9.6      April 28, 2017    Kukhee Kim (KHKIM)
             - decouple BSA name (uniqueue key) and BSA PV name
+            - introduce linear conversion
+              . slope 
+              . offset
             
 R0.9.5      April 10, 2017    Bruce Hill (bhill)
 			Updated for git workflow so we can build bsaDriver for other base versions
