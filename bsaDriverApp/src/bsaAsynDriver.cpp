@@ -581,7 +581,7 @@ static void initCallFunc(const iocshArgBuf *args)
 #endif  /* HAVE_YAML */
 
 
-static const iocshArg addBsaArg0 = { "bsaName", iocshArgString };
+static const iocshArg addBsaArg0 = { "bsaKey", iocshArgString };
 static const iocshArg addBsaArg1 = { "bsaType", iocshArgString };
 static const iocshArg * const addBsaArgs [] = { &addBsaArg0,
                                                 &addBsaArg1 };
@@ -620,7 +620,7 @@ static void addBsaCallFunc(const iocshArgBuf *args)
 }
 
 
-static const iocshArg listBsaArg0 = { "bsaName", iocshArgString };  // not required now, but prepare for future
+static const iocshArg listBsaArg0 = { "bsaKey", iocshArgString };  // not required now, but prepare for future
 static const iocshArg listBsaArg1 = { "bsaType", iocshArgString };  // not required now, but prepare for future
 static const iocshArg * const listBsaArgs [] = { &listBsaArg0,
                                                  &listBsaArg1 };
