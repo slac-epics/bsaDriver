@@ -86,8 +86,8 @@ driver initialization:
   for the driver initialization
 - the driver initialization command should be called after completing the hierarchy loading by yamlLoader driver
   and also after the BSA name list is built.
-- the register path and dram path should be consistent with the hierarcy files.
-  (in the example, ROOT path of hierarcy is NetIODev,
+- the register path and dram path should be consistent with the hierarchy files.
+  (in the example, ROOT path of hierarchy is NetIODev,
    the register space is located at NetIODev/mmio/AmcCarrierTimingGenerator/AmcCarrierCore/AmcCarrierBsa,
    and the stream dram is located at NetIODev/strm/AmcCarrierDRAM/dram.)
 
@@ -107,7 +107,7 @@ EPICS database template loading:
   $(DEV):$(SECN)PIDLHST<n>      ; pulse id lower word
   
   $(DEV)         ; macro
-  $(SCEN)        ; macro, bsa PV name
+  $(SECN)        ; macro, bsa PV name
   $(BSAKEY)      ; macro, bsa key, it should be matched with the bsa name string in addBsa()
   $(MAXLENGTH)   ; macro, history buffer length, recommend to fix it to 20000
   $(PORT)        ; macro, asyn port name for bsa driver, should be matched with the port name in the driver initialization
