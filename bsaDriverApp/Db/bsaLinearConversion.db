@@ -13,6 +13,7 @@ record(ao, "$(DEV):$(SECN)_SLOPE")
   field(DTYP, "asynFloat64")
   field(OUT,  "@asyn($(PORT),0) $(BSAKEY)_slope")
   field(PINI, "YES")
+  field(VAL, "1.")
   info(autosaveFields, "VAL")
 }
 
@@ -22,6 +23,7 @@ record(ao, "$(DEV):$(SECN)_OFFSET")
   field(DTYP, "asynFloat64")
   field(OUT,  "@asyn($(PORT),0) $(BSAKEY)_offset")
   field(PINI, "YES")
+  field(VAL, "0.")
   info(autosaveFields, "VAL")
 }
 
