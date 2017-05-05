@@ -144,6 +144,8 @@ Slope and Offset PV names are:
   $(DEV):$(SECN)_OFFSET
   
 These will be in autosave list.
+The database template bsa.db has default value for SLOPE=1 and OFFSET=0.
+These will be override by the autosave, once the user setting is saved.
 
 
 # End of file
