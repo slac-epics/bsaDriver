@@ -1,3 +1,6 @@
+R0.9.9      May 8, 2017      Kukhee Kim (KHKIM)
+            - build against cpsw R3.5.4 and  bsa R1.0.1  (API layer)
+            - build against yamlLoader R1.0.3 (epics driver layer) 
 R0.9.8      May 5, 2017      Kukhee Kim (KHKIM)
             - build against yamlLoader R1.0.2
 R0.9.7      May 5, 2017      Kukhee Kim (KHKIM)
