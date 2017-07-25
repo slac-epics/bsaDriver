@@ -27,6 +27,75 @@ templates for BSA PVs in epics ioc application.
 Requirements:
 
 - The epics ioc application should build with yamlLoader driver and with CPSW framework.
+
+  API layer
+  . cpsw/framework R3.5.4
+  . yaml-cpp-0.5.3
+  . boost 1.63.0
+  . timing/bsa R1.0.1
+
+  configure/CONFIG_SITE.Common.<platform> in application should have the followings:
+
+  CPSW_FRAMEWORK_PACKAGE_NAME=cpsw/framework
+  CPSW_FRAMEWORK_VERSION=R3.5.4
+  CPSW_FRAMEWORK=$(PACKAGE_AREA)/$(CPSW_FRAMEWORK_PACKAGE_NAME)/$(CPSW_FRAMEWORK_VERSION)/$(LINUXRT_BUILDROOT_VERSION)-x86_64
+  CPSW_FRAMEWORK_LIB     = $(CPSW_FRAMEWORK)/lib
+  CPSW_FRAMEWORK_INCLUDE = $(CPSW_FRAMEWORK)/include
+
+  YAML_NAME=yaml-cpp
+  YAML_VERSION=yaml-cpp-0.5.3
+  YAML_ARCH=$(LINUXRT_BUILDROOT_VERSION)-x86_64
+  YAML=$(PACKAGE_AREA)/$(YAML_NAME)/$(YAML_VERSION)/$(YAML_ARCH)
+  YAML_INCLUDE=$(YAML)/include
+  YAML_LIB=$(YAML)/lib
+
+  BOOST_PACKAGE_NAME=boost
+  BOOST_VERSION=1.63.0
+  BOOST_ARCH=$(LINUXRT_BUILDROOT_VERSION)-x86_64
+  BOOST=$(PACKAGE_AREA)/$(BOOST_PACKAGE_NAME)/$(BOOST_VERSION)/$(BOOST_ARCH)
+  BOOST_LIB     = $(BOOST)/lib
+  BOOST_INCLUDE = $(BOOST)/include
+ 
+  BSA_PACKAGE_NAME=timing/bsa
+  BSA_VERSION=R1.0.1
+  BSA_ARCH=$(LINUXRT_BUILDROOT_VERSION)-x86_64
+  BSA=$(PACKAGE_AREA)/$(BSA_PACKAGE_NAME)/$(BSA_VERSION)/$(BSA_ARCH)
+  BSA_LIB     = $(BSA)/lib
+  BSA_INCLUDE = $(BSA)/include
+
+
+
+
+  EPICS module
+  . yamlLoader R1.0.3
+  . asyn R4.31-0.1.0
+
+  configure/RELEASE in application should have the followings:
+
+  ASYN_MODULE_VERSION=R4.31-0.1.0
+  YAMLLOADER_MODULE_VERSION=R1.0.3
+  BSADRIVER_MODULE_VERSION=R1.0.0
+
+  ASYN=$(EPICS_MODULES)/asyn/$(ASYN_MODULE_VERSION)
+  YAMLLOADER=$(EPICS_MODULES)/yamlLoader/$(YAMLLOADER_MODULE_VERSION)
+  BSADRIVER=$(EPICS_MODULES)/bsaDriver/$(BSADRIVER_MODULE_VERSION
+
+
+
+  <application>/src/Makefile should have the follwings:
+
+
+  <application>_DBD += asyn.dbd
+  <applicaiton>_DBD += yamlLoader.dbd
+  <application>_DBD += bsaAsynDriver.dbd
+
+  <application>_LIBS += cpsw
+  <application>_LIBS += bsa
+  <applicaiton>_LIBS += asyn
+  <application>_LIBS += yamlLoader
+  <application>_LIBS += bsaDriver
+
+  
 - The yamlLoader driver should provide register hierarchy and path information.
 - The application firmware should have BSA functionallity
 
@@ -111,7 +180,18 @@ EPICS database template loading:
   $(BSAKEY)      ; macro, bsa key, it should be matched with the bsa name string in addBsa()
   $(MAXLENGTH)   ; macro, history buffer length, recommend to fix it to 20000
   $(PORT)        ; macro, asyn port name for bsa driver, should be matched with the port name in the driver initialization
-  
+
+  <n>            ; given instance number / name
+        [0..55]   BSA slot number for general use
+	1H        pre-programmed BSA for 1Hz continuous acquisition
+        TH        pre-programmed BSA for 10Hz continuous acquisition
+        F1        reserved BSA slot for fast feedback
+        F2        reserved BSA slot for fast feedback
+        FLTB0     reserved BSA slot for fault buffer
+        FLTB1     reserved BSA slot for fault buffer
+        FLTB2     reserved BSA slot for fault buffer
+        FLTB3     reserved BSA slot for fault buffer
+ 
 ex) 
 
 # BSA driver DB
