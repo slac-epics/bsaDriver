@@ -533,6 +533,61 @@ int bsaAsynDriverConfigure(const char *portName, const char *regPathString, cons
 #endif  /* HAVE_YAML */
 
 
+
+int addBsa(const char *bsaKey, const char *bsaType)
+{
+    bsaList_t *p = (bsaList_t *) malloc(sizeof(bsaList_t));
+    int i;
+    if(!p) {
+        printf("memory allocation error\b");
+        return -1;
+    }
+    
+    if(!addBsa_once) {    /* initialize for once */
+        addBsa_once = 1;
+        
+        pBsaEllList = (ELLLIST *) malloc(sizeof(ELLLIST));
+        ellInit(pBsaEllList);        
+    }
+    
+    strcpy(p->bsa_name, bsaKey);
+    strcpy(p->bsa_type, "double");    //temporally hardcoded 
+    // strcpy(p->bsa_type, args[1].sval);
+    
+    for(i=0; i< MAX_BSA_ARRAY; i++) {
+        p->p_num[i]        = p->p_mean[i]        = p->p_rms2[i]        = -1;   // intialize to invalid parameter
+        p->pname_num[i][0] = p->pname_mean[i][0] = p->pname_rms2[i][0] = '\0'; // make null string
+    }
+    
+    p->slope  = 1.;   // setup default linear conversion, it will be override by epics PV
+    p->offset = 0.;   // setup drfault linear conversion, it will be override by epics PV
+    
+    ellAdd(pBsaEllList, &p->node);
+    
+    /* add Bsa */
+    
+    return 0;
+}
+
+
+int listBsa(void)
+{
+    bsaList_t *p;
+    int       i = 0;
+
+    if(!pBsaEllList) return -1;
+    printf("Total %d BSA(s) has(have) been registered\n", ellCount(pBsaEllList));
+    
+    p = (bsaList_t *) ellFirst(pBsaEllList);
+    while (p) {
+        printf("\t%d\t%s, %s\n", i++, p->bsa_name, p->bsa_type);
+        p = (bsaList_t *) ellNext(&p->node);
+    }
+
+    return 0;
+}
+
+
 /* EPICS iocsh shell commands */
 
 
@@ -588,35 +643,8 @@ static const iocshArg * const addBsaArgs [] = { &addBsaArg0,
 static const iocshFuncDef addBsaFuncDef = { "addBsa", 2, addBsaArgs };
 static void addBsaCallFunc(const iocshArgBuf *args)
 {
-    bsaList_t *p = (bsaList_t *) malloc(sizeof(bsaList_t));
-    int i;
-    if(!p) {
-        printf("memory allocation error\b");
-        return;
-    }
-    
-    if(!addBsa_once) {    /* initialize for once */
-        addBsa_once = 1;
-        
-        pBsaEllList = (ELLLIST *) malloc(sizeof(ELLLIST));
-        ellInit(pBsaEllList);        
-    }
-    
-    strcpy(p->bsa_name, args[0].sval);
-    strcpy(p->bsa_type, "double");    //temporally hardcoded 
-    // strcpy(p->bsa_type, args[1].sval);
-    
-    for(i=0; i< MAX_BSA_ARRAY; i++) {
-        p->p_num[i]        = p->p_mean[i]        = p->p_rms2[i]        = -1;   // intialize to invalid parameter
-        p->pname_num[i][0] = p->pname_mean[i][0] = p->pname_rms2[i][0] = '\0'; // make null string
-    }
-    
-    p->slope  = 1.;   // setup default linear conversion, it will be override by epics PV
-    p->offset = 0.;   // setup drfault linear conversion, it will be override by epics PV
-    
-    ellAdd(pBsaEllList, &p->node);
-    
-    /* add Bsa */
+
+    addBsa(args[0].sval, args[1].sval);
 }
 
 
@@ -627,17 +655,7 @@ static const iocshArg * const listBsaArgs [] = { &listBsaArg0,
 static const iocshFuncDef listBsaFuncDef = { "listBsa", 2, listBsaArgs };
 static void listBsaCallFunc(const iocshArgBuf *args)
 {
-    bsaList_t *p;
-    int       i = 0;
-
-    if(!pBsaEllList) return;
-    printf("Total %d BSA(s) has(have) been registered\n", ellCount(pBsaEllList));
-    
-    p = (bsaList_t *) ellFirst(pBsaEllList);
-    while (p) {
-        printf("\t%d\t%s, %s\n", i++, p->bsa_name, p->bsa_type);
-        p = (bsaList_t *) ellNext(&p->node);
-    }
+    listBsa();
 }
 
 void bsaAsynDriverRegister(void)
