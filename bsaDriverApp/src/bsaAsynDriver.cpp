@@ -386,7 +386,7 @@ void bsaAsynDriver::SetupFields(void)
 
 void bsaAsynDriver::SetupPvs(void)
 {
-    unsigned i, j, k;
+    unsigned i, j;
     
     for(i=0; i< MAX_BSA_ARRAY; i++) {
         for(j=0; j < fields[i].size(); j++) {
