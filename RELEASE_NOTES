@@ -1,3 +1,10 @@
+R1.1.0      September 14, 2017    Kukhee Kim (KHKIM)
+            - implement slave BSA node for mulitple independent data conversion
+            - the slave BSA shares BSA data source with master, but could have separate 
+              BSA name and BSA database instances
+            - user can set up slope and offset independently for the slave BSA,
+              and it allows independent data conversion from the master BSA 
+
 R1.0.0      July 24, 2017    Kukhee Kim (KHKIM)
             - consideration for Cexp shell
             - build against asyn R4.31-0.1.0
