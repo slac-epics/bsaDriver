@@ -84,6 +84,10 @@ BsaPv::BsaPv (Bsa::Field& f) : _f(f), _n(0), _mean(0), _rms2(0), size(0), loc(0)
    _n.reserve(MAX_BSA_LENGTH *2);     _n.resize(MAX_BSA_LENGTH *2);
    _mean.reserve(MAX_BSA_LENGTH *2);  _mean.resize(MAX_BSA_LENGTH *2);
    _rms2.reserve(MAX_BSA_LENGTH *2);  _rms2.resize(MAX_BSA_LENGTH *2);
+   
+   for(unsigned i=0; i < p->slaveField.size(); i++) {
+       slavePv.push_back(new BsaPv(*p->slaveField[i]));
+   }
 }
 
 
@@ -99,6 +103,10 @@ void BsaPv::clear()
 {
     size = 0;
     loc  = 0;
+    
+    for(unsigned i =0; i <slavePv.size(); i++) {
+        slavePv[i]->clear();   /* execute clear() method for all of slaves */
+    }
 }
 
 
@@ -106,6 +114,10 @@ void BsaPv::setTimestamp(unsigned sec, unsigned nsec)
 {
     _ts_sec  = sec;
     _ts_nsec = nsec;
+    
+    for(unsigned i =0; i< slavePv.size(); i++) {
+        slavePv[i]->setTimestamp(sec, nsec);    /* execture setTimestamp() method for all of slaves */
+    }
 }
 
 void BsaPv::append()
@@ -119,6 +131,10 @@ void BsaPv::append()
     
     if(++size >= MAX_BSA_LENGTH) size = MAX_BSA_LENGTH;
     if(++loc  >= MAX_BSA_LENGTH) loc  = 0;
+    
+    for(unsigned i=0; i < slavePv.size(); i++) {
+        slavePv[i]->append();    /* execute append() method for all of slaves */
+    }
 
 }
 
@@ -131,6 +147,11 @@ void BsaPv::append(unsigned n, double mean, double rms2)
     
     if(++size >= MAX_BSA_LENGTH) size = MAX_BSA_LENGTH;
     if(++loc  >= MAX_BSA_LENGTH) loc  = 0;
+    
+    for(unsigned i=0; i < slavePv.size(); i++) {
+        slavePv[i]->append(n, mean, rms2);    /* execute append() method for all of slaves */
+        // printf("Slave append %d: slope %lf, offset %lf\n", i, *(slavePv[i]->_p_slope), *(slavePv[i]->_p_offset)); 
+    }
 }
 
 void BsaPv::flush()
@@ -139,6 +160,10 @@ void BsaPv::flush()
     pBsaDrv->flush(&_n[MAX_BSA_LENGTH + loc -size],   size, _p_num);
     pBsaDrv->flush(&_mean[MAX_BSA_LENGTH + loc-size], size, _p_mean);
     pBsaDrv->flush(&_rms2[MAX_BSA_LENGTH + loc-size], size, _p_rms2);
+    
+    for(unsigned i=0; i < slavePv.size(); i++) {
+        slavePv[i]->flush();              /* execture flush() method for all of slaves */
+    }
 }
 
 
@@ -299,19 +324,37 @@ void bsaAsynDriver::SetupAsynParams(void)
         sprintf(param_name, pidLString, i); createParam(param_name, asynParamInt32Array, &p_pid_L[i]);
         
         bsaList_t * p = (bsaList_t *) ellFirst(pBsaEllList);
-        while(p) {
+        while(p) {    /* search for master node */
             sprintf(param_name, numString,  p->bsa_name, i); createParam(param_name, asynParamFloat64Array, &p->p_num[i]);  strcpy(p->pname_num[i],  param_name);
             sprintf(param_name, meanString, p->bsa_name, i); createParam(param_name, asynParamFloat64Array, &p->p_mean[i]); strcpy(p->pname_mean[i], param_name);
             sprintf(param_name, rms2String, p->bsa_name, i); createParam(param_name, asynParamFloat64Array, &p->p_rms2[i]); strcpy(p->pname_rms2[i], param_name);
+            
+            bsaList_t * q = (bsaList_t *) ellFirst(p->pSlaveEllList);
+            while(q) {  /* search for slave node */
+                sprintf(param_name, numString,  q->bsa_name, i); createParam(param_name, asynParamFloat64Array, &q->p_num[i]);  strcpy(q->pname_num[i],  param_name);
+                sprintf(param_name, meanString, q->bsa_name, i); createParam(param_name, asynParamFloat64Array, &q->p_mean[i]); strcpy(q->pname_mean[i], param_name);
+                sprintf(param_name, rms2String, q->bsa_name, i); createParam(param_name, asynParamFloat64Array, &q->p_rms2[i]); strcpy(q->pname_rms2[i], param_name);
+            
+                q = (bsaList_t *) ellNext(&q->node);
+            }
+            
             p = (bsaList_t *) ellNext(&p->node);
         }
     
     }
     
     bsaList_t *p = (bsaList_t *) ellFirst(pBsaEllList);
-    while (p) {
+    while (p) {    /* search for master node */
         sprintf(param_name, slopeString,  p->bsa_name); createParam(param_name, asynParamFloat64, &p->p_slope);  strcpy(p->pname_slope,  param_name);
         sprintf(param_name, offsetString, p->bsa_name); createParam(param_name, asynParamFloat64, &p->p_offset); strcpy(p->pname_offset, param_name);
+        
+        bsaList_t *q = (bsaList_t *) ellFirst(p->pSlaveEllList);
+        while(q) {    /* search for slave node */
+            sprintf(param_name, slopeString,  q->bsa_name); createParam(param_name, asynParamFloat64, &q->p_slope);  strcpy(q->pname_slope,  param_name);
+            sprintf(param_name, offsetString, q->bsa_name); createParam(param_name, asynParamFloat64, &q->p_offset); strcpy(q->pname_offset, param_name);
+            q = (bsaList_t *) ellNext(&q->node);
+        }
+        
         p = (bsaList_t *) ellNext(&p->node);
     }
     
@@ -321,13 +364,21 @@ void bsaAsynDriver::SetupAsynParams(void)
 
 void bsaAsynDriver::SetupFields(void)
 {
-    bsaList_t *p;
+    bsaList_t *p, *q;
     int i;
     
     for(i = 0; i< MAX_BSA_ARRAY; i++) {
         p = (bsaList_t *) ellFirst(pBsaEllList);
-        while(p) {
-            fields[i].push_back(new BsaField(p->bsa_name, i, p->p_num[i], p->p_mean[i], p->p_rms2[i], &p->slope, &p->offset));
+        while(p) {    /* register parent field */
+            BsaField *pField = new BsaField(p->bsa_name, i, p->p_num[i], p->p_mean[i], p->p_rms2[i], &p->slope, &p->offset);
+            fields[i].push_back(pField);
+            
+            q = (bsaList_t *) ellFirst(p->pSlaveEllList);
+            while(q) {  /* register slave field */
+                BsaField *qField = new BsaField(q->bsa_name, i, q->p_num[i], q->p_mean[i], q->p_rms2[i], &q->slope, &q->offset);
+                pField->slaveField.push_back(qField);
+                q = (bsaList_t *) ellNext(&q->node);
+            }
             p = (bsaList_t *) ellNext(&p->node);
         }
     }
@@ -335,7 +386,7 @@ void bsaAsynDriver::SetupFields(void)
 
 void bsaAsynDriver::SetupPvs(void)
 {
-    unsigned i, j;
+    unsigned i, j, k;
     
     for(i=0; i< MAX_BSA_ARRAY; i++) {
         for(j=0; j < fields[i].size(); j++) {
@@ -454,7 +505,7 @@ asynStatus bsaAsynDriver::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
     
     
     bsaList_t * p = (bsaList_t *) ellFirst(pBsaEllList);
-    while(p) {
+    while(p) {           // update slope and offset for master BSA node
         if(function == p->p_slope) {
             p->slope = value;
             // printf("%s:%s slope %lf\n", p->bsa_name, p->bsa_type, value);
@@ -462,6 +513,21 @@ asynStatus bsaAsynDriver::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
         if(function == p->p_offset) {
             p->offset = value;
             // printf("%s:%s offset %lf\n", p->bsa_name, p->bsa_type,value);
+        }
+        
+        
+        bsaList_t *q = (bsaList_t *) ellFirst(p->pSlaveEllList);
+        while(q) {    // update slope and offset for slave BSA node
+            if(function == q->p_slope) {
+                q->slope = value;
+                // printf("%s:%s slope %lf\n", q->bsa_name, q->bsa_type, value);
+            }
+            
+            if(function == q->p_offset) {
+                q->offset = value;
+                // printf("%s:%s slope %lf\n", q->bsa_name, q->bsa_type, value);
+            }
+            q = (bsaList_t *) ellNext(&q->node);
         }
         
         p = (bsaList_t *) ellNext(&p->node);
@@ -515,9 +581,15 @@ int bsaAsynDriverConfigure(const char *portName, const char *regPathString, cons
     if(!pBsaEllList) return -1;
     
     int i = 0;
-    bsaList_t *p = (bsaList_t *) ellFirst(pBsaEllList);
-    while(p) {
+    bsaList_t *p, *q;
+    p = (bsaList_t *) ellFirst(pBsaEllList);
+    while(p) {                                           /* search master node */
         i += (int)(&p->lastParam - &p->firstParam -1);
+        q = (bsaList_t *) ellFirst(p->pSlaveEllList);
+        while (q) {                                      /* search slave node */
+            i += (int)(&q->lastParam - &q->firstParam-1);
+            q = (bsaList_t *) ellNext(&q->node);
+        }
         p = (bsaList_t *) ellNext(&p->node);
     }  /* calculate total number of dynamic parameters */
 
@@ -532,14 +604,14 @@ int bsaAsynDriverConfigure(const char *portName, const char *regPathString, cons
 
 #endif  /* HAVE_YAML */
 
-
+static bsaList_t * findBsa(const char *bsaKey);
 
 int addBsa(const char *bsaKey, const char *bsaType)
 {
     bsaList_t *p = (bsaList_t *) malloc(sizeof(bsaList_t));
     int i;
     if(!p) {
-        printf("memory allocation error\b");
+        printf("memory allocation error\n");
         return -1;
     }
     
@@ -549,6 +621,9 @@ int addBsa(const char *bsaKey, const char *bsaType)
         pBsaEllList = (ELLLIST *) malloc(sizeof(ELLLIST));
         ellInit(pBsaEllList);        
     }
+    
+    p->pSlaveEllList = (ELLLIST *) malloc(sizeof(ELLLIST));
+    ellInit(p->pSlaveEllList);        //init. linked list for slave
     
     strcpy(p->bsa_name, bsaKey);
     strcpy(p->bsa_type, "double");    //temporally hardcoded 
@@ -569,22 +644,77 @@ int addBsa(const char *bsaKey, const char *bsaType)
     return 0;
 }
 
+int addSlaveBsa(const char *bsaKey, const char *slaveKey, const char *bsaType)
+{
+    bsaList_t *p, *q;
+    int i;
+ 
+    p = findBsa(bsaKey);
+    if(!p) {
+        printf("Could not find bsa node (%s)\n", bsaKey);
+        return -1;
+    }   
+    q = (bsaList_t *) malloc(sizeof(bsaList_t));
+    if(!q) {
+        printf("memory allocation error\n");
+        return -1;
+    }
+    q->pSlaveEllList = (ELLLIST *) NULL;
+    
+    strcpy(q->bsa_name, slaveKey);
+    strcpy(q->bsa_type, "double");
+    
+    for(i = 0; i <MAX_BSA_ARRAY; i++) {
+        q->p_num[i]        = q->p_mean[i]        = q->p_rms2[i]         = -1;       // initialize to invalid parameter
+        q->pname_num[i][0] = q->pname_mean[i][0] = q->pname_rms2[i][0] = '\0';      // make nulll string
+    }
+    
+    q->slope  = 1.;
+    q->offset = 0.;
+    
+    ellAdd(p->pSlaveEllList, &q->node);
+    
+    return 0;
+}
+
 
 int listBsa(void)
 {
-    bsaList_t *p;
+    bsaList_t *p, *q;
     int       i = 0;
+    int       j;
 
     if(!pBsaEllList) return -1;
     printf("Total %d BSA(s) has(have) been registered\n", ellCount(pBsaEllList));
     
     p = (bsaList_t *) ellFirst(pBsaEllList);
     while (p) {
-        printf("\t%d\t%s, %s\n", i++, p->bsa_name, p->bsa_type);
+        printf("\t%d\t%s, %s\n", i++, p->bsa_name, p->bsa_type);  // print out for master node
+        q = (bsaList_t *) ellFirst(p->pSlaveEllList);
+        j = 0;
+        while(q) {
+            printf("\t\t+----- slave node %d\t%s, %s\n", j++, q->bsa_name, q->bsa_type);    // print out for slave nodes 
+            q = (bsaList_t *) ellNext(&q->node);
+        } 
         p = (bsaList_t *) ellNext(&p->node);
     }
 
     return 0;
+}
+
+static bsaList_t * findBsa(const char *bsaKey)
+{
+    bsaList_t *p;
+    
+    if(!pBsaEllList || !ellCount(pBsaEllList)) return (bsaList_t *) NULL;
+   
+    p = (bsaList_t *) ellFirst(pBsaEllList);
+    while(p) {
+        if(!strcmp(bsaKey, p->bsa_name)) break;
+        p = (bsaList_t *) ellNext(&p->node);
+    }
+    
+    return p;
 }
 
 
@@ -647,6 +777,18 @@ static void addBsaCallFunc(const iocshArgBuf *args)
     addBsa(args[0].sval, args[1].sval);
 }
 
+static const iocshArg addSlaveBsaArg0 = {"bsaKey",   iocshArgString};
+static const iocshArg addSlaveBsaArg1 = {"slaveKey", iocshArgString};
+static const iocshArg addSlaveBsaArg2 = {"bsaType",  iocshArgString};
+static const iocshArg * const addSlaveBsaArgs [] = { &addSlaveBsaArg0,
+                                                     &addSlaveBsaArg1,
+                                                     &addSlaveBsaArg2 };
+static const iocshFuncDef addSlaveBsaFuncDef = {"addSlaveBsa", 3, addSlaveBsaArgs};
+static void addSlaveBsaCallFunc(const iocshArgBuf *args)
+{
+    addSlaveBsa(args[0].sval, args[1].sval, args[2].sval);
+}
+
 
 static const iocshArg listBsaArg0 = { "bsaKey", iocshArgString };  // not required now, but prepare for future
 static const iocshArg listBsaArg1 = { "bsaType", iocshArgString };  // not required now, but prepare for future
@@ -660,9 +802,10 @@ static void listBsaCallFunc(const iocshArgBuf *args)
 
 void bsaAsynDriverRegister(void)
 {
-    iocshRegister(&initFuncDef,    initCallFunc);
-    iocshRegister(&addBsaFuncDef,  addBsaCallFunc);
-    iocshRegister(&listBsaFuncDef, listBsaCallFunc);
+    iocshRegister(&initFuncDef,        initCallFunc);
+    iocshRegister(&addBsaFuncDef,      addBsaCallFunc);
+    iocshRegister(&addSlaveBsaFuncDef, addSlaveBsaCallFunc);
+    iocshRegister(&listBsaFuncDef,     listBsaCallFunc);
 }
 
 epicsExportRegistrar(bsaAsynDriverRegister);

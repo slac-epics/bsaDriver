@@ -147,6 +147,43 @@ Total 31 BSA(s) has(have) been registered
         7       BEAMNRG23, double
         8       MPSSTAT, double
         9       MPSCLASS01, double
+        
+        
+Adding Slave BSA names for the driver
+- The slave BSA shares BSA data source with master.
+- It could have different data conversion - separate slope and offset from the master BSA
+- After creating master BSA node, create slave BSA node as the followings:
+
+  addSlaveBsa(<BSA name for master>, <BSA name for slave>, "double")
+
+- The "BSA name for master" should exist when adding the slave
+- The "BSA name for slave" will be used for the BSAKEY for dbLoadRecords()
+
+
+ex) 
+  addSlaveBsa("PIDL", "pidlSlave0", "double")
+  addSlaveBsa("PIDL", "pidlSlave1", "double")
+  addSlaveBsa("PIDL", "pidlSlave2", "double")
+  addSlaveBsa("PIDL", "pidlSlave3", "double")
+  addSlaveBsa("PIDL", "pidlSlave4", "double")
+  addSlaveBsa("PIDL", "pidlSlave5", "double")
+  
+  In this example, we added up 6 slave BSAs for PIDL BSA.
+  
+  listBsa()
+  Total 31 BSA(s) has(have) been registered
+        0       PIDL, double
+                +----- slave node 0     pidlSlave0, double
+                +----- slave node 1     pidlSlave1, double
+                +----- slave node 2     pidlSlave2, double
+                +----- slave node 3     pidlSlave3, double
+                +----- slave node 4     pidlSlave4, double
+                +----- slave node 5     pidlSlave5, double
+        1       PIDU, double
+        2       TSL, double
+        3       TSU, double
+        
+  listBsa() command shows master node and its slave nodes
 
 
 driver initialization:
@@ -205,6 +242,20 @@ dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=BEA
 dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=BEAMNRG23,SECN=BEAMNRG23")
 dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=MPSSTAT,SECN=MPSSTAT")
 dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=MPSCLASS01,SECN=MPSCLASS01")
+
+# PIDL has Slave BSAs
+#
+#   Test Slave Bsa Node
+# 
+dbLoadRecords("db/bsa.db", "DEV=TPG:SYS2:1,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=pidlSlave0,SECN=PIDLSL0")
+dbLoadRecords("db/bsa.db", "DEV=TPG:SYS2:1,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=pidlSlave1,SECN=PIDLSL1")
+dbLoadRecords("db/bsa.db", "DEV=TPG:SYS2:1,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=pidlSlave2,SECN=PIDLSL2")
+dbLoadRecords("db/bsa.db", "DEV=TPG:SYS2:1,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=pidlSlave3,SECN=PIDLSL3")
+dbLoadRecords("db/bsa.db", "DEV=TPG:SYS2:1,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=pidlSlave4,SECN=PIDLSL4")
+dbLoadRecords("db/bsa.db", "DEV=TPG:SYS2:1,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=pidlSlave5,SECN=PIDLSL5")
+
+
+
 
 - the database template loading can be located before driver initialization
 

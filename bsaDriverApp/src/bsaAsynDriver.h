@@ -33,7 +33,9 @@ class BsaField : public Bsa::Field {
         const int get_p_rms2() const { return _p_rms2; }
         
         double * get_p_slope() const { return _p_slope; }
-        double * get_p_offset() const { return _p_offset; } 
+        double * get_p_offset() const { return _p_offset; }
+        
+        std::vector <BsaField *> slaveField; 
         
     private:
         std::string _name;
@@ -59,6 +61,8 @@ class BsaPv : public Bsa::Pv {
         void append();
         void append(unsigned n, double mean, double rms2);
         void flush();
+        
+        std::vector <BsaPv *> slavePv;
         
     private:
         Bsa::Field& _f;
@@ -118,6 +122,7 @@ class BsaPvArray : public Bsa::PvArray {
 
 typedef struct {
     ELLNODE  node;
+    ELLLIST  *pSlaveEllList;  // slave node
     char     bsa_name[64];    // bsa name
     char     bsa_type[32];    // bsa datatype
     
