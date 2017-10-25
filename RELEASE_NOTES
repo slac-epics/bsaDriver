@@ -1,3 +1,9 @@
+R1.2.0-Diag October 3, 2017      Kukhee Kim (KHKIM)
+            - add an interface to get AmcCarrierBase class for diagnostic buffer for debugging sequence engine
+            - BSA client doesn't use the the interface, it is only for TPG
+            - thus, BSA client application doesn't need to update with this version
+            - it is test a temporal test version, we are not going to deploy it to production
+
 R1.1.0      September 14, 2017    Kukhee Kim (KHKIM)
             - implement slave BSA node for mulitple independent data conversion
             - the slave BSA shares BSA data source with master, but could have separate 

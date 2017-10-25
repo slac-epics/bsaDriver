@@ -166,12 +166,12 @@ public:
     void SetupPvArray(void);
     
     int  BsaRetreivePoll(void);
-    
+
     asynStatus flush(double *pData, unsigned size, int param);
     asynStatus flush(unsigned *pData, unsigned size, int param);
     asynStatus flush(int *pData, unsigned size, int param);
     
-	  asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
+    asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
    //	asynStatus writeInt32Array(asynUser *pasynUser, epicsInt32 *value, size_t nElements);
     asynStatus writeFloat64(asynUser *pasynUser, epicsFloat64 value);
    

@@ -47,6 +47,10 @@ static int  addBsa_once = 0;
 static class bsaAsynDriver *pBsaDrv = NULL;
 
 static ELLLIST *pBsaEllList = NULL;
+static void *_pBsaBridge = NULL;
+
+extern "C" { void *_getBsaBridge(void) { return _pBsaBridge; } }
+
 
 BsaField::BsaField(char *name, int index, int p_num, int p_mean, int p_rms2, double * p_slope, double * p_offset)
 {
@@ -254,6 +258,8 @@ bsaAsynDriver::bsaAsynDriver(const char *portName, const char *ipString, const i
         pProcessor = Bsa::Processor::create(ipString);  // master mode
     
     if(!pProcessor) return;
+
+    _pBsaBridge = (void*) pProcessor->getHardware();
     
     SetupAsynParams();
     SetupFields();
@@ -301,6 +307,8 @@ bsaAsynDriver::bsaAsynDriver(const char *portName, const char *path_reg, const c
         printf("BSA driver: could not complete initialization for processor class\n"); 
         return;
     }
+
+    _pBsaBridge = (void*) pProcessor->getHardware();
     
     SetupAsynParams();
     SetupFields();
