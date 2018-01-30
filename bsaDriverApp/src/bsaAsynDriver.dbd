@@ -1,4 +1,4 @@
 registrar(bsaAsynDriverRegister)
 driver(bsaAsynDriver)
-variable(bsa_length, unsigned)
-variable(fltb_length, unsigned)
+variable(bsa_length, int)
+variable(fltb_length, int)

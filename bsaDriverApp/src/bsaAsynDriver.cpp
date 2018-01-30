@@ -51,17 +51,17 @@ static void *_pBsaBridge = NULL;
 
 extern "C" { void *_getBsaBridge(void) { return _pBsaBridge; } }
 extern "C" {
-    static unsigned bsa_length   = MAX_BSA_LENGTH;
-    static unsigned fltb_length  = MAX_FLTB_LENGTH;
+    static int bsa_length   = MAX_BSA_LENGTH;
+    static int fltb_length  = MAX_FLTB_LENGTH;
     
-    epicsExportAddress(unsigned, bsa_length);
-    epicsExportAddress(unsigned, fltb_length);
+    epicsExportAddress(int, bsa_length);
+    epicsExportAddress(int, fltb_length);
     
 }
 
 static unsigned determine_max_size(unsigned array_index)
 {
-    return (array_index < FLTB_ARRAY0)?bsa_length:fltb_length;
+    return (array_index < FLTB_ARRAY0)? (unsigned) bsa_length: (unsigned) fltb_length;
 }
 
 
