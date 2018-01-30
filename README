@@ -122,31 +122,31 @@ ex)
 # Setup BSA Driver
 # ====================================
 # add BSA 
-addBsa("PIDL",       "double")
-addBsa("PIDU",       "double")
-addBsa("TSL",        "double")
-addBsa("TSU",        "double")
-addBsa("RATES",      "double")
-addBsa("BEAMREQ",    "double")
-addBsa("BEAMNRG01",  "double")
-addBsa("BEAMNRG23",  "double")
-addBsa("MPSSTAT",    "double")
-addBsa("MPSCLASS01", "double")
-addBsa("MPSCLASS23", "double")
+addBsa("PIDL",       "uint32")
+addBsa("PIDU",       "uint32")
+addBsa("TSL",        "uint32")
+addBsa("TSU",        "uint32")
+addBsa("RATES",      "uint32")
+addBsa("BEAMREQ",    "uint32")
+addBsa("BEAMNRG01",  "uint32")
+addBsa("BEAMNRG23",  "uint32")
+addBsa("MPSSTAT",    "uint32")
+addBsa("MPSCLASS01", "uint32")
+addBsa("MPSCLASS23", "uint32")
 
 ex) 
 vioc-b84-ev01>listBsa()
 Total 31 BSA(s) has(have) been registered
-        0       PIDL, double
-        1       PIDU, double
-        2       TSL, double
-        3       TSU, double
-        4       RATES, double
-        5       BEAMREQ, double
-        6       BEAMNRG01, double
-        7       BEAMNRG23, double
-        8       MPSSTAT, double
-        9       MPSCLASS01, double
+        0       PIDL, uint32
+        1       PIDU, uint32
+        2       TSL, uint32
+        3       TSU, uint32
+        4       RATES, uint32
+        5       BEAMREQ, uint32
+        6       BEAMNRG01, uint32
+        7       BEAMNRG23, uint32
+        8       MPSSTAT, uint32
+        9       MPSCLASS01, uint32
         
         
 Adding Slave BSA names for the driver
@@ -154,36 +154,44 @@ Adding Slave BSA names for the driver
 - It could have different data conversion - separate slope and offset from the master BSA
 - After creating master BSA node, create slave BSA node as the followings:
 
-  addSlaveBsa(<BSA name for master>, <BSA name for slave>, "double")
+  addSlaveBsa(<BSA name for master>, <BSA name for slave>, "uint32")
 
 - The "BSA name for master" should exist when adding the slave
 - The "BSA name for slave" will be used for the BSAKEY for dbLoadRecords()
 
 
 ex) 
-  addSlaveBsa("PIDL", "pidlSlave0", "double")
-  addSlaveBsa("PIDL", "pidlSlave1", "double")
-  addSlaveBsa("PIDL", "pidlSlave2", "double")
-  addSlaveBsa("PIDL", "pidlSlave3", "double")
-  addSlaveBsa("PIDL", "pidlSlave4", "double")
-  addSlaveBsa("PIDL", "pidlSlave5", "double")
+  addSlaveBsa("PIDL", "pidlSlave0", "uint32")
+  addSlaveBsa("PIDL", "pidlSlave1", "uint32")
+  addSlaveBsa("PIDL", "pidlSlave2", "uint32")
+  addSlaveBsa("PIDL", "pidlSlave3", "uint32")
+  addSlaveBsa("PIDL", "pidlSlave4", "uint32")
+  addSlaveBsa("PIDL", "pidlSlave5", "uint32")
   
   In this example, we added up 6 slave BSAs for PIDL BSA.
   
   listBsa()
   Total 31 BSA(s) has(have) been registered
         0       PIDL, double
-                +----- slave node 0     pidlSlave0, double
-                +----- slave node 1     pidlSlave1, double
-                +----- slave node 2     pidlSlave2, double
-                +----- slave node 3     pidlSlave3, double
-                +----- slave node 4     pidlSlave4, double
-                +----- slave node 5     pidlSlave5, double
-        1       PIDU, double
-        2       TSL, double
-        3       TSU, double
+                +----- slave node 0     pidlSlave0, uint32
+                +----- slave node 1     pidlSlave1, uint32
+                +----- slave node 2     pidlSlave2, uint32
+                +----- slave node 3     pidlSlave3, uint32
+                +----- slave node 4     pidlSlave4, uint32
+                +----- slave node 5     pidlSlave5, uint32
+        1       PIDU, uint32
+        2       TSL, uint32
+        3       TSU, uint32
         
   listBsa() command shows master node and its slave nodes
+  
+  
+  
+BSA Data Tytpe
+
+BSA driver and firmware allow {"int32", "uint32", "float32"} type of data.
+If firmware doesn't calculate statistics (mean and rms) all 3 types are allowed.
+If firmware calculate statstics, only "int32" type is allowed.
 
 
 driver initialization:
