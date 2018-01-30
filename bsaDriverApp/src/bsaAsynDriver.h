@@ -23,10 +23,22 @@
 #define  MAX_BSA_ARRAY     64
 #define  MAX_BSA_LENGTH    20000
 
+#define  INT32STRING     "int32"
+#define  UINT32STRING    "uint32"
+#define  FLOAT32STRING   "float32"
+
+
+typedef enum {
+    int32,
+    uint32,
+    float32,
+    fault
+} bsaDataType_t;
+
 
 class BsaField : public Bsa::Field {
     public:
-        BsaField(char *name, int index, int p_num, int p_mean, int p_rms2, double * p_slope, double * p_offset);
+        BsaField(char *name, int index, int p_num, int p_mean, int p_rms2, double * p_slope, double * p_offset, bsaDataType_t * p_type);
         const char *name() const { return _name.c_str(); }
         const int get_p_num()  const { return _p_num; }
         const int get_p_mean() const { return _p_mean; }
@@ -34,6 +46,8 @@ class BsaField : public Bsa::Field {
         
         double * get_p_slope() const { return _p_slope; }
         double * get_p_offset() const { return _p_offset; }
+        
+        bsaDataType_t * get_p_type() const { return _p_type; }
         
         std::vector <BsaField *> slaveField; 
         
@@ -46,6 +60,8 @@ class BsaField : public Bsa::Field {
         
         double *_p_slope;    // slope data pointer from bsa driver
         double *_p_offset;   // offset data pointer from bsa driver
+        
+        bsaDataType_t *_p_type;
         
     
 };
@@ -82,6 +98,8 @@ class BsaPv : public Bsa::Pv {
         // slope and offset data pointer from bsa driver
         double * _p_slope;
         double * _p_offset;
+        
+        bsaDataType_t *_p_type;
 };
 
 
@@ -136,6 +154,8 @@ typedef struct {
     
     double   slope;
     double   offset;
+    
+    bsaDataType_t type;
     
     char     pname_num[MAX_BSA_ARRAY][64];
     char     pname_mean[MAX_BSA_ARRAY][64];

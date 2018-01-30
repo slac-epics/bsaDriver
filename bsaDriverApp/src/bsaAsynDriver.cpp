@@ -52,7 +52,7 @@ static void *_pBsaBridge = NULL;
 extern "C" { void *_getBsaBridge(void) { return _pBsaBridge; } }
 
 
-BsaField::BsaField(char *name, int index, int p_num, int p_mean, int p_rms2, double * p_slope, double * p_offset)
+BsaField::BsaField(char *name, int index, int p_num, int p_mean, int p_rms2, double * p_slope, double * p_offset, bsaDataType_t * p_type)
 {
     std::ostringstream o;
     o << name << index;
@@ -66,6 +66,8 @@ BsaField::BsaField(char *name, int index, int p_num, int p_mean, int p_rms2, dou
     // copy slope and offset data pointer from bsa driver
     _p_slope  = p_slope;
     _p_offset = p_offset;
+    
+    _p_type = p_type;
 }
 
 
@@ -81,6 +83,8 @@ BsaPv::BsaPv (Bsa::Field& f) : _f(f), _n(0), _mean(0), _rms2(0), size(0), loc(0)
     // copy slope and offfset data pointer from field class
     _p_slope  = p->get_p_slope();
     _p_offset = p->get_p_offset();
+    
+    _p_type = p->get_p_type();
     
     
 // reserve memory for better performance
@@ -144,9 +148,23 @@ void BsaPv::append()
 
 void BsaPv::append(unsigned n, double mean, double rms2)
 {
+    uint32_t _u = (uint32_t) mean;
+    double __mean;
+    
+    switch(*_p_type) {
+        case int32:
+            __mean = (double)(*(int32_t*)&_u);
+            break;
+        case uint32:
+            __mean = (double)_u;
+            break;
+        case float32:
+            __mean = (double)(*(float*)&_u);
+            break;
+    }
         
     _n[loc]    = _n[loc + MAX_BSA_LENGTH]    = n;
-    _mean[loc] = _mean[loc + MAX_BSA_LENGTH] = isnan(mean)? NAN: (*_p_slope * mean + *_p_offset);
+    _mean[loc] = _mean[loc + MAX_BSA_LENGTH] = isnan(mean)? NAN: (*_p_slope * __mean + *_p_offset);
     _rms2[loc] = _rms2[loc + MAX_BSA_LENGTH] = isnan(rms2)? NAN: (*_p_slope * sqrt(rms2));
     
     if(++size >= MAX_BSA_LENGTH) size = MAX_BSA_LENGTH;
@@ -378,12 +396,12 @@ void bsaAsynDriver::SetupFields(void)
     for(i = 0; i< MAX_BSA_ARRAY; i++) {
         p = (bsaList_t *) ellFirst(pBsaEllList);
         while(p) {    /* register parent field */
-            BsaField *pField = new BsaField(p->bsa_name, i, p->p_num[i], p->p_mean[i], p->p_rms2[i], &p->slope, &p->offset);
+            BsaField *pField = new BsaField(p->bsa_name, i, p->p_num[i], p->p_mean[i], p->p_rms2[i], &p->slope, &p->offset, &p->type);
             fields[i].push_back(pField);
             
             q = (bsaList_t *) ellFirst(p->pSlaveEllList);
             while(q) {  /* register slave field */
-                BsaField *qField = new BsaField(q->bsa_name, i, q->p_num[i], q->p_mean[i], q->p_rms2[i], &q->slope, &q->offset);
+                BsaField *qField = new BsaField(q->bsa_name, i, q->p_num[i], q->p_mean[i], q->p_rms2[i], &q->slope, &q->offset, &p->type);
                 pField->slaveField.push_back(qField);
                 q = (bsaList_t *) ellNext(&q->node);
             }
@@ -614,6 +632,19 @@ int bsaAsynDriverConfigure(const char *portName, const char *regPathString, cons
 
 static bsaList_t * findBsa(const char *bsaKey);
 
+bsaDataType_t getBsaDataType(const char *bsaType)
+{
+    bsaDataType_t type;
+    
+    if(!strcmp(INT32STRING, bsaType)) type = int32;
+    else if(!strcmp(UINT32STRING, bsaType)) type = uint32;
+    else if(!strcmp(FLOAT32STRING, bsaType)) type = float32;
+    else type = fault;
+    
+    return type;
+    
+}
+
 int addBsa(const char *bsaKey, const char *bsaType)
 {
     bsaList_t *p = (bsaList_t *) malloc(sizeof(bsaList_t));
@@ -634,8 +665,8 @@ int addBsa(const char *bsaKey, const char *bsaType)
     ellInit(p->pSlaveEllList);        //init. linked list for slave
     
     strcpy(p->bsa_name, bsaKey);
-    strcpy(p->bsa_type, "double");    //temporally hardcoded 
-    // strcpy(p->bsa_type, args[1].sval);
+    strcpy(p->bsa_type, bsaType);  
+    
     
     for(i=0; i< MAX_BSA_ARRAY; i++) {
         p->p_num[i]        = p->p_mean[i]        = p->p_rms2[i]        = -1;   // intialize to invalid parameter
@@ -644,6 +675,13 @@ int addBsa(const char *bsaKey, const char *bsaType)
     
     p->slope  = 1.;   // setup default linear conversion, it will be override by epics PV
     p->offset = 0.;   // setup drfault linear conversion, it will be override by epics PV
+    
+    p->type = getBsaDataType(p->bsa_type);
+    
+    if(p->type == fault) {
+        printf("Error in addBsa(): could not add %s due to wrong type descript (%s)\n", bsaKey, bsaType);
+        return 0;
+    }
     
     ellAdd(pBsaEllList, &p->node);
     
@@ -670,7 +708,7 @@ int addSlaveBsa(const char *bsaKey, const char *slaveKey, const char *bsaType)
     q->pSlaveEllList = (ELLLIST *) NULL;
     
     strcpy(q->bsa_name, slaveKey);
-    strcpy(q->bsa_type, "double");
+    strcpy(q->bsa_type, bsaType);
     
     for(i = 0; i <MAX_BSA_ARRAY; i++) {
         q->p_num[i]        = q->p_mean[i]        = q->p_rms2[i]         = -1;       // initialize to invalid parameter
@@ -679,6 +717,13 @@ int addSlaveBsa(const char *bsaKey, const char *slaveKey, const char *bsaType)
     
     q->slope  = 1.;
     q->offset = 0.;
+    
+    p->type = getBsaDataType(p->bsa_type);
+    
+    if(p->type == fault) {
+        printf("Error in addSlaveBsa(): could not add %s into %s due to wrong type descriptor (%s)\n", slaveKey, bsaKey, bsaType);
+        return 0;
+    }
     
     ellAdd(p->pSlaveEllList, &q->node);
     
