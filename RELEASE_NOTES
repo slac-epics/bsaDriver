@@ -1,3 +1,8 @@
+R1.3.0      January 29, 2018    Kukhee Kim (KHKIM)
+            - support 3 data types for bsa "int32", "uint32", and "float32"
+              all 3 data types can be supported in no statistics mode,
+              in statistics mode, only "in32" can be supported
+
 R1.2.0-Diag October 3, 2017      Kukhee Kim (KHKIM)
             - add an interface to get AmcCarrierBase class for diagnostic buffer for debugging sequence engine
             - BSA client doesn't use the the interface, it is only for TPG
