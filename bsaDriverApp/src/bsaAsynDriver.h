@@ -23,6 +23,12 @@
 #define  MAX_BSA_ARRAY     64
 #define  MAX_BSA_LENGTH    20000
 
+#define  FLTB_ARRAY0       60
+#define  FLTB_ARRAY1       61
+#define  FLTB_ARRAY2       62
+#define  FLTB_ARRAY3       63
+#define  MAX_FLTB_LENGTH   1000000
+
 #define  INT32STRING     "int32"
 #define  UINT32STRING    "uint32"
 #define  FLOAT32STRING   "float32"
@@ -46,6 +52,7 @@ class BsaField : public Bsa::Field {
         
         double * get_p_slope() const { return _p_slope; }
         double * get_p_offset() const { return _p_offset; }
+        unsigned get_max_size(void) { return max_size; }
         
         bsaDataType_t * get_p_type() const { return _p_type; }
         
@@ -62,6 +69,8 @@ class BsaField : public Bsa::Field {
         double *_p_offset;   // offset data pointer from bsa driver
         
         bsaDataType_t *_p_type;
+        
+        unsigned max_size;
         
     
 };
@@ -88,7 +97,7 @@ class BsaPv : public Bsa::Pv {
         std::vector <double> _mean;
         std::vector <double> _rms2;
         
-        unsigned size, loc;
+        unsigned size, loc, max_size;
         
         // asyn parameters from bsa driver
         int _p_num;
@@ -100,6 +109,8 @@ class BsaPv : public Bsa::Pv {
         double * _p_offset;
         
         bsaDataType_t *_p_type;
+        
+        
 };
 
 
@@ -114,6 +125,8 @@ class BsaPvArray : public Bsa::PvArray {
         
         unsigned get_ts_sec(void)  { return _ts_sec; }
         unsigned get_ts_nsec(void) { return _ts_nsec; }
+        
+        unsigned get_max_size(void) { return max_size; }
 
     private:
         unsigned    _array;
@@ -123,7 +136,7 @@ class BsaPvArray : public Bsa::PvArray {
         std::vector <uint32_t> _pidU;
         std::vector <uint32_t> _pidL;
         
-        unsigned size, loc;
+        unsigned size, loc, max_size;
         
         const std::vector <Bsa::Pv*>& _pvs;
         

@@ -50,6 +50,19 @@ static ELLLIST *pBsaEllList = NULL;
 static void *_pBsaBridge = NULL;
 
 extern "C" { void *_getBsaBridge(void) { return _pBsaBridge; } }
+extern "C" {
+    static unsigned bsa_length   = MAX_BSA_LENGTH;
+    static unsigned fltb_length  = MAX_FLTB_LENGTH;
+    
+    epicsExportAddress(unsigned, bsa_length);
+    epicsExportAddress(unsigned, fltb_length);
+    
+}
+
+static unsigned determine_max_size(unsigned array_index)
+{
+    return (array_index < FLTB_ARRAY0)?bsa_length:fltb_length;
+}
 
 
 BsaField::BsaField(char *name, int index, int p_num, int p_mean, int p_rms2, double * p_slope, double * p_offset, bsaDataType_t * p_type)
@@ -68,6 +81,8 @@ BsaField::BsaField(char *name, int index, int p_num, int p_mean, int p_rms2, dou
     _p_offset = p_offset;
     
     _p_type = p_type;
+    
+    max_size = determine_max_size(index);
 }
 
 
@@ -86,12 +101,14 @@ BsaPv::BsaPv (Bsa::Field& f) : _f(f), _n(0), _mean(0), _rms2(0), size(0), loc(0)
     
     _p_type = p->get_p_type();
     
+    max_size = p->get_max_size();
+    
     
 // reserve memory for better performance
 // need to test to measure improvement   
-   _n.reserve(MAX_BSA_LENGTH *2);     _n.resize(MAX_BSA_LENGTH *2);
-   _mean.reserve(MAX_BSA_LENGTH *2);  _mean.resize(MAX_BSA_LENGTH *2);
-   _rms2.reserve(MAX_BSA_LENGTH *2);  _rms2.resize(MAX_BSA_LENGTH *2);
+   _n.reserve(max_size *2);     _n.resize(max_size *2);
+   _mean.reserve(max_size *2);  _mean.resize(max_size *2);
+   _rms2.reserve(max_size *2);  _rms2.resize(max_size *2);
    
    for(unsigned i=0; i < p->slaveField.size(); i++) {
        slavePv.push_back(new BsaPv(*p->slaveField[i]));
@@ -131,14 +148,14 @@ void BsaPv::setTimestamp(unsigned sec, unsigned nsec)
 void BsaPv::append()
 {
 
-    _n[loc]    = _n[loc + MAX_BSA_LENGTH] = 0;
-    _mean[loc] = _mean[loc + MAX_BSA_LENGTH] = nan("");
-    _rms2[loc] = _rms2[loc + MAX_BSA_LENGTH] = nan("");
+    _n[loc]    = _n[loc + max_size] = 0;
+    _mean[loc] = _mean[loc + max_size] = nan("");
+    _rms2[loc] = _rms2[loc + max_size] = nan("");
     
     
     
-    if(++size >= MAX_BSA_LENGTH) size = MAX_BSA_LENGTH;
-    if(++loc  >= MAX_BSA_LENGTH) loc  = 0;
+    if(++size >= max_size) size = max_size;
+    if(++loc  >= max_size) loc  = 0;
     
     for(unsigned i=0; i < slavePv.size(); i++) {
         slavePv[i]->append();    /* execute append() method for all of slaves */
@@ -163,12 +180,12 @@ void BsaPv::append(unsigned n, double mean, double rms2)
             break;
     }
         
-    _n[loc]    = _n[loc + MAX_BSA_LENGTH]    = n;
-    _mean[loc] = _mean[loc + MAX_BSA_LENGTH] = isnan(mean)? NAN: (*_p_slope * __mean + *_p_offset);
-    _rms2[loc] = _rms2[loc + MAX_BSA_LENGTH] = isnan(rms2)? NAN: (*_p_slope * sqrt(rms2));
+    _n[loc]    = _n[loc + max_size]    = n;
+    _mean[loc] = _mean[loc + max_size] = isnan(mean)? NAN: (*_p_slope * __mean + *_p_offset);
+    _rms2[loc] = _rms2[loc + max_size] = isnan(rms2)? NAN: (*_p_slope * sqrt(rms2));
     
-    if(++size >= MAX_BSA_LENGTH) size = MAX_BSA_LENGTH;
-    if(++loc  >= MAX_BSA_LENGTH) loc  = 0;
+    if(++size >= max_size) size = max_size;
+    if(++loc  >= max_size) loc  = 0;
     
     for(unsigned i=0; i < slavePv.size(); i++) {
         slavePv[i]->append(n, mean, rms2);    /* execute append() method for all of slaves */
@@ -179,9 +196,9 @@ void BsaPv::append(unsigned n, double mean, double rms2)
 void BsaPv::flush()
 {
 // need to callback to asyn level to post out PVs
-    pBsaDrv->flush(&_n[MAX_BSA_LENGTH + loc -size],   size, _p_num);
-    pBsaDrv->flush(&_mean[MAX_BSA_LENGTH + loc-size], size, _p_mean);
-    pBsaDrv->flush(&_rms2[MAX_BSA_LENGTH + loc-size], size, _p_rms2);
+    pBsaDrv->flush(&_n[max_size + loc -size],   size, _p_num);
+    pBsaDrv->flush(&_mean[max_size + loc-size], size, _p_mean);
+    pBsaDrv->flush(&_rms2[max_size + loc-size], size, _p_rms2);
     
     for(unsigned i=0; i < slavePv.size(); i++) {
         slavePv[i]->flush();              /* execture flush() method for all of slaves */
@@ -194,11 +211,13 @@ void BsaPv::flush()
 BsaPvArray::BsaPvArray(unsigned array, const std::vector <Bsa::Pv*>& pvs, int p_pid_U, int p_pid_L) 
                        : _array(array), size(0), loc(0), _pvs(pvs), _p_pid_U(p_pid_U), _p_pid_L(p_pid_L)
 { 
+
+    max_size = determine_max_size(array);
 // reserve emory for better performance
-    _pid.reserve(MAX_BSA_LENGTH *2); _pid.resize(MAX_BSA_LENGTH *2);   
+    _pid.reserve(max_size *2); _pid.resize(max_size *2);   
     
-    _pidU.reserve(MAX_BSA_LENGTH);
-    _pidL.reserve(MAX_BSA_LENGTH);
+    _pidU.reserve(max_size);
+    _pidL.reserve(max_size);
 }
 
 
@@ -226,9 +245,9 @@ void BsaPvArray::reset(unsigned sec, unsigned nsec)
 
 void BsaPvArray::append(uint64_t pulseId) 
 {
-    _pid[loc] = _pid[loc + MAX_BSA_LENGTH] = pulseId;
-    if(++size >= MAX_BSA_LENGTH) size = MAX_BSA_LENGTH;
-    if(++loc  >= MAX_BSA_LENGTH) loc  = 0;
+    _pid[loc] = _pid[loc + max_size] = pulseId;
+    if(++size >= max_size) size = max_size;
+    if(++loc  >= max_size) loc  = 0;
     
 }
 
@@ -243,8 +262,8 @@ void BsaPvArray::flush()
     _pidL.clear();
     
     for(unsigned int i=0; i < size; i++) {
-        _pidU.push_back(unsigned(_pid[MAX_BSA_LENGTH + loc - size + i] >> 32));
-        _pidL.push_back(unsigned(_pid[MAX_BSA_LENGTH + loc - size + i]));
+        _pidU.push_back(unsigned(_pid[max_size + loc - size + i] >> 32));
+        _pidL.push_back(unsigned(_pid[max_size + loc - size + i]));
     
     }
     
