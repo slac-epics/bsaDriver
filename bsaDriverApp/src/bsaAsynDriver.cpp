@@ -679,7 +679,7 @@ int addBsa(const char *bsaKey, const char *bsaType)
     p->type = getBsaDataType(p->bsa_type);
     
     if(p->type == fault) {
-        printf("Error in addBsa(): could not add %s due to wrong type descript (%s)\n", bsaKey, bsaType);
+        printf("Error in addBsa(): could not add %s due to wrong type descriptor (%s)\n", bsaKey, bsaType);
         return 0;
     }
     
