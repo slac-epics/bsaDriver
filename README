@@ -57,7 +57,7 @@ Requirements:
   BOOST_INCLUDE = $(BOOST)/include
  
   BSA_PACKAGE_NAME=timing/bsa
-  BSA_VERSION=R1.0.1
+  BSA_VERSION=R1.0.3
   BSA_ARCH=$(LINUXRT_BUILDROOT_VERSION)-x86_64
   BSA=$(PACKAGE_AREA)/$(BSA_PACKAGE_NAME)/$(BSA_VERSION)/$(BSA_ARCH)
   BSA_LIB     = $(BSA)/lib
@@ -74,7 +74,7 @@ Requirements:
 
   ASYN_MODULE_VERSION=R4.31-0.1.0
   YAMLLOADER_MODULE_VERSION=R1.0.3
-  BSADRIVER_MODULE_VERSION=R1.0.0
+  BSADRIVER_MODULE_VERSION=R1.4.0
 
   ASYN=$(EPICS_MODULES)/asyn/$(ASYN_MODULE_VERSION)
   YAMLLOADER=$(EPICS_MODULES)/yamlLoader/$(YAMLLOADER_MODULE_VERSION)
@@ -223,7 +223,7 @@ EPICS database template loading:
   $(DEV)         ; macro
   $(SECN)        ; macro, bsa PV name
   $(BSAKEY)      ; macro, bsa key, it should be matched with the bsa name string in addBsa()
-  $(MAXLENGTH)   ; macro, history buffer length, recommend to fix it to 20000
+  
   $(PORT)        ; macro, asyn port name for bsa driver, should be matched with the port name in the driver initialization
 
   <n>            ; given instance number / name
@@ -240,27 +240,27 @@ EPICS database template loading:
 ex) 
 
 # BSA driver DB
-dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=PIDU,SECN=PIDU")
-dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=PIDL,SECN=PIDL")
-dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=TSU,SECN=TSU")
-dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=TSL,SECN=TSL")
-dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=RATES,SECN=RATES")
-dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=BEAMREQ,SECN=BEAMREQ")
-dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=BEAMNRG01,SECN=BEAMNRG01")
-dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=BEAMNRG23,SECN=BEAMNRG23")
-dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=MPSSTAT,SECN=MPSSTAT")
-dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=MPSCLASS01,SECN=MPSCLASS01")
+dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,BSAKEY=PIDU,SECN=PIDU")
+dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,BSAKEY=PIDL,SECN=PIDL")
+dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,BSAKEY=TSU,SECN=TSU")
+dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,BSAKEY=TSL,SECN=TSL")
+dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,BSAKEY=RATES,SECN=RATES")
+dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,BSAKEY=BEAMREQ,SECN=BEAMREQ")
+dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,BSAKEY=BEAMNRG01,SECN=BEAMNRG01")
+dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,BSAKEY=BEAMNRG23,SECN=BEAMNRG23")
+dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,BSAKEY=MPSSTAT,SECN=MPSSTAT")
+dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,BSAKEY=MPSCLASS01,SECN=MPSCLASS01")
 
 # PIDL has Slave BSAs
 #
 #   Test Slave Bsa Node
 # 
-dbLoadRecords("db/bsa.db", "DEV=TPG:SYS2:1,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=pidlSlave0,SECN=PIDLSL0")
-dbLoadRecords("db/bsa.db", "DEV=TPG:SYS2:1,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=pidlSlave1,SECN=PIDLSL1")
-dbLoadRecords("db/bsa.db", "DEV=TPG:SYS2:1,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=pidlSlave2,SECN=PIDLSL2")
-dbLoadRecords("db/bsa.db", "DEV=TPG:SYS2:1,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=pidlSlave3,SECN=PIDLSL3")
-dbLoadRecords("db/bsa.db", "DEV=TPG:SYS2:1,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=pidlSlave4,SECN=PIDLSL4")
-dbLoadRecords("db/bsa.db", "DEV=TPG:SYS2:1,PORT=bsaPort,MAXLENGTH=20000,BSAKEY=pidlSlave5,SECN=PIDLSL5")
+dbLoadRecords("db/bsa.db", "DEV=TPG:SYS2:1,PORT=bsaPort,BSAKEY=pidlSlave0,SECN=PIDLSL0")
+dbLoadRecords("db/bsa.db", "DEV=TPG:SYS2:1,PORT=bsaPort,BSAKEY=pidlSlave1,SECN=PIDLSL1")
+dbLoadRecords("db/bsa.db", "DEV=TPG:SYS2:1,PORT=bsaPort,BSAKEY=pidlSlave2,SECN=PIDLSL2")
+dbLoadRecords("db/bsa.db", "DEV=TPG:SYS2:1,PORT=bsaPort,BSAKEY=pidlSlave3,SECN=PIDLSL3")
+dbLoadRecords("db/bsa.db", "DEV=TPG:SYS2:1,PORT=bsaPort,BSAKEY=pidlSlave4,SECN=PIDLSL4")
+dbLoadRecords("db/bsa.db", "DEV=TPG:SYS2:1,PORT=bsaPort,BSAKEY=pidlSlave5,SECN=PIDLSL5")
 
 
 

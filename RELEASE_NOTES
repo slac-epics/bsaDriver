@@ -1,3 +1,10 @@
+R1.4.0      January 30, 2018    Kukhee Kim (KHKIM)
+            - remove MAXBSALENGTH macro from bsa.db template (default BSA Length is 20000, user doens't need to specify the BSA waveform length)
+            - increase fault buffer length to one million samples
+            remark) the bsa length and fault buffer length are set by default values (20000 and 1000000).
+            we can change the default values in run-time but not recommended. Please, look at more details in README file
+            
+
 R1.3.0      January 29, 2018    Kukhee Kim (KHKIM)
             - support 3 data types for bsa "int32", "uint32", and "float32"
               all 3 data types can be supported in no statistics mode,
