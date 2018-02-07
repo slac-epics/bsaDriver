@@ -1,5 +1,6 @@
 R1.4.0      February 7, 2018    Kukhee Kim (KHKIM)
             - rebuild with bsa API R1.0.4 to fix a bug on  fault buffers when wrapped
+            - force tag to R1.4.0
 
 R1.4.0      January 30, 2018    Kukhee Kim (KHKIM)
             - remove MAXBSALENGTH macro from bsa.db template (default BSA Length is 20000, user doens't need to specify the BSA waveform length)
