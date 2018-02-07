@@ -268,6 +268,41 @@ dbLoadRecords("db/bsa.db", "DEV=TPG:SYS2:1,PORT=bsaPort,BSAKEY=pidlSlave5,SECN=P
 - the database template loading can be located before driver initialization
 
 
+
+BSA buffer length change and Fault buffer length change
+
+The BSA buffer length and Fault buffer length are fixed (BSA length: 20000 and Fault buffer length: 1000000)
+We do not suppose, end user need to change it, but the bsaDriver has way to make change the lengths.
+
+the buffer lengths is defined in epics ioc shell variables. you cna check up the values as the followings.
+
+example) 
+
+    epics>var bsa_length
+    bsa_length = 20000
+    epics>var fltb_length
+    fltb_length = 100000
+
+You cna change the variable with "var" command, but you should make change prior than any of BSA driver related command.
+
+example) we are going to make double length for both buffer. 
+
+    epics>var bsa_length 40000
+    epics>var fltb_length 2000000
+
+You can also change the waveform length with two macros: BSA_LENGTH, FLTB_LENGTH.
+If you do not specify the macors, these have 20000 and 1000000 as default values.
+
+example)
+
+dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,BSAKEY=PIDU,SECN=PIDU,BSA_LENGTH=40000,FLTB_LENGTH=2000000")
+dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,BSAKEY=PIDL,SECN=PIDL,BSA_LENGTH=40000,FLTB_LENGTH=2000000")
+
+
+
+
+
+
 Linear Conversion
 
 BSA database template has slope and offset PVs for each bsa name (bsakey).
