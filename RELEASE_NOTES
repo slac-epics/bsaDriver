@@ -1,3 +1,20 @@
+R1.5.0      March 21, 2018      Kukhee Kim (KHKIM)
+
+            - Bumpup yamlLoader     R1.1.0
+            - Bumpup bsa api        R1.1.0
+            - Bumpup cpsw framework R3.6.3 
+
+            - Merge Till's branch 'ts_fixes'
+               - yamlLoader R1.1.0-BR-ts
+               - Removed unused variable
+               - Makefile: removed std=c++0x; replaced -I$(VAR) by $(addprefix -I,$(VAR))
+               - ... this expands to an empty string if VAR is empty (the original version to '-I'
+                  which can be harmful)
+
+
+
+
+
 R1.4.0      February 7, 2018    Kukhee Kim (KHKIM)
             - rebuild with bsa API R1.0.4 to fix a bug on  fault buffers when wrapped
             - force tag to R1.4.0
