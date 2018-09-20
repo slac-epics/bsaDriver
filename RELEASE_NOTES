@@ -1,3 +1,8 @@
+R1.5.2      Sep 20, 2018        Kukhee Kim (KHKIM)
+            - bumpup cpsw/framework R3.6.6
+            - bumpup bsa api        R1.1.2
+            - bumpup yamlLoader     R1.1.1
+
 R1.5.1      May 29, 2018        Kukhee Kim (KHKIM)
             - Bumpup bsa api        R1.1.1
             - Bumpup cpsw framewrok R3.6.4
