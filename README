@@ -29,15 +29,15 @@ Requirements:
 - The epics ioc application should build with yamlLoader driver and with CPSW framework.
 
   API layer
-  . cpsw/framework R3.5.4
+  . cpsw/framework R3.6.6
   . yaml-cpp-0.5.3
   . boost 1.63.0
-  . timing/bsa R1.0.4
+  . timing/bsa R1.1.2
 
   configure/CONFIG_SITE.Common.<platform> in application should have the followings:
 
   CPSW_FRAMEWORK_PACKAGE_NAME=cpsw/framework
-  CPSW_FRAMEWORK_VERSION=R3.5.4
+  CPSW_FRAMEWORK_VERSION=R3.6.6
   CPSW_FRAMEWORK=$(PACKAGE_AREA)/$(CPSW_FRAMEWORK_PACKAGE_NAME)/$(CPSW_FRAMEWORK_VERSION)/$(LINUXRT_BUILDROOT_VERSION)-x86_64
   CPSW_FRAMEWORK_LIB     = $(CPSW_FRAMEWORK)/lib
   CPSW_FRAMEWORK_INCLUDE = $(CPSW_FRAMEWORK)/include
@@ -57,7 +57,7 @@ Requirements:
   BOOST_INCLUDE = $(BOOST)/include
  
   BSA_PACKAGE_NAME=timing/bsa
-  BSA_VERSION=R1.0.4
+  BSA_VERSION=R1.1.2
   BSA_ARCH=$(LINUXRT_BUILDROOT_VERSION)-x86_64
   BSA=$(PACKAGE_AREA)/$(BSA_PACKAGE_NAME)/$(BSA_VERSION)/$(BSA_ARCH)
   BSA_LIB     = $(BSA)/lib
@@ -67,14 +67,14 @@ Requirements:
 
 
   EPICS module
-  . yamlLoader R1.0.3
+  . yamlLoader R1.1.1
   . asyn R4.31-0.1.0
 
   configure/RELEASE in application should have the followings:
 
   ASYN_MODULE_VERSION=R4.31-0.1.0
-  YAMLLOADER_MODULE_VERSION=R1.0.3
-  BSADRIVER_MODULE_VERSION=R1.4.0
+  YAMLLOADER_MODULE_VERSION=R1.1.1
+  BSADRIVER_MODULE_VERSION=R1.5.2
 
   ASYN=$(EPICS_MODULES)/asyn/$(ASYN_MODULE_VERSION)
   YAMLLOADER=$(EPICS_MODULES)/yamlLoader/$(YAMLLOADER_MODULE_VERSION)
