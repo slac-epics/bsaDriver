@@ -1,3 +1,6 @@
+R1.5.3      Nov 8, 2018         Kukhee Kim (KHKIM)
+            - build with  cpsw/framework R3.6.6,  yaml-cpp-0.5.3_boost-1.64.0, boost 1.64.0, yamlLoader R1.1.2
+
 R1.5.2      Sep 20, 2018        Kukhee Kim (KHKIM)
             - bumpup cpsw/framework R3.6.6
             - bumpup bsa api        R1.1.2
