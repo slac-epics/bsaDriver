@@ -1,3 +1,6 @@
+R1.5.5      Sep. 16, 2019       Kukhee Kim (khkim)
+            - add bsaAsynDriverEnable() and bsaAsynDriverDisable() in ioc shell command
+
 R1.5.4      June 24, 2019       Kukhee Kim (khkim)
             - build with cpsw/framework R4.1.2, yamlLoader R1.1.3
 

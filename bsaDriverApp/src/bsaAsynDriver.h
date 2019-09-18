@@ -49,30 +49,30 @@ class BsaField : public Bsa::Field {
         const int get_p_num()  const { return _p_num; }
         const int get_p_mean() const { return _p_mean; }
         const int get_p_rms2() const { return _p_rms2; }
-        
+
         double * get_p_slope() const { return _p_slope; }
         double * get_p_offset() const { return _p_offset; }
         unsigned get_max_size(void) { return max_size; }
-        
+
         bsaDataType_t * get_p_type() const { return _p_type; }
-        
-        std::vector <BsaField *> slaveField; 
-        
+
+        std::vector <BsaField *> slaveField;
+
     private:
         std::string _name;
-        
+
         int _p_num;    // asyn parameter index from bsa driver
         int _p_mean;   // asyn parameter index from bsa driver
         int _p_rms2;   // asyn parameter index from bsa driver
-        
+
         double *_p_slope;    // slope data pointer from bsa driver
         double *_p_offset;   // offset data pointer from bsa driver
-        
+
         bsaDataType_t *_p_type;
-        
+
         unsigned max_size;
-        
-    
+
+
 };
 
 
@@ -86,9 +86,9 @@ class BsaPv : public Bsa::Pv {
         void append();
         void append(unsigned n, double mean, double rms2);
         void flush();
-        
+
         std::vector <BsaPv *> slavePv;
-        
+
     private:
         Bsa::Field& _f;
         unsigned _ts_sec;
@@ -96,21 +96,21 @@ class BsaPv : public Bsa::Pv {
         std::vector <unsigned> _n;
         std::vector <double> _mean;
         std::vector <double> _rms2;
-        
+
         unsigned size, loc, max_size;
-        
+
         // asyn parameters from bsa driver
         int _p_num;
         int _p_mean;
         int _p_rms2;
-        
+
         // slope and offset data pointer from bsa driver
         double * _p_slope;
         double * _p_offset;
-        
+
         bsaDataType_t *_p_type;
-        
-        
+
+
 };
 
 
@@ -122,10 +122,10 @@ class BsaPvArray : public Bsa::PvArray {
         void append(uint64_t pulseId);
         std::vector <Bsa::Pv*> pvs();
         void flush();
-        
+
         unsigned get_ts_sec(void)  { return _ts_sec; }
         unsigned get_ts_nsec(void) { return _ts_nsec; }
-        
+
         unsigned get_max_size(void) { return max_size; }
 
     private:
@@ -135,11 +135,11 @@ class BsaPvArray : public Bsa::PvArray {
         std::vector <uint64_t> _pid;
         std::vector <uint32_t> _pidU;
         std::vector <uint32_t> _pidL;
-        
+
         unsigned size, loc, max_size;
-        
+
         const std::vector <Bsa::Pv*>& _pvs;
-        
+
         int _p_pid_U;
         int _p_pid_L;
 };
@@ -156,7 +156,7 @@ typedef struct {
     ELLLIST  *pSlaveEllList;  // slave node
     char     bsa_name[64];    // bsa name
     char     bsa_type[32];    // bsa datatype
-    
+
     int      firstParam;
     int      p_num[MAX_BSA_ARRAY];           // asyn parameter for number of average, asynFloat64Array, RO
     int      p_mean[MAX_BSA_ARRAY];          // asyn parameter for average value,     asynFloat64Array, RO
@@ -164,20 +164,20 @@ typedef struct {
     int      p_slope;                        // asyn parameter for linear conversion, asynFloat64, RW
     int      p_offset;                       // asyn parameter for linear conversion, asynFloat64, RW
     int      lastParam;
-    
+
     double   slope;
     double   offset;
-    
+
     bsaDataType_t type;
-    
+
     char     pname_num[MAX_BSA_ARRAY][64];
     char     pname_mean[MAX_BSA_ARRAY][64];
     char     pname_rms2[MAX_BSA_ARRAY][64];
-    
+
     char     pname_slope[64];
     char     pname_offset[64];
 
-    
+
 } bsaList_t;
 
 
@@ -197,26 +197,29 @@ public:
     void SetupFields(void);
     void SetupPvs(void);
     void SetupPvArray(void);
-    
+
     int  BsaRetreivePoll(void);
+    int  bsaAsynDriverEnable(void);
+    int  bsaAsynDriverDisable(void);
 
     asynStatus flush(double *pData, unsigned size, int param);
     asynStatus flush(unsigned *pData, unsigned size, int param);
     asynStatus flush(int *pData, unsigned size, int param);
-    
+
     asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
    //	asynStatus writeInt32Array(asynUser *pasynUser, epicsInt32 *value, size_t nElements);
     asynStatus writeFloat64(asynUser *pasynUser, epicsFloat64 value);
-   
+
 private:
     Bsa::Processor* pProcessor;
-    std::vector <Bsa::Field*> fields[MAX_BSA_ARRAY]; 
+    std::vector <Bsa::Field*> fields[MAX_BSA_ARRAY];
     std::vector <Bsa::Pv*> pvs[MAX_BSA_ARRAY];
     std::vector <BsaPvArray*> pBsaPvArray;
-	
-	
-	
+
+
+
 protected:
+    int bsa_enable;
 //
 // parameter section for asynPortDriver,
 // just static parameter should be listed here
@@ -226,6 +229,7 @@ protected:
 	#define FIRST_BSA_PARAM    firstBsaParam
     int p_pid_U[MAX_BSA_ARRAY];    // asynInt32Array, RO
     int p_pid_L[MAX_BSA_ARRAY];    // asynInt32Array, RO
+    int p_enable;
 	  int lastBsaParam;
 	#define LAST_BSA_PARAM     lastBsaParam
 };
@@ -241,5 +245,7 @@ protected:
 
 #define slopeString    "%s_slope"
 #define offsetString   "%s_offset"
+
+#define enableString   "bsa_enable"
 
 #endif  /* BSA_ASYN_DRIVER_H */

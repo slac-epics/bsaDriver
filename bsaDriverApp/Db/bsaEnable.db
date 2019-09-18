@@ -1,0 +1,10 @@
+record(bo, "$(DEV):BSA_ENABLE")
+{
+    field(DESC, "Bsa Enable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),0) bsa_enable")
+    field(ZNAM, "Disable")
+    field(ONAM, "Enable")
+    field(OMSL, "supervisory")
+    field(VAL,  "Enable")
+}
