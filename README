@@ -29,10 +29,10 @@ Requirements:
 - The epics ioc application should build with yamlLoader driver and with CPSW framework.
 
   API layer
-  . cpsw/framework R4.1.2
+  . cpsw/framework R4.2.0
   . yaml-cpp-0.5.3_boost-1.64.0
   . boost 1.64.0
-  . timing/bsa R1.1.3
+  . timing/bsa R1.1.4
 
   configure/CONFIG_SITE.Common.<platform> in application should have the followings:
 
