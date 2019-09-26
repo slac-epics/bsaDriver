@@ -20,6 +20,7 @@
 #include <BsaField.hh>
 #include <Processor.hh>
 
+#define  START_BSA_ARRAY   21
 #define  MAX_BSA_ARRAY     64
 #define  MAX_BSA_LENGTH    20000
 

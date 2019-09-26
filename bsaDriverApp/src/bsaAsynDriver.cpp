@@ -373,20 +373,20 @@ void bsaAsynDriver::SetupAsynParams(void)
     sprintf(param_name, enableString); createParam(param_name, asynParamInt32, &p_enable);
 
     for(int i=0; i<MAX_BSA_ARRAY; i++) {
-        sprintf(param_name, pidUString, i); createParam(param_name, asynParamInt32Array, &p_pid_U[i]);
-        sprintf(param_name, pidLString, i); createParam(param_name, asynParamInt32Array, &p_pid_L[i]);
+        sprintf(param_name, pidUString, i+START_BSA_ARRAY); createParam(param_name, asynParamInt32Array, &p_pid_U[i]);
+        sprintf(param_name, pidLString, i+START_BSA_ARRAY); createParam(param_name, asynParamInt32Array, &p_pid_L[i]);
 
         bsaList_t * p = (bsaList_t *) ellFirst(pBsaEllList);
         while(p) {    /* search for master node */
-            sprintf(param_name, numString,  p->bsa_name, i); createParam(param_name, asynParamFloat64Array, &p->p_num[i]);  strcpy(p->pname_num[i],  param_name);
-            sprintf(param_name, meanString, p->bsa_name, i); createParam(param_name, asynParamFloat64Array, &p->p_mean[i]); strcpy(p->pname_mean[i], param_name);
-            sprintf(param_name, rms2String, p->bsa_name, i); createParam(param_name, asynParamFloat64Array, &p->p_rms2[i]); strcpy(p->pname_rms2[i], param_name);
+            sprintf(param_name, numString,  p->bsa_name, i+START_BSA_ARRAY); createParam(param_name, asynParamFloat64Array, &p->p_num[i]);  strcpy(p->pname_num[i],  param_name);
+            sprintf(param_name, meanString, p->bsa_name, i+START_BSA_ARRAY); createParam(param_name, asynParamFloat64Array, &p->p_mean[i]); strcpy(p->pname_mean[i], param_name);
+            sprintf(param_name, rms2String, p->bsa_name, i+START_BSA_ARRAY); createParam(param_name, asynParamFloat64Array, &p->p_rms2[i]); strcpy(p->pname_rms2[i], param_name);
 
             bsaList_t * q = (bsaList_t *) ellFirst(p->pSlaveEllList);
             while(q) {  /* search for slave node */
-                sprintf(param_name, numString,  q->bsa_name, i); createParam(param_name, asynParamFloat64Array, &q->p_num[i]);  strcpy(q->pname_num[i],  param_name);
-                sprintf(param_name, meanString, q->bsa_name, i); createParam(param_name, asynParamFloat64Array, &q->p_mean[i]); strcpy(q->pname_mean[i], param_name);
-                sprintf(param_name, rms2String, q->bsa_name, i); createParam(param_name, asynParamFloat64Array, &q->p_rms2[i]); strcpy(q->pname_rms2[i], param_name);
+                sprintf(param_name, numString,  q->bsa_name, i+START_BSA_ARRAY); createParam(param_name, asynParamFloat64Array, &q->p_num[i]);  strcpy(q->pname_num[i],  param_name);
+                sprintf(param_name, meanString, q->bsa_name, i+START_BSA_ARRAY); createParam(param_name, asynParamFloat64Array, &q->p_mean[i]); strcpy(q->pname_mean[i], param_name);
+                sprintf(param_name, rms2String, q->bsa_name, i+START_BSA_ARRAY); createParam(param_name, asynParamFloat64Array, &q->p_rms2[i]); strcpy(q->pname_rms2[i], param_name);
 
                 q = (bsaList_t *) ellNext(&q->node);
             }
