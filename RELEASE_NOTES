@@ -1,3 +1,6 @@
+R1.6.0      Sep 26, 2019        Kukhee Kim (khkim)
+            - adjust bsa number (LCLSII BSA starts from 21)
+            
 R1.5.6      Sep 20, 2019        Kukhee Kim (khkim)
             - build with cpsw/framework R4.2.0,  timing/bsa R1.1.4 and yamlLoader R1.1.4
 
@@ -23,7 +26,7 @@ R1.5.0      March 21, 2018      Kukhee Kim (KHKIM)
 
             - Bumpup yamlLoader     R1.1.0
             - Bumpup bsa api        R1.1.0
-            - Bumpup cpsw framework R3.6.3 
+            - Bumpup cpsw framework R3.6.3
 
             - Merge Till's branch 'ts_fixes'
                - yamlLoader R1.1.0-BR-ts
@@ -45,7 +48,7 @@ R1.4.0      January 30, 2018    Kukhee Kim (KHKIM)
             - increase fault buffer length to one million samples
             remark) the bsa length and fault buffer length are set by default values (20000 and 1000000).
             we can change the default values in run-time but not recommended. Please, look at more details in README file
-            
+
 
 R1.3.0      January 29, 2018    Kukhee Kim (KHKIM)
             - support 3 data types for bsa "int32", "uint32", and "float32"
@@ -60,10 +63,10 @@ R1.2.0-Diag October 3, 2017      Kukhee Kim (KHKIM)
 
 R1.1.0      September 14, 2017    Kukhee Kim (KHKIM)
             - implement slave BSA node for mulitple independent data conversion
-            - the slave BSA shares BSA data source with master, but could have separate 
+            - the slave BSA shares BSA data source with master, but could have separate
               BSA name and BSA database instances
             - user can set up slope and offset independently for the slave BSA,
-              and it allows independent data conversion from the master BSA 
+              and it allows independent data conversion from the master BSA
 
 R1.0.0      July 24, 2017    Kukhee Kim (KHKIM)
             - consideration for Cexp shell
@@ -73,7 +76,7 @@ R1.0.0      July 24, 2017    Kukhee Kim (KHKIM)
 
 R0.9.9      May 8, 2017      Kukhee Kim (KHKIM)
             - build against cpsw R3.5.4 and  bsa R1.0.1  (API layer)
-            - build against yamlLoader R1.0.3 (epics driver layer) 
+            - build against yamlLoader R1.0.3 (epics driver layer)
 R0.9.8      May 5, 2017      Kukhee Kim (KHKIM)
             - build against yamlLoader R1.0.2
 R0.9.7      May 5, 2017      Kukhee Kim (KHKIM)
@@ -87,9 +90,9 @@ R0.9.7      May 5, 2017      Kukhee Kim (KHKIM)
 R0.9.6      April 28, 2017    Kukhee Kim (KHKIM)
             - decouple BSA name (uniqueue key) and BSA PV name
             - introduce linear conversion
-              . slope 
+              . slope
               . offset
-            
+
 R0.9.5      April 10, 2017    Bruce Hill (bhill)
 			Updated for git workflow so we can build bsaDriver for other base versions
 			Note: We need to move to new version numbering scheme: major.minor.config
