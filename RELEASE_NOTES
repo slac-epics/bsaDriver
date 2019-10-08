@@ -1,3 +1,14 @@
+
+
+            - changes for reentrant to prepare mutiple ATCA boards in a single ioc
+            - multiple list of BSA PVs
+            - multiple instances
+
+
+R1.6.1-multi_instances:     Oct 8, 2019
+            -Branch out to R1.6.1-multi_instances to implement multiple instances
+
+
 R1.6.1      Oct 2, 2019         Kukhee Kim (khkim)
             - pre-programed BSA name changes: SCH1H SCHTH SCHHH SCS1H SCSTH SCSHH
 
