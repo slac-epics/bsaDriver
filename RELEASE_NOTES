@@ -1,3 +1,6 @@
+R1.6.2      Oct 28, 2019        Kukhee Kim (khkim)
+            - build with cpsw/framework R4.3.1, timing/bsa R1.1.5 and yamlLoader R1.1.5
+
 R1.6.1      Oct 2, 2019         Kukhee Kim (khkim)
             - pre-programed BSA name changes: SCH1H SCHTH SCHHH SCS1H SCSTH SCSHH
 
