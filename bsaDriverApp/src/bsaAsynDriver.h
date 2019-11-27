@@ -20,6 +20,7 @@
 #include <BsaField.hh>
 #include <Processor.hh>
 
+
 #define  START_BSA_ARRAY   21
 #define  MAX_BSA_ARRAY     64
 #define  MAX_BSA_LENGTH    20000
@@ -41,6 +42,9 @@ typedef enum {
     float32,
     fault
 } bsaDataType_t;
+
+
+class bsaAsynDriver;
 
 
 class BsaField : public Bsa::Field {
@@ -79,7 +83,7 @@ class BsaField : public Bsa::Field {
 
 class BsaPv : public Bsa::Pv {
     public:
-        BsaPv(Bsa::Field &f);
+        BsaPv(Bsa::Field &f, bsaAsynDriver *pBsaDrv);
         const Bsa::Field& field() const { return _f; }
         const char *name();
         void clear();
@@ -91,6 +95,7 @@ class BsaPv : public Bsa::Pv {
         std::vector <BsaPv *> slavePv;
 
     private:
+        bsaAsynDriver *pBsaDrv;
         Bsa::Field& _f;
         unsigned _ts_sec;
         unsigned _ts_nsec;
@@ -117,7 +122,7 @@ class BsaPv : public Bsa::Pv {
 
 class BsaPvArray : public Bsa::PvArray {
     public:
-        BsaPvArray(unsigned array, const std::vector <Bsa::Pv*>& pvs, int p_pid_U, int p_pid_L);
+        BsaPvArray(unsigned array, const std::vector <Bsa::Pv*>& pvs, int p_pid_U, int p_pid_L, bsaAsynDriver *pBsaDrv);
         unsigned array() const { return _array; }
         void reset(unsigned sec, unsigned nsec);
         void append(uint64_t pulseId);
@@ -130,6 +135,7 @@ class BsaPvArray : public Bsa::PvArray {
         unsigned get_max_size(void) { return max_size; }
 
     private:
+        bsaAsynDriver *pBsaDrv;
         unsigned    _array;
         unsigned    _ts_sec;
         unsigned    _ts_nsec;
@@ -191,7 +197,7 @@ public:
 #ifndef HAVE_YAML
     bsaAsynDriver(const char *portName, const char *ipString, const int num_dynamic_params);
 #else
-    bsaAsynDriver(const char *portName, const char *path_reg, const char *path_ram, const int num_dynamic_params);
+    bsaAsynDriver(const char *portName, const char *path_reg, const char *path_ram, const int num_dynamic_params, ELLLIST *pBsaList, const char *named_root = NULL);
 #endif  /* HAVE_YAML */
 	  ~bsaAsynDriver();
     void SetupAsynParams(void);
@@ -212,6 +218,7 @@ public:
     asynStatus writeFloat64(asynUser *pasynUser, epicsFloat64 value);
 
 private:
+    ELLLIST *pBsaEllList;
     Bsa::Processor* pProcessor;
     std::vector <Bsa::Field*> fields[MAX_BSA_ARRAY];
     std::vector <Bsa::Pv*> pvs[MAX_BSA_ARRAY];

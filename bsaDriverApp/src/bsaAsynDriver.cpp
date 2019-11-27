@@ -16,6 +16,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <cantProceed.h>
 #include <ellLib.h>
 #include <epicsTypes.h>
 #include <epicsTime.h>
@@ -42,12 +43,127 @@ static char ip_string[32];
 static char reg_path_string[256];
 static char ram_path_string[256];
 
-static int  once = 0;      /* do not make more than one instace */
-static int  addBsa_once = 0;
-static class bsaAsynDriver *pBsaDrv = NULL;
 
-static ELLLIST *pBsaEllList = NULL;
-static void *_pBsaBridge = NULL;
+// static class bsaAsynDriver *pBsaDrv = NULL;  /* will be removed */
+
+//static ELLLIST *pBsaEllList = NULL;
+static void *_pBsaBridge = NULL;    /* will be removed */
+
+static ELLLIST *pDrvEllList = NULL;
+
+typedef struct {
+    ELLNODE       node;
+    char          *named_root;
+    char          *port;
+    bsaAsynDriver *pBsaDrv;
+    ELLLIST       *pBsaEllList;
+    void          *_pBsaBridge;
+    
+} pDrvList_t;
+
+
+static void init_drvList(void)
+{
+    if(!pDrvEllList) {
+        pDrvEllList = (ELLLIST *) mallocMustSucceed(sizeof(ELLLIST), "bsaDriver(init_drvList)");
+        ellInit(pDrvEllList);
+    }
+
+    return;
+}
+
+
+static int prep_drvAnonimous(void)
+{
+    init_drvList();
+    pDrvList_t *p = (pDrvList_t *) mallocMustSucceed(sizeof(pDrvList_t), "bsaDriver(prep_drvAnonimous)");
+
+    p->named_root  = NULL;
+    p->port        = NULL;
+    p->pBsaDrv     = NULL;
+    p->pBsaEllList = NULL;
+    p->_pBsaBridge = NULL;
+
+    ellAdd(pDrvEllList, &p->node);
+
+    return ellCount(pDrvEllList);
+}
+
+static int prep_drvByPort(const char *port)
+{
+    init_drvList();
+    pDrvList_t *p = (pDrvList_t *) mallocMustSucceed(sizeof(pDrvList_t), "bsaDriver(prep_drvByPort)");
+
+    p->named_root  = NULL;
+    p->port        = epicsStrDup(port);
+    p->pBsaDrv     = NULL;
+    p->pBsaEllList = NULL;
+    p->_pBsaBridge = NULL;
+
+    ellAdd(pDrvEllList, &p->node);
+
+    return ellCount(pDrvEllList);
+
+    
+}
+
+
+static int prep_drvByNamedRoot(const char *named_root)
+{
+    init_drvList();
+    pDrvList_t *p = (pDrvList_t *) mallocMustSucceed(sizeof(pDrvList_t), "bsaDriver(prep_drvByNamedRoot)");
+
+    p->named_root = epicsStrDup(named_root);
+    p->port        = NULL;
+    p->pBsaDrv     = NULL;
+    p->pBsaEllList = NULL;
+    p->_pBsaBridge = NULL;
+
+    ellAdd(pDrvEllList, &p->node);
+
+    return ellCount(pDrvEllList);
+
+}
+
+
+
+static pDrvList_t *find_drvByPort(const char *port)
+{
+    init_drvList();
+    pDrvList_t  *p = (pDrvList_t *) ellFirst(pDrvEllList);
+
+    while(p) {
+        if(p->port && strlen(p->port) && !strcmp(p->port, port)) break; 
+        p = (pDrvList_t *) ellNext(&p->node);
+    }
+
+    return p;
+}
+
+static pDrvList_t *find_drvByNamedRoot(const char *named_root)
+{
+    init_drvList();
+    pDrvList_t *p = (pDrvList_t *) ellFirst(pDrvEllList);
+
+    while(p) {
+        if(p->named_root && strlen(p->named_root) && !strcmp(p->named_root, named_root)) break;
+        p = (pDrvList_t *) ellNext(&p->node);
+    }
+
+    return p;
+}
+
+
+static pDrvList_t *find_drvLast(void)
+{
+    init_drvList();
+
+    if(ellCount(pDrvEllList)) return (pDrvList_t *) ellLast(pDrvEllList);
+
+    return (pDrvList_t *) NULL;
+}
+
+
 
 extern "C" { void *_getBsaBridge(void) { return _pBsaBridge; } }
 extern "C" {
@@ -86,8 +202,9 @@ BsaField::BsaField(char *name, int index, int p_num, int p_mean, int p_rms2, dou
 }
 
 
-BsaPv::BsaPv (Bsa::Field& f) : _f(f), _n(0), _mean(0), _rms2(0), size(0), loc(0)
+BsaPv::BsaPv (Bsa::Field& f, bsaAsynDriver *pBsaDrv) : _f(f), _n(0), _mean(0), _rms2(0), size(0), loc(0)
 {
+    this->pBsaDrv = pBsaDrv;
     BsaField *p = (BsaField *)&_f;
 
    // copy asyn paramter indexes from field calss
@@ -111,7 +228,7 @@ BsaPv::BsaPv (Bsa::Field& f) : _f(f), _n(0), _mean(0), _rms2(0), size(0), loc(0)
    _rms2.reserve(max_size *2);  _rms2.resize(max_size *2);
 
    for(unsigned i=0; i < p->slaveField.size(); i++) {
-       slavePv.push_back(new BsaPv(*p->slaveField[i]));
+       slavePv.push_back(new BsaPv(*p->slaveField[i], this->pBsaDrv));
    }
 }
 
@@ -212,10 +329,10 @@ void BsaPv::flush()
 
 
 
-BsaPvArray::BsaPvArray(unsigned array, const std::vector <Bsa::Pv*>& pvs, int p_pid_U, int p_pid_L)
+BsaPvArray::BsaPvArray(unsigned array, const std::vector <Bsa::Pv*>& pvs, int p_pid_U, int p_pid_L, bsaAsynDriver *pBsaDrv)
                        : _array(array), size(0), loc(0), _pvs(pvs), _p_pid_U(p_pid_U), _p_pid_L(p_pid_L)
 {
-
+    this->pBsaDrv = pBsaDrv;
     max_size = determine_max_size(array);
 // reserve emory for better performance
     _pid.reserve(max_size *2); _pid.resize(max_size *2);
@@ -289,8 +406,6 @@ bsaAsynDriver::bsaAsynDriver(const char *portName, const char *ipString, const i
 					 0,    /* Default priority */
 					 0)    /* Default stack size */
 {
-    if(once) return;
-   	once = 1;
     if(!pBsaEllList || !ellCount(pBsaEllList)) return;
 
     if(!strcmp(ipString, "SLAVE") || !strcmp(ipString, "slave"))
@@ -309,7 +424,7 @@ bsaAsynDriver::bsaAsynDriver(const char *portName, const char *ipString, const i
 }
 
 #else   /* HAVE_YAML */
-bsaAsynDriver::bsaAsynDriver(const char *portName, const char *path_reg, const char *path_ram, const int num_dyn_param)
+bsaAsynDriver::bsaAsynDriver(const char *portName, const char *path_reg, const char *path_ram, const int num_dyn_param, ELLLIST *pBsaELLList,  const char *named_root)
     : asynPortDriver(portName,
 	                 1,  /* number of elements of this device */
 					 NUM_BSA_DET_PARAMS +  num_dyn_param ,    /* number of asyn params to be cleared for each device */
@@ -320,11 +435,11 @@ bsaAsynDriver::bsaAsynDriver(const char *portName, const char *path_reg, const c
 					 0,    /* Default priority */
 					 0)    /* Default stack size */
 {
-    if(once) return;
-   	once = 1;
     if(!pBsaEllList || !ellCount(pBsaEllList)) return;
 
-    Path root_ = cpswGetRoot();
+    this->pBsaEllList = pBsaEllList;
+
+    Path root_ = (named_root && strlen(named_root))?cpswGetNamedRoot(named_root):cpswGetRoot();
     if(!root_) {
         printf("BSA driver: could not find root path\n");
         return;
@@ -443,7 +558,7 @@ void bsaAsynDriver::SetupPvs(void)
 
     for(i=0; i< MAX_BSA_ARRAY; i++) {
         for(j=0; j < fields[i].size(); j++) {
-            pvs[i].push_back(new BsaPv(*fields[i][j]));
+            pvs[i].push_back(new BsaPv(*fields[i][j], this));
         }
     }
 }
@@ -451,7 +566,7 @@ void bsaAsynDriver::SetupPvs(void)
 void bsaAsynDriver::SetupPvArray(void)
 {
 
-    for(int i=0; i< MAX_BSA_ARRAY; i++) pBsaPvArray.push_back(new BsaPvArray(i, pvs[i], p_pid_U[i], p_pid_L[i]));
+    for(int i=0; i< MAX_BSA_ARRAY; i++) pBsaPvArray.push_back(new BsaPvArray(i, pvs[i], p_pid_U[i], p_pid_L[i], this));
 }
 
 
@@ -460,14 +575,15 @@ int bsaAsynDriver::BsaRetreivePoll(void)
     epicsTimeStamp    _ts;
     uint64_t  pending;
 
-    while(1) {
+//    while(1) {
 
-        if(bsa_enable) {
+        if(bsa_enable) // {
             pending = pProcessor->pending();
-        } else {
-            epicsThreadSleep(1.);
-            continue;
-        }
+        else  return 0;
+//        } else {
+//            epicsThreadSleep(1.);
+//            continue;
+//        }
 
         for(int i=0; i< MAX_BSA_ARRAY; i++) {
             if(!(pending & (1ULL << pBsaPvArray[i]->array()))) continue; /* nothing to flush */
@@ -486,8 +602,8 @@ int bsaAsynDriver::BsaRetreivePoll(void)
             }
 
         }
-        epicsThreadSleep(.1);
-    }
+//        epicsThreadSleep(.1);
+//    }
 
 
 
@@ -652,13 +768,28 @@ int bsaAsynDriverConfigure(const char *portName, const char *ipString)
 
 #else /* HAVE_YAML */
 
-int bsaAsynDriverConfigure(const char *portName, const char *regPathString, const char *ramPathString)
+int bsaAsynDriverConfigure(const char *portName, const char *regPathString, const char *ramPathString, const char *named_root)
 {
-    if(!pBsaEllList) return -1;
+    pDrvList_t *pl = find_drvByPort(portName);
+    if(!pl) {
+         pl = find_drvLast();
+         if(pl) {
+             if(!pl->port && !pl->named_root && !pl->pBsaDrv) pl->port = epicsStrDup(portName);
+             else pl = NULL;
+         }
+    }
+    if(!pl) {
+        printf("Bsa list never been configured for port (%s)\n", portName);
+        return -1;
+    }
+
+    pl->named_root = (named_root && strlen(named_root))?epicsStrDup(named_root):cpswGetRootName();
+    
+    if(!pl->pBsaEllList) return -1;
 
     int i = 0;
     bsaList_t *p, *q;
-    p = (bsaList_t *) ellFirst(pBsaEllList);
+    p = (bsaList_t *) ellFirst(pl->pBsaEllList);
     while(p) {                                           /* search master node */
         i += (int)(&p->lastParam - &p->firstParam -1);
         q = (bsaList_t *) ellFirst(p->pSlaveEllList);
@@ -669,7 +800,7 @@ int bsaAsynDriverConfigure(const char *portName, const char *regPathString, cons
         p = (bsaList_t *) ellNext(&p->node);
     }  /* calculate total number of dynamic parameters */
 
-    pBsaDrv = new bsaAsynDriver(portName, regPathString, ramPathString, i);
+    pl->pBsaDrv = new bsaAsynDriver(portName, regPathString, ramPathString, i, pl->pBsaEllList);
     strcpy(port_name, portName);
     strcpy(ip_string, "not applicable");
     strcpy(reg_path_string, regPathString);
@@ -677,32 +808,50 @@ int bsaAsynDriverConfigure(const char *portName, const char *regPathString, cons
     return 0;
 }
 
-int bsaAsynDriverEnable(void)
+int bsaAsynDriverEnable(const char *idString)
 {
-    if(!pBsaDrv) {
-       printf("failt to enable BSA due to the bsaAsynDriver never been initialized.\n");
-       return 0;
+    pDrvList_t *p = NULL;
+
+    if(idString) {
+        p = find_drvByPort(idString);
+        if(!p) p = find_drvByNamedRoot(idString);
     }
+    else  p = find_drvLast();
 
-    pBsaDrv->bsaAsynDriverEnable();
-    return 0;
-}
-
-int bsaAsynDriverDisable(void)
-{
-    if(!pBsaDrv) {
-        printf("fail to disable BSA due to the bsaAsynDriver never been initialized.\n");
+    if(p && p->pBsaDrv) { 
+        p->pBsaDrv->bsaAsynDriverEnable();
         return 0;
     }
 
-    pBsaDrv->bsaAsynDriverDisable();
+
+    printf("failt to enable BSA due to the bsaAsynDriver never been initialized.\n");
+    return 0;
+}
+
+int bsaAsynDriverDisable(const char *idString)
+{
+    pDrvList_t *p = NULL;
+
+    if(idString) {
+        p = find_drvByPort(idString);
+        if(!p) p = find_drvByNamedRoot(idString);
+    }
+    else p = find_drvLast();
+
+    if(p && p->pBsaDrv) {
+        p->pBsaDrv->bsaAsynDriverDisable();
+        return 0;
+    }
+
+
+    printf("fail to disable BSA due to the bsaAsynDriver never been initialized.\n");
     return 0;
 }
 
 
 #endif  /* HAVE_YAML */
 
-static bsaList_t * findBsa(const char *bsaKey);
+static bsaList_t * findBsa(ELLLIST *pBsaEllList, const char *bsaKey);
 
 bsaDataType_t getBsaDataType(const char *bsaType)
 {
@@ -717,23 +866,39 @@ bsaDataType_t getBsaDataType(const char *bsaType)
 
 }
 
+int createBsaList(const char *port_name)
+{
+    pDrvList_t *pl = find_drvByPort(port_name);
+
+    if(pl) {
+        printf("Bsa List (port: %s) already exists\n", port_name);
+        return 0;
+    }
+
+    prep_drvByPort(port_name);
+
+    return 0;
+}
+
 int addBsa(const char *bsaKey, const char *bsaType)
 {
-    bsaList_t *p = (bsaList_t *) malloc(sizeof(bsaList_t));
+    pDrvList_t *pl = find_drvLast();
+    while(!pl) {
+        prep_drvAnonimous();
+        pl = find_drvLast();
+    }
+
+
+    bsaList_t *p = (bsaList_t *) mallocMustSucceed(sizeof(bsaList_t), "bsaDriver (addBsa)");
     int i;
-    if(!p) {
-        printf("memory allocation error\n");
-        return -1;
+ 
+
+    if(!pl->pBsaEllList) {    /* initialize for once */
+         pl->pBsaEllList = (ELLLIST *) mallocMustSucceed(sizeof(ELLLIST), "bsaDriver(addBsa)");
+        ellInit(pl->pBsaEllList);
     }
 
-    if(!addBsa_once) {    /* initialize for once */
-        addBsa_once = 1;
-
-        pBsaEllList = (ELLLIST *) malloc(sizeof(ELLLIST));
-        ellInit(pBsaEllList);
-    }
-
-    p->pSlaveEllList = (ELLLIST *) malloc(sizeof(ELLLIST));
+    p->pSlaveEllList = (ELLLIST *) mallocMustSucceed(sizeof(ELLLIST), "bsaDriver(addBsa)");
     ellInit(p->pSlaveEllList);        //init. linked list for slave
 
     strcpy(p->bsa_name, bsaKey);
@@ -755,7 +920,7 @@ int addBsa(const char *bsaKey, const char *bsaType)
         return 0;
     }
 
-    ellAdd(pBsaEllList, &p->node);
+    ellAdd(pl->pBsaEllList, &p->node);
 
     /* add Bsa */
 
@@ -764,15 +929,23 @@ int addBsa(const char *bsaKey, const char *bsaType)
 
 int addSlaveBsa(const char *bsaKey, const char *slaveKey, const char *bsaType)
 {
+
+    pDrvList_t *pl = find_drvLast();
+    while(!pl) {
+        prep_drvAnonimous();
+        pl = find_drvLast();
+    }
+
+
     bsaList_t *p, *q;
     int i;
 
-    p = findBsa(bsaKey);
+    p = findBsa(pl->pBsaEllList, bsaKey);
     if(!p) {
         printf("Could not find bsa node (%s)\n", bsaKey);
         return -1;
     }
-    q = (bsaList_t *) malloc(sizeof(bsaList_t));
+    q = (bsaList_t *) mallocMustSucceed(sizeof(bsaList_t), "bsaDriver(addSlaveBsa)");
     if(!q) {
         printf("memory allocation error\n");
         return -1;
@@ -803,7 +976,7 @@ int addSlaveBsa(const char *bsaKey, const char *slaveKey, const char *bsaType)
 }
 
 
-int listBsa(void)
+static int _listBsa(ELLLIST *pBsaEllList)
 {
     bsaList_t *p, *q;
     int       i = 0;
@@ -827,7 +1000,48 @@ int listBsa(void)
     return 0;
 }
 
-static bsaList_t * findBsa(const char *bsaKey)
+
+static int _listBsaAll(void)
+{
+    pDrvList_t *p = (pDrvList_t *) ellFirst(pDrvEllList);
+
+    while(p) {
+        printf("Bsa Driver (named_root: %s, port: %s)\n",
+               (p->named_root)?p->named_root: "Unknown", (p->port)?p->port: "Unknown");
+        if(p->pBsaEllList) _listBsa(p->pBsaEllList);
+        p = (pDrvList_t *) ellNext(&p->node);
+    }
+
+    return 0;
+}
+
+
+static int _listBsaByName(const char *name)
+{
+
+    pDrvList_t *p = find_drvByPort(name);
+    if(!p)      p = find_drvByNamedRoot(name);
+    if(!p) {
+        printf("Could not find BSA list for %s\n", name);
+        return 0;
+    }
+
+    printf("Bsa Driver (named_root: %s, port: %s)\n",
+           (p->named_root)?p->named_root: "Unknown", (p->port)?p->port: "Unknown");
+    if(p->pBsaEllList) _listBsa(p->pBsaEllList);
+
+    return 0;
+}
+
+
+
+int listBsa(const char *name = NULL)
+{
+    if(name && strlen(name)) return _listBsaByName(name);
+    else                      return _listBsaAll();
+}
+
+static bsaList_t * findBsa(ELLLIST *pBsaEllList, const char *bsaKey)
 {
     bsaList_t *p;
 
@@ -855,13 +1069,8 @@ static const iocshArg * const initArgs[] = { &initArg0,
 static const iocshFuncDef initFuncDef = { "bsaAsynDriverConfigure", 2, initArgs };
 static void initCallFunc(const iocshArgBuf *args)
 {
-    if(once) {
-	    printf("The BSA driver allows single instance."
-		       "Duplicated configuration is ignored.\n");
-		return;
-	}
 
-	bsaAsynDriverConfigure(args[0].sval, args[1].sval);
+    bsaAsynDriverConfigure(args[0].sval, args[1].sval);
 }
 
 #else   /* HAVE_YAML */
@@ -869,37 +1078,48 @@ static void initCallFunc(const iocshArgBuf *args)
 static const iocshArg initArg0 = { "portName",                                           iocshArgString };
 static const iocshArg initArg1 = { "register path (which should be described in yaml):", iocshArgString };
 static const iocshArg initArg2 = { "ram path (which should be described in yaml):",      iocshArgString };
+static const iocshArg initArg3 = { "named_root (optional)",                              iocshArgString };
 static const iocshArg * const initArgs[] = { &initArg0,
                                              &initArg1,
-                                             &initArg2 };
-static const iocshFuncDef initFuncDef = { "bsaAsynDriverConfigure", 3, initArgs };
+                                             &initArg2,
+                                             &initArg3 };
+static const iocshFuncDef initFuncDef = { "bsaAsynDriverConfigure", 4, initArgs };
 static void initCallFunc(const iocshArgBuf *args)
 {
-    if(once) {
-        printf("The BSA driver allows single instance."
-               "Duplicated configuration is ignored.\n"
-               "This constraint is only for prototype driver,"
-               "we are going to allow multiple instance in near future.\n");
-        return;
-    }
-
+ 
     bsaAsynDriverConfigure(args[0].sval,  /* port name */
                            args[1].sval,  /* register path */
-                           args[2].sval); /* ram path */
+                           args[2].sval, /* ram path */
+                           (args[3].sval && strlen(args[3].sval))? args[3].sval: NULL);  /* named_root */
 }
 
 #endif  /* HAVE_YAML */
 
-static const iocshFuncDef bsaEnableFuncDef  = { "bsaAsynDriverEnable",  0, NULL };
+static const iocshArg enableArg0 = {"portName or named_root (optional)", iocshArgString };
+static const iocshArg * const enableArgs[] = { &enableArg0 };
+static const iocshFuncDef bsaEnableFuncDef  = { "bsaAsynDriverEnable",  1, enableArgs};
 static void bsaEnableCallFunc(const iocshArgBuf *args)
 {
-    bsaAsynDriverEnable();
+    bsaAsynDriverEnable( (args[0].sval && strlen(args[0].sval))? args[0].sval: NULL);
 }
-static const iocshFuncDef bsaDisableFuncDef = { "bsaAsynDriverDisable", 0, NULL };
+
+static const iocshArg disableArg0 = {"portName or named_string (optional)", iocshArgString };
+static const iocshArg * const disableArgs [] = { &disableArg0 };
+static const iocshFuncDef bsaDisableFuncDef = { "bsaAsynDriverDisable", 1, disableArgs };
 static void bsaDisableCallFunc(const iocshArgBuf *args)
 {
-    bsaAsynDriverDisable();
+    bsaAsynDriverDisable((args[0].sval && strlen(args[0].sval))? args[0].sval: NULL);
 }
+
+
+static const iocshArg createArg0 = { "port name", iocshArgString };
+static const iocshArg * const createArgs [] = { &createArg0 };
+static const iocshFuncDef createBsaFuncDef = {"createBsaList", 1, createArgs};
+static void createBsaCallFunc(const iocshArgBuf *args)
+{
+    createBsaList((args[0].sval && strlen(args[0].sval))? args[0].sval: NULL);
+}
+
 
 static const iocshArg addBsaArg0 = { "bsaKey", iocshArgString };
 static const iocshArg addBsaArg1 = { "bsaType", iocshArgString };
@@ -925,14 +1145,12 @@ static void addSlaveBsaCallFunc(const iocshArgBuf *args)
 }
 
 
-static const iocshArg listBsaArg0 = { "bsaKey", iocshArgString };  // not required now, but prepare for future
-static const iocshArg listBsaArg1 = { "bsaType", iocshArgString };  // not required now, but prepare for future
-static const iocshArg * const listBsaArgs [] = { &listBsaArg0,
-                                                 &listBsaArg1 };
-static const iocshFuncDef listBsaFuncDef = { "listBsa", 2, listBsaArgs };
+static const iocshArg listBsaArg0 = {"named_root or port (optional)", iocshArgString};
+static const iocshArg * const listBsaArgs[] = { &listBsaArg0 };
+static const iocshFuncDef listBsaFuncDef = { "listBsa", 1, listBsaArgs };
 static void listBsaCallFunc(const iocshArgBuf *args)
 {
-    listBsa();
+    listBsa((args[0].sval && strlen(args[0].sval))? args[0].sval: NULL);
 }
 
 void bsaAsynDriverRegister(void)
@@ -940,6 +1158,7 @@ void bsaAsynDriverRegister(void)
     iocshRegister(&initFuncDef,        initCallFunc);
     iocshRegister(&bsaEnableFuncDef,   bsaEnableCallFunc);
     iocshRegister(&bsaDisableFuncDef,  bsaDisableCallFunc);
+    iocshRegister(&createBsaFuncDef,   createBsaCallFunc);
     iocshRegister(&addBsaFuncDef,      addBsaCallFunc);
     iocshRegister(&addSlaveBsaFuncDef, addSlaveBsaCallFunc);
     iocshRegister(&listBsaFuncDef,     listBsaCallFunc);
@@ -951,7 +1170,16 @@ epicsExportRegistrar(bsaAsynDriverRegister);
 
 static int BsaRetreivePoll(void)
 {
-    return pBsaDrv->BsaRetreivePoll();
+    while(1) {
+        pDrvList_t *p = (pDrvList_t *) ellFirst(pDrvEllList);
+        while(p) {
+            if(p->pBsaDrv) p->pBsaDrv->BsaRetreivePoll();
+            p = (pDrvList_t *) ellNext(&p->node);
+        }
+        epicsThreadSleep(.1);
+    }
+
+    return 0;
 }
 
 
@@ -970,21 +1198,34 @@ epicsExportAddress(drvet, bsaAsynDriver);
 
 static int bsaAsynDriverReport(int interest)
 {
-    if(!once) return 0;
+    pDrvList_t *p = (pDrvList_t *) ellFirst(pDrvEllList);
+    if(!p) {
+        printf("No BSA driver instances\n");
+        return 0;
+    }
 
-	/* Implement report function here */
+    while(p) {
+        printf("named_root: %s, port: %s, driver instace: %p, number of BSA varibles %d\n",
+              (p->named_root && strlen(p->named_root))?p->named_root: "Unknown",
+              (p->port && strlen(p->port))? p->port: "Unknown",
+              p->pBsaDrv,
+              (p->pBsaEllList)? ellCount(p->pBsaEllList): -1);
+        p = (pDrvList_t *) ellNext(&p->node);
+    }
 
-	return 0;
+    return 0;
 }
 
 static int bsaAsynDriverInitialize(void)
 {
-    if(!once) printf("Driver Initialization is so early.\n");
-	  else      printf("Driver Initialization is good.\n");
 
-	/* Implement EPICS driver initialization here */
+   /* Implement EPICS driver initialization here */
+    init_drvList();
 
-     if(!pBsaDrv) return -1;
+    if(!pDrvEllList) {
+        printf("Bsa Driver never been configured\n");
+        return 0;
+    }
 
     epicsThreadCreate("bsaDrvPoll", epicsThreadPriorityMedium,
                       epicsThreadGetStackSize(epicsThreadStackMedium),
