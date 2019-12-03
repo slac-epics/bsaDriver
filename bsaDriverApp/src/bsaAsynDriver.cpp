@@ -800,7 +800,7 @@ int bsaAsynDriverConfigure(const char *portName, const char *regPathString, cons
         p = (bsaList_t *) ellNext(&p->node);
     }  /* calculate total number of dynamic parameters */
 
-    pl->pBsaDrv = new bsaAsynDriver(portName, regPathString, ramPathString, i, pl->pBsaEllList);
+    pl->pBsaDrv = new bsaAsynDriver(portName, regPathString, ramPathString, i, pl->pBsaEllList, pl->named_root);
     strcpy(port_name, portName);
     strcpy(ip_string, "not applicable");
     strcpy(reg_path_string, regPathString);
