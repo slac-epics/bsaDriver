@@ -169,9 +169,13 @@ extern "C" { void *_getBsaBridge(void) { return _pBsaBridge; } }
 extern "C" {
     static int bsa_length   = MAX_BSA_LENGTH;
     static int fltb_length  = MAX_FLTB_LENGTH;
+    static int bsa_item_cnt   = 0;
+    static int bsa_mem_alloc  = 0;
 
     epicsExportAddress(int, bsa_length);
     epicsExportAddress(int, fltb_length);
+    epicsExportAddress(int, bsa_item_cnt);
+    epicsExportAddress(int, bsa_mem_alloc);
 
 }
 
@@ -223,9 +227,9 @@ BsaPv::BsaPv (Bsa::Field& f, bsaAsynDriver *pBsaDrv) : _f(f), _n(0), _mean(0), _
 
 // reserve memory for better performance
 // need to test to measure improvement
-   _n.reserve(max_size *2);     _n.resize(max_size *2);
-   _mean.reserve(max_size *2);  _mean.resize(max_size *2);
-   _rms2.reserve(max_size *2);  _rms2.resize(max_size *2);
+   _n.reserve(max_size *2);     _n.resize(max_size *2);      bsa_item_cnt++;
+   _mean.reserve(max_size *2);  _mean.resize(max_size *2);   bsa_item_cnt++;
+   _rms2.reserve(max_size *2);  _rms2.resize(max_size *2);   bsa_item_cnt++;
 
    for(unsigned i=0; i < p->slaveField.size(); i++) {
        slavePv.push_back(new BsaPv(*p->slaveField[i], this->pBsaDrv));
@@ -335,10 +339,10 @@ BsaPvArray::BsaPvArray(unsigned array, const std::vector <Bsa::Pv*>& pvs, int p_
     this->pBsaDrv = pBsaDrv;
     max_size = determine_max_size(array);
 // reserve emory for better performance
-    _pid.reserve(max_size *2); _pid.resize(max_size *2);
+    _pid.reserve(max_size *2); _pid.resize(max_size *2); bsa_item_cnt++;
 
-    _pidU.reserve(max_size);
-    _pidL.reserve(max_size);
+    _pidU.reserve(max_size);  bsa_item_cnt++;
+    _pidL.reserve(max_size);  bsa_item_cnt++;
 }
 
 
