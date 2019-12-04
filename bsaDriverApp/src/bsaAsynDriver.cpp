@@ -424,7 +424,7 @@ bsaAsynDriver::bsaAsynDriver(const char *portName, const char *ipString, const i
 }
 
 #else   /* HAVE_YAML */
-bsaAsynDriver::bsaAsynDriver(const char *portName, const char *path_reg, const char *path_ram, const int num_dyn_param, ELLLIST *pBsaELLList,  const char *named_root)
+bsaAsynDriver::bsaAsynDriver(const char *portName, const char *path_reg, const char *path_ram, const int num_dyn_param, ELLLIST *pBsaEllList,  const char *named_root)
     : asynPortDriver(portName,
 	                 1,  /* number of elements of this device */
 					 NUM_BSA_DET_PARAMS +  num_dyn_param ,    /* number of asyn params to be cleared for each device */
