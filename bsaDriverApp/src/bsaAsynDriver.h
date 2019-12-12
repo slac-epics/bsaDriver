@@ -232,20 +232,20 @@ protected:
 // parameter section for asynPortDriver,
 // just static parameter should be listed here
 //
-#if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 || 32)
+#if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 | 32)
     int firstBsaParam;
     #define FIRST_BSA_PARAM    firstBsaParam
 #endif /* asyn version check, under 4.32 */
     int p_pid_U[MAX_BSA_ARRAY];    // asynInt32Array, RO
     int p_pid_L[MAX_BSA_ARRAY];    // asynInt32Array, RO
     int p_enable;
-#if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 || 32)
+#if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 | 32)
     int lastBsaParam;
     #define LAST_BSA_PARAM     lastBsaParam
 #endif /* asyn version check, under 4.32 */
 };
 
-#if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 || 32)
+#if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 | 32)
 #define NUM_BSA_DET_PARAMS ((int) (&LAST_BSA_PARAM - &FIRST_BSA_PARAM -1))
 #endif /* asyn version check, under 4.32 */
 

@@ -402,7 +402,7 @@ void BsaPvArray::flush()
 bsaAsynDriver::bsaAsynDriver(const char *portName, const char *ipString, const int num_dyn_param)
     : asynPortDriver(portName,
 	                 1,  /* number of elements of this device */
-#if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 || 32)
+#if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 | 32)
 					 NUM_BSA_DET_PARAMS +  num_dyn_param ,    /* number of asyn params to be cleared for each device */
 #endif /* asyn version check, under 4.32 */
 					 asynInt32Mask | asynFloat64Mask | asynOctetMask | asynDrvUserMask | asynInt32ArrayMask | asynFloat64ArrayMask,    /* Interface mask */
@@ -433,7 +433,7 @@ bsaAsynDriver::bsaAsynDriver(const char *portName, const char *ipString, const i
 bsaAsynDriver::bsaAsynDriver(const char *portName, const char *path_reg, const char *path_ram, const int num_dyn_param, ELLLIST *pBsaEllList,  const char *named_root)
     : asynPortDriver(portName,
 	                 1,  /* number of elements of this device */
-#if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 || 32)
+#if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 | 32)
 					 NUM_BSA_DET_PARAMS +  num_dyn_param ,    /* number of asyn params to be cleared for each device */
 #endif /* asyn version check, under 4.32 */
 					 asynInt32Mask | asynFloat64Mask | asynOctetMask | asynDrvUserMask | asynInt32ArrayMask | asynFloat64ArrayMask,    /* Interface mask */
