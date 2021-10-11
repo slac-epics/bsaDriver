@@ -1,6 +1,7 @@
 O.*
 db
 dbd
+lib/
 include
 *.log
 RELEASE_SITE
