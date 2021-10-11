@@ -22,8 +22,8 @@
 # ==========================================================
 #
 
-YAMLLOADER_VERSION=R2.1.1
-ASYN_MODULE_VERSION=R4.32-1.0.0
+YAMLLOADER_VERSION=R2.2.0
+ASYN_MODULE_VERSION=R4.39-0.0.1
 
 # ==========================================================
 # Define module paths using pattern
