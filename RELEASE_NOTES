@@ -7,6 +7,9 @@ R1.8.3      2021-11-04 Bruce Hill
 R1.8.2      Oct 11, 2021  M. Dunning (mdunning)
             - Upgrade to asyn R4.39-0.0.1, yamlLoader R2.2.0
             - Use bsa R1.2.0 since R1.2.1 is missing
+R1.8.1-br-0-1  Nov 15, 2021 C.B. Mattison (carolina)
+	    -Upgrade to support tprTrigger R2.5.0 compiled with yamlLoader R2.2.0
+	      and asyn R4.32-1.0.0 
 
 R1.8.1      Jan 30, 2020        Kukhee Kim (khkim)
             - build with yamlLoader R2.1.1, cpsw/framework R4.3.2 and bsa R1.2.1
