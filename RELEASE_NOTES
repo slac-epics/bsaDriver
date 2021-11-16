@@ -1,3 +1,6 @@
+R1.8.4-br-0-1 2021-15-11 Carolina B Mattison
+	    -Adding bsa datatype uint64 to bsaDriver" bsaDriverApp/Db/bsaHst.db bsaDriverApp/src/bsaAsynDriver.cpp bsaDriverApp/src/bsaAsynDriver.h
+
 R1.8.4      2021-15-11 Carolina B Mattison
 	    -Upgrade to asyn R4.39-1.0.0
 
