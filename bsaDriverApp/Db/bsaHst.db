@@ -6,7 +6,6 @@
 #    $(DEV):$(SECN)HST$(MDID)      $(BSAKEY)_BSAMEAN_$(MDID)    DOUBLE      History buffer for BSA data (average)
 #    $(DEV):$(SECN)CNTHST$(MDID)   $(BSAKEY)_BSANUM_$(MDID)     ULONG       Number of samples for average
 #    $(DEV):$(SECN)RMSHST$(MDID)   $(BSAKEY)_BSARMS2_$(MDID)    DOUBLE      RMS
-#    $(DEV):$(SECN)PIDHST$(MDID)   BSAPID_$(MDID)               ULONG       PulseId upper 64bits word
 #    $(DEV):$(SECN)PIDUHST$(MDID)  BSAPIDU_$(MDID)              ULONG       PulseId upper 32bits word
 #    $(DEV):$(SECN)PIDLHST$(MDID)  BSAPIDL_$(MDID)              ULONG       PulseId lower 32bits word
 

@@ -148,7 +148,7 @@ class BsaPvArray : public Bsa::PvArray {
 
         const std::vector <Bsa::Pv*>& _pvs;
        
-	int _p_pid;
+	//int _p_pid;
         int _p_pid_U;
         int _p_pid_L;
 };
@@ -238,7 +238,7 @@ protected:
     int firstBsaParam;
     #define FIRST_BSA_PARAM    firstBsaParam
 #endif /* asyn version check, under 4.32 */
-    int p_pid[MAX_BSA_ARRAY];    // asynInt64Array, RO
+    //int p_pid[MAX_BSA_ARRAY];    // asynInt64Array, RO
     int p_pid_U[MAX_BSA_ARRAY];    // asynInt32Array, RO
     int p_pid_L[MAX_BSA_ARRAY];    // asynInt32Array, RO
     int p_enable;
@@ -252,7 +252,7 @@ protected:
 #define NUM_BSA_DET_PARAMS ((int) (&LAST_BSA_PARAM - &FIRST_BSA_PARAM -1))
 #endif /* asyn version check, under 4.32 */
 
-#define pidString     "BSAPID_%d"
+//#define pidString     "BSAPID_%d"
 #define pidUString    "BSAPIDU_%d"
 #define pidLString    "BSAPIDL_%d"
 #define numString     "%s_BSANUM_%d"
