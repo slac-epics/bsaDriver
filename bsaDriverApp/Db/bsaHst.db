@@ -6,6 +6,7 @@
 #    $(DEV):$(SECN)HST$(MDID)      $(BSAKEY)_BSAMEAN_$(MDID)    DOUBLE      History buffer for BSA data (average)
 #    $(DEV):$(SECN)CNTHST$(MDID)   $(BSAKEY)_BSANUM_$(MDID)     ULONG       Number of samples for average
 #    $(DEV):$(SECN)RMSHST$(MDID)   $(BSAKEY)_BSARMS2_$(MDID)    DOUBLE      RMS
+#    $(DEV):$(SECN)PIDHST$(MDID)   BSAPID_$(MDID)               ULONG       PulseId upper 64bits word
 #    $(DEV):$(SECN)PIDUHST$(MDID)  BSAPIDU_$(MDID)              ULONG       PulseId upper 32bits word
 #    $(DEV):$(SECN)PIDLHST$(MDID)  BSAPIDL_$(MDID)              ULONG       PulseId lower 32bits word
 
@@ -42,11 +43,22 @@ record(waveform, "$(DEV):$(SECN)RMSHST$(MDID)")
     field(TSE,  "-2")
 }
 
+record(waveform, "$(DEV):$(SECN)PIDHST$(MDID)")
+{
+    field(DESC, "PulseId")
+    field(DTYP, "asynInt64ArrayIn")
+    field(INP,  "@asyn($(PORT),0) BSAPID_$(INST)")
+    field(SCAN, "I/O Intr")
+    field(FTVL, "ULONG")
+    field(NELM, "$(MAXLENGTH)")
+    field(TSE,  "-2")
+}
+
 record(waveform, "$(DEV):$(SECN)PIDUHST$(MDID)")
 {
     field(DESC, "PulseId upper word")
     field(DTYP, "asynInt32ArrayIn")
-    field(INP,  "@asyn($(PORT),0) BSAPIDU_$(INST)")
+    field(INP,  "@asyn($(PORT),0) BSAUPID_$(INST)")
     field(SCAN, "I/O Intr")
     field(FTVL, "ULONG")
     field(NELM, "$(MAXLENGTH)")
@@ -63,4 +75,3 @@ record(waveform, "$(DEV):$(SECN)PIDLHST$(MDID)")
     field(NELM, "$(MAXLENGTH)")
     field(TSE,  "-2")
 }
-

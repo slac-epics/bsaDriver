@@ -496,6 +496,7 @@ void bsaAsynDriver::SetupAsynParams(void)
     sprintf(param_name, enableString); createParam(param_name, asynParamInt32, &p_enable);
 
     for(int i=0; i<MAX_BSA_ARRAY; i++) {
+	sprintf(param_name, pidString, i+START_BSA_ARRAY); createParam(param_name, asynParamInt64Array, &p_pid[i]);
         sprintf(param_name, pidUString, i+START_BSA_ARRAY); createParam(param_name, asynParamInt32Array, &p_pid_U[i]);
         sprintf(param_name, pidLString, i+START_BSA_ARRAY); createParam(param_name, asynParamInt32Array, &p_pid_L[i]);
 
@@ -868,6 +869,7 @@ bsaDataType_t getBsaDataType(const char *bsaType)
     if(!strcmp(INT32STRING, bsaType)) type = int32;
     else if(!strcmp(UINT32STRING, bsaType)) type = uint32;
     else if(!strcmp(FLOAT32STRING, bsaType)) type = float32;
+    else if(!strcmp(UINT64STRING, bsaType)) type = uint64;
     else type = fault;
 
     return type;
