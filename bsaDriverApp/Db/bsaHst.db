@@ -12,7 +12,7 @@
 
 record(waveform, "$(DEV):$(SECN)HST$(MDID)")
 {
-    field(DESC, "Hostory buffer")
+    field(DESC, "History buffer")
     field(DTYP, "asynFloat64ArrayIn")
     field(INP,  "@asyn($(PORT), 0) $(BSAKEY)_BSAMEAN_$(INST)")
     field(SCAN, "I/O Intr")
@@ -39,17 +39,6 @@ record(waveform, "$(DEV):$(SECN)RMSHST$(MDID)")
     field(INP,  "@asyn($(PORT),0) $(BSAKEY)_BSARMS2_$(INST)")
     field(SCAN, "I/O Intr")
     field(FTVL, "DOUBLE")
-    field(NELM, "$(MAXLENGTH)")
-    field(TSE,  "-2")
-}
-
-record(waveform, "$(DEV):$(SECN)PIDHST$(MDID)")
-{
-    field(DESC, "PulseId")
-    field(DTYP, "asynInt64ArrayIn")
-    field(INP,  "@asyn($(PORT),0) BSAPID_$(INST)")
-    field(SCAN, "I/O Intr")
-    field(FTVL, "ULONG")
     field(NELM, "$(MAXLENGTH)")
     field(TSE,  "-2")
 }
