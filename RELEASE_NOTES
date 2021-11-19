@@ -1,3 +1,7 @@
+R1.9.0      Nov 19, 2021
+            - upgrade to asyn R4.39-1.0.1
+            - use 64bit integer for pulse Id PV
+            
 R1.8.4      2021-15-11 Carolina B Mattison
 	    -Upgrade to asyn R4.39-1.0.0
 

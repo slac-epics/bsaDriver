@@ -33,12 +33,14 @@
 
 #define  INT32STRING     "int32"
 #define  UINT32STRING    "uint32"
+#define  UINT64STRING    "uint64"
 #define  FLOAT32STRING   "float32"
 
 
 typedef enum {
     int32,
     uint32,
+    uint64,
     float32,
     fault
 } bsaDataType_t;
@@ -122,7 +124,7 @@ class BsaPv : public Bsa::Pv {
 
 class BsaPvArray : public Bsa::PvArray {
     public:
-        BsaPvArray(unsigned array, const std::vector <Bsa::Pv*>& pvs, int p_pid_U, int p_pid_L, bsaAsynDriver *pBsaDrv);
+        BsaPvArray(unsigned array, const std::vector <Bsa::Pv*>& pvs, int p_pid_UL, bsaAsynDriver *pBsaDrv);
         unsigned array() const { return _array; }
         void reset(unsigned sec, unsigned nsec);
         void append(uint64_t pulseId);
@@ -140,15 +142,12 @@ class BsaPvArray : public Bsa::PvArray {
         unsigned    _ts_sec;
         unsigned    _ts_nsec;
         std::vector <uint64_t> _pid;
-        std::vector <uint32_t> _pidU;
-        std::vector <uint32_t> _pidL;
 
         unsigned size, loc, max_size;
 
         const std::vector <Bsa::Pv*>& _pvs;
 
-        int _p_pid_U;
-        int _p_pid_L;
+        int _p_pid_UL;
 };
 
 
@@ -212,6 +211,7 @@ public:
     asynStatus flush(double *pData, unsigned size, int param);
     asynStatus flush(unsigned *pData, unsigned size, int param);
     asynStatus flush(int *pData, unsigned size, int param);
+    asynStatus flush(uint64_t *pData, unsigned size, int param);
 
     asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
    //	asynStatus writeInt32Array(asynUser *pasynUser, epicsInt32 *value, size_t nElements);
@@ -236,8 +236,7 @@ protected:
     int firstBsaParam;
     #define FIRST_BSA_PARAM    firstBsaParam
 #endif /* asyn version check, under 4.32 */
-    int p_pid_U[MAX_BSA_ARRAY];    // asynInt32Array, RO
-    int p_pid_L[MAX_BSA_ARRAY];    // asynInt32Array, RO
+    int p_pid_UL[MAX_BSA_ARRAY];      // asynInt32Array, RO
     int p_enable;
 #if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 | 32)
     int lastBsaParam;
@@ -249,8 +248,7 @@ protected:
 #define NUM_BSA_DET_PARAMS ((int) (&LAST_BSA_PARAM - &FIRST_BSA_PARAM -1))
 #endif /* asyn version check, under 4.32 */
 
-#define pidUString    "BSAPIDU_%d"
-#define pidLString    "BSAPIDL_%d"
+#define pidString     "BSAPID_%d"
 #define numString     "%s_BSANUM_%d"
 #define meanString    "%s_BSAMEAN_%d"
 #define rms2String    "%s_BSARMS2_%d"

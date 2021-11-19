@@ -333,16 +333,14 @@ void BsaPv::flush()
 
 
 
-BsaPvArray::BsaPvArray(unsigned array, const std::vector <Bsa::Pv*>& pvs, int p_pid_U, int p_pid_L, bsaAsynDriver *pBsaDrv)
-                       : _array(array), size(0), loc(0), _pvs(pvs), _p_pid_U(p_pid_U), _p_pid_L(p_pid_L)
+BsaPvArray::BsaPvArray(unsigned array, const std::vector <Bsa::Pv*>& pvs, int p_pid_UL, bsaAsynDriver *pBsaDrv)
+                       : _array(array), size(0), loc(0), _pvs(pvs), _p_pid_UL(p_pid_UL)
 {
     this->pBsaDrv = pBsaDrv;
     max_size = determine_max_size(array);
 // reserve emory for better performance
     _pid.reserve(max_size *2); _pid.resize(max_size *2); bsa_item_cnt++;
 
-    _pidU.reserve(max_size);  bsa_item_cnt++;
-    _pidL.reserve(max_size);  bsa_item_cnt++;
 }
 
 
@@ -356,9 +354,6 @@ void BsaPvArray::reset(unsigned sec, unsigned nsec)
 
     size = 0;
     loc  = 0;
-
-    _pidU.clear();
-    _pidL.clear();
 
     for(unsigned i =0; i < _pvs.size(); i++) {
         _pvs[i]->clear();
@@ -383,17 +378,8 @@ std::vector <Bsa::Pv*> BsaPvArray::pvs()
 
 void BsaPvArray::flush()
 {
-    _pidU.clear();
-    _pidL.clear();
+    pBsaDrv->flush(&_pid[max_size + loc -size], size, _p_pid_UL);
 
-    for(unsigned int i=0; i < size; i++) {
-        _pidU.push_back(unsigned(_pid[max_size + loc - size + i] >> 32));
-        _pidL.push_back(unsigned(_pid[max_size + loc - size + i]));
-
-    }
-
-    pBsaDrv->flush(_pidU.data(), size, _p_pid_U);
-    pBsaDrv->flush(_pidL.data(), size, _p_pid_L);
 }
 
 
@@ -405,8 +391,10 @@ bsaAsynDriver::bsaAsynDriver(const char *portName, const char *ipString, const i
 #if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 | 32)
 					 NUM_BSA_DET_PARAMS +  num_dyn_param ,    /* number of asyn params to be cleared for each device */
 #endif /* asyn version check, under 4.32 */
-					 asynInt32Mask | asynFloat64Mask | asynOctetMask | asynDrvUserMask | asynInt32ArrayMask | asynFloat64ArrayMask,    /* Interface mask */
-					 asynInt32Mask | asynFloat64Mask | asynOctetMask | asynEnumMask | asynInt32ArrayMask | asynFloat64ArrayMask,       /* Interrupt mask */
+					 asynInt32Mask | asynInt64Mask | asynFloat64Mask | asynOctetMask | asynDrvUserMask | 
+                                         asynInt32ArrayMask | asynInt64ArrayMask | asynFloat64ArrayMask,    /* Interface mask */
+					 asynInt32Mask | asynInt64Mask | asynFloat64Mask | asynOctetMask | asynEnumMask | 
+                                         asynInt32ArrayMask | asynInt64ArrayMask | asynFloat64ArrayMask,       /* Interrupt mask */
 					 1,    /* asynFlags. This driver does block and it is non multi-device, so flag is 1. */
 					 1,    /* Auto connect */
 					 0,    /* Default priority */
@@ -436,8 +424,10 @@ bsaAsynDriver::bsaAsynDriver(const char *portName, const char *path_reg, const c
 #if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 | 32)
 					 NUM_BSA_DET_PARAMS +  num_dyn_param ,    /* number of asyn params to be cleared for each device */
 #endif /* asyn version check, under 4.32 */
-					 asynInt32Mask | asynFloat64Mask | asynOctetMask | asynDrvUserMask | asynInt32ArrayMask | asynFloat64ArrayMask,    /* Interface mask */
-					 asynInt32Mask | asynFloat64Mask | asynOctetMask | asynEnumMask | asynInt32ArrayMask | asynFloat64ArrayMask,       /* Interrupt mask */
+					 asynInt32Mask | asynInt64Mask | asynFloat64Mask | asynOctetMask | asynDrvUserMask | 
+                                         asynInt32ArrayMask | asynInt64ArrayMask | asynFloat64ArrayMask,    /* Interface mask */
+					 asynInt32Mask | asynInt64Mask | asynFloat64Mask | asynOctetMask | asynEnumMask | 
+                                         asynInt32ArrayMask | asynInt64ArrayMask | asynFloat64ArrayMask,       /* Interrupt mask */
 					 1,    /* asynFlags. This driver does block and it is non multi-device, so flag is 1. */
 					 1,    /* Auto connect */
 					 0,    /* Default priority */
@@ -496,8 +486,7 @@ void bsaAsynDriver::SetupAsynParams(void)
     sprintf(param_name, enableString); createParam(param_name, asynParamInt32, &p_enable);
 
     for(int i=0; i<MAX_BSA_ARRAY; i++) {
-        sprintf(param_name, pidUString, i+START_BSA_ARRAY); createParam(param_name, asynParamInt32Array, &p_pid_U[i]);
-        sprintf(param_name, pidLString, i+START_BSA_ARRAY); createParam(param_name, asynParamInt32Array, &p_pid_L[i]);
+        sprintf(param_name, pidString,  i+START_BSA_ARRAY); createParam(param_name, asynParamInt64Array, &p_pid_UL[i]);
 
         bsaList_t * p = (bsaList_t *) ellFirst(pBsaEllList);
         while(p) {    /* search for master node */
@@ -574,7 +563,7 @@ void bsaAsynDriver::SetupPvs(void)
 void bsaAsynDriver::SetupPvArray(void)
 {
 
-    for(int i=0; i< MAX_BSA_ARRAY; i++) pBsaPvArray.push_back(new BsaPvArray(i, pvs[i], p_pid_U[i], p_pid_L[i], this));
+    for(int i=0; i< MAX_BSA_ARRAY; i++) pBsaPvArray.push_back(new BsaPvArray(i, pvs[i], p_pid_UL[i], this));
 }
 
 
@@ -654,6 +643,15 @@ asynStatus bsaAsynDriver::flush(int *pData, unsigned size, int param)
     asynStatus status;
 
     status = doCallbacksInt32Array((epicsInt32*) pData, size, param, 0);
+
+    return status;
+}
+
+asynStatus bsaAsynDriver::flush(uint64_t *pData, unsigned size, int param)
+{
+    asynStatus status;
+
+    status = doCallbacksInt64Array((epicsInt64*) pData, size, param, 0);
 
     return status;
 }
@@ -865,8 +863,9 @@ bsaDataType_t getBsaDataType(const char *bsaType)
 {
     bsaDataType_t type;
 
-    if(!strcmp(INT32STRING, bsaType)) type = int32;
-    else if(!strcmp(UINT32STRING, bsaType)) type = uint32;
+    if(!strcmp(INT32STRING,        bsaType)) type = int32;
+    else if(!strcmp(UINT32STRING,  bsaType)) type = uint32;
+    else if(!strcmp(UINT64STRING,  bsaType)) type = uint64;
     else if(!strcmp(FLOAT32STRING, bsaType)) type = float32;
     else type = fault;
 
