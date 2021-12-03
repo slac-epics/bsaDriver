@@ -85,7 +85,7 @@ static int prep_drvAnonimous(void)
 
 bsssAsynDriver::bsssAsynDriver(const char *portName, const char *reg_path, ELLLIST *pBsssEllList,  const char *named_root)
     : asynPortDriver(portName,
-                         1,  /* number of elements of this device */
+                                        1,  /* number of elements of this device */
 #if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 | 32)
                                          NUM_BSA_DET_PARAMS +  num_dyn_param ,    /* number of asyn params to be cleared for each device */
 #endif /* asyn version check, under 4.32 */
@@ -126,5 +126,40 @@ void bsssAsynDriver::SetupAsynParams(void)
 {
     char param_name[64];
 
-//    sprintf(param_name, 
+    // BSSS Status Monitoring
+    sprintf(param_name, CURRPACKETSIZE_STR);   createParam(param_name, asynParamInt32, &p_currPacketSize);
+    sprintf(param_name, CURRPACKETSTATUS_STR); createParam(param_name, asynParamInt32, &p_currPacketStatus);
+    sprintf(param_name, CURRPULSEIDL_STR);     createParam(param_name, asynParamInt32, &p_currPulseIdL);
+    sprintf(param_name, CURRTIMESTAMPL_STR);   createParam(param_name, asynParamInt32, &p_currTimeStampL);
+    sprintf(param_name, CURRDELTA_STR);        createParam(param_name, asynParamInt32, &p_currDelta);
+    sprintf(param_name, PACKETCOUNT_STR);      createParam(param_name, asynParamInt32, &p_packetCount);
+    sprintf(param_name, PAUSED_STR);           createParam(param_name, asynParamInt32, &p_paused);
+    sprintf(param_name, DIAGNCLOCKRATE_STR);   createParam(param_name, asynParamInt32, &p_diagnClockRate);
+    sprintf(param_name, DIAGNSTROBERATE_STR);  createParam(param_name, asynParamInt32, &p_diagnStrobeRate);
+    sprintf(param_name, EVENTSEL0RATE_STR);    createParam(param_name, asynParamInt32, &p_eventSel0Rate);
+
+    // BSSS Status Control
+    sprintf(param_name, PACKETSIZE_STR);       createParam(param_name, asynParamInt32, &p_packetSize);
+    sprintf(param_name, ENABLE_STR);           createParam(param_name, asynParamInt32, &p_enable);
+
+    for(int i = 0; i < NUM_BSSS_DATA_MAX; i++) {
+        sprintf(param_name, CHANNELMASK_STR, i); createParam(param_name, asynParamInt32, &p_channelMask[i]);
+        sprintf(param_name, CHANNELSEVR_STR, i); createParam(param_name, asynParamInt32, &p_channelSevr[i]);
+    }
+
+    // BSSS Rate Controls
+    sprintf(param_name, EDEFENABLE_STR);       createParam(param_name, asynParamInt32, &p_edefEnable);
+
+    for(int i = 0; i < NUM_BSSS_CHN; i++) {
+        sprintf(param_name, RATEMODE_STR, i);  createParam(param_name, asynParamInt32, &p_rateMode[i]);
+        sprintf(param_name, FIXEDRATE_STR, i); createParam(param_name, asynParamInt32, &p_fixedRate[i]);
+        sprintf(param_name, ACRATE_STR, i);    createParam(param_name, asynParamInt32, &p_acRate[i]);
+        sprintf(param_name, TSLOTMASK_STR, i); createParam(param_name, asynParamInt32, &p_tSlotMask[i]);
+        sprintf(param_name, EXPSEQNUM_STR, i); createParam(param_name, asynParamInt32, &p_expSeqNum[i]);
+        sprintf(param_name, EXPSEQBIT_STR, i); createParam(param_name, asynParamInt32, &p_expSeqBit[i]);
+        sprintf(param_name, DESTMODE_STR, i);  createParam(param_name, asynParamInt32, &p_destMode[i]);
+        sprintf(param_name, DESTMASK_STR, i);  createParam(param_name, asynParamInt32, &p_destMask[i]);
+    }
+
+
 }

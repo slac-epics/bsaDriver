@@ -95,11 +95,11 @@ class bsssAsynDriver: asynPortDriver {
 
 #define PACKETSIZE_STR          "packetSize"
 #define ENABLE_STR              "enable"
-#define CHANNELMASK_STR         "channelMask_%d
-#define CHANNELSEVR_STR
+#define CHANNELMASK_STR         "channelMask_%d"
+#define CHANNELSEVR_STR         "channelSevr_%d"
 
 
-#define EDEFENABLE_STR        "edefEnable_%d"
+#define EDEFENABLE_STR        "edefEnable"
 #define RATEMODE_STR          "rateMode_%d"
 #define FIXEDRATE_STR         "fixedRate_%d"
 #define ACRATE_STR            "acRate_%d"
