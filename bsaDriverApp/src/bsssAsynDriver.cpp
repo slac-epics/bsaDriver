@@ -163,3 +163,105 @@ void bsssAsynDriver::SetupAsynParams(void)
 
 
 }
+
+
+void bsssAsynDriver::SetRate(int chn)
+{
+    uint32_t rateMode, fixedRate, acRate, tSlotMask, expSeqNum, expSeqBit;
+
+    getIntegerParam(p_rateMode[chn], (epicsInt32*) &rateMode);
+    switch(rateMode) {
+        case 0: /* fixed rate mode */
+            getIntegerParam(p_fixedRate[chn], (epicsInt32*) &fixedRate);
+            pBsss->setFixedRate(chn, fixedRate);
+            break;
+        case 1: /* AC rate mode */
+            getIntegerParam(p_acRate[chn], (epicsInt32*) &acRate);
+            getIntegerParam(p_tSlotMask[chn], (epicsInt32*) &tSlotMask);
+            pBsss->setACRate(chn, tSlotMask, acRate);
+            break;
+        case 2: /* Seq rate mode */
+            getIntegerParam(p_expSeqNum[chn], (epicsInt32*) &expSeqNum);
+            getIntegerParam(p_expSeqBit[chn], (epicsInt32*) &expSeqBit);
+            pBsss->setSeqRate(chn, expSeqNum, expSeqBit);
+            break;
+        default:  /* nothing todo */
+            break;
+    }
+}
+
+void bsssAsynDriver::SetDest(int chn)
+{
+    uint32_t destMode, destMask;
+
+    getIntegerParam(p_destMode[chn], (epicsInt32*) &destMode);
+    getIntegerParam(p_destMask[chn], (epicsInt32*) &destMask);
+
+    switch(destMode) {
+        case 0:  /* Inclusion */
+            pBsss->setDestInclusion(chn, destMask);
+            break;
+        case 1:  /* Exclusion */
+            pBsss->setDestExclusion(chn, destMask);
+            break;
+        case 2:  /* Disable */
+            pBsss->setDestDisable(chn);
+            break;
+        default:  /* nothing to do */
+            break;
+    }
+}
+
+asynStatus bsssAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
+{
+    int function = pasynUser->reason;
+    asynStatus status = asynSuccess;
+    const char *functionName = "writeInt32";
+
+    /* set the parameter in the parameter library */
+    status = (asynStatus) setIntegerParam(function, value);
+
+    if(function == p_packetSize) {
+        pBsss->setPacketSize((uint32_t) value);
+        goto done;
+    }
+    else if(function == p_enable) {
+        pBsss->enablePacket((uint32_t) value);
+        goto done;
+    }
+    else if(function == p_edefEnable)
+    for(int i = 0; i < NUM_BSSS_DATA_MAX; i++) {
+        if(function == p_channelMask[i]) {
+            pBsss->setChannelMask(i, (uint32_t) value);
+            goto done;
+        }
+        else if(function == p_channelSevr[i]) {
+            pBsss->setChannelSevr(i, (uint64_t) value);
+            goto done;
+        }
+    }
+
+    for(int i = 0; i < NUM_BSSS_CHN; i++) {
+        if(function == p_rateMode[i]  ||
+           function == p_fixedRate[i] ||
+           function == p_acRate[i]    ||
+           function == p_tSlotMask[i] ||
+           function == p_expSeqNum[i] ||
+           function == p_expSeqBit[i]) {
+            SetRate(i);
+            goto done;
+        }
+
+        else if(function == p_destMode[i] ||
+                function == p_destMask[i]) {
+            SetDest(i);
+            goto done;
+        }
+    }
+
+    done:
+    callParamCallbacks();
+    return status;
+}
+
+

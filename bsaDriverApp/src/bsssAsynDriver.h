@@ -27,12 +27,16 @@ class bsssAsynDriver: asynPortDriver {
         bsssAsynDriver(const char *protName, const char *reg_path, ELLLIST *pBsssList, const char *named_root = NULL);
         ~bsssAsynDriver();
 
+        asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
+
     private:
         ELLLIST *pBsssEllList;
         Bsss::BsssYaml *pBsss;
         
 
-        void SetupAsynParams();
+        void SetupAsynParams(void);
+        void SetRate(int chn);
+        void SetDest(int chn);
 
     protected:
 #if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 | 32)
