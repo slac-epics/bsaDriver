@@ -37,6 +37,7 @@ class bsssAsynDriver: asynPortDriver {
         void SetupAsynParams(void);
         void SetRate(int chn);
         void SetDest(int chn);
+        void MonitorStatus(void);
 
     protected:
 #if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 | 32)

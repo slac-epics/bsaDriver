@@ -212,6 +212,24 @@ void bsssAsynDriver::SetDest(int chn)
     }
 }
 
+void bsssAsynDriver::MonitorStatus(void)
+{
+    uint32_t v;
+
+    pBsss->getCurrPacketSize(&v);    setIntegerParam(p_currPacketSize, (epicsInt32) v);
+    pBsss->getCurrPacketState(&v);   setIntegerParam(p_currPacketStatus, (epicsInt32) v);
+    pBsss->getCurrPulseIdL(&v);      setIntegerParam(p_currPulseIdL, (epicsInt32) v);
+    pBsss->getCurrTimeStampL(&v);    setIntegerParam(p_currTimeStampL, (epicsInt32) v);
+    pBsss->getCurrDelta(&v);         setIntegerParam(p_currDelta, (epicsInt32) v);
+    pBsss->getPacketCount(&v);       setIntegerParam(p_packetCount, (epicsInt32) v);
+    pBsss->getPaused(&v);            setIntegerParam(p_paused, (epicsInt32) v);
+    pBsss->getDiagnClockRate(&v);    setIntegerParam(p_diagnClockRate, (epicsInt32) v);
+    pBsss->getDiagnStrobeRate(&v);   setIntegerParam(p_diagnStrobeRate, (epicsInt32) v);
+    pBsss->getEventSel0Rate(&v);     setIntegerParam(p_eventSel0Rate, (epicsInt32) v);
+
+    callParamCallbacks();
+}
+
 asynStatus bsssAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
 {
     int function = pasynUser->reason;
