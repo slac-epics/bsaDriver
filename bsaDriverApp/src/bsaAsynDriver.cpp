@@ -890,6 +890,12 @@ int createBsaList(const char *port_name)
 int addBsa(const char *bsaKey, const char *bsaType)
 {
     pDrvList_t *pl = find_drvLast();
+
+    if(pl) {
+        if(pl->pBsaDrv ||
+           (pl->port && strlen(pl->port))) pl = NULL;   /* the driver node has been configured, need to make another one */
+    }
+
     while(!pl) {
         prep_drvAnonimous();
         pl = find_drvLast();
