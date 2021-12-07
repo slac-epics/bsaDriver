@@ -20,11 +20,22 @@
 
 #define NUM_BSSS_DATA_MAX    31
 
+typedef struct {
+    ELLNODE node;
+    char    bsss_name[64];
+
+    int     p_firstParam;
+    int     p_bsss[NUM_BSSS_CHN];
+    int     p_lastParam;
+
+    char    pname_bsss[NUM_BSSS_CHN][64];
+} bsssList_t;
+
 
 class bsssAsynDriver: asynPortDriver {
 
     public:
-        bsssAsynDriver(const char *protName, const char *reg_path, ELLLIST *pBsssList, const char *named_root = NULL);
+        bsssAsynDriver(const char *protName, const char *reg_path, const int num_dyn_param, ELLLIST *pBsssList, const char *named_root = NULL);
         ~bsssAsynDriver();
 
         asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
@@ -41,8 +52,8 @@ class bsssAsynDriver: asynPortDriver {
 
     protected:
 #if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 | 32)
-        int firstBsaParam;
-        #define FIRST_BSA_PARAM    firstBsaParam
+        int firstBsssParam;
+        #define FIRST_BSSS_PARAM    firstBsssParam
 #endif /* asyn version check, under 4.32 */
 
         // BSSS status monitoring
@@ -76,14 +87,14 @@ class bsssAsynDriver: asynPortDriver {
 
 
 #if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 | 32)
-        int lastBsaParam;
-        #define LAST_BSA_PARAM     lastBsaParam
+        int lastBsssParam;
+        #define LAST_BSSS_PARAM     lastBsssParam
 #endif /* asyn version check, under 4.32 */
 };
 
 
 #if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 | 32)
-#define NUM_BSA_DET_PARAMS ((int) (&LAST_BSA_PARAM - &FIRST_BSA_PARAM -1))
+#define NUM_BSSS_DET_PARAMS ((int) (&LAST_BSSS_PARAM - &FIRST_BSSS_PARAM -1))
 #endif /* asyn version check, under 4.32 */
 
 

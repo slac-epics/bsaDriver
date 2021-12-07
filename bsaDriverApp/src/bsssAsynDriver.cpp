@@ -44,7 +44,7 @@ typedef struct {
     char            *port;
     char            *reg_path;
     bsssAsynDriver  *pBsssDrv;
-    ELLLIST         *pBsssList;
+    ELLLIST         *pBsssEllList;
 } pDrvList_t;
 
 
@@ -66,6 +66,19 @@ static pDrvList_t *find_drvLast(void)
 
 }
 
+static pDrvList_t *find_drvByPort(const char *port)
+{
+    init_drvList();
+    pDrvList_t *p = (pDrvList_t *) ellFirst(pDrvEllList);
+
+    while(p) {
+        if(p->port && strlen(p->port) && !strcmp(p->port, port)) break;
+        p = (pDrvList_t *) ellNext(&p->node);
+    }
+
+    return p;
+}
+
 static int prep_drvAnonimous(void)
 {
     init_drvList();
@@ -75,7 +88,7 @@ static int prep_drvAnonimous(void)
     p->port       = NULL;
     p->reg_path   = NULL;
     p->pBsssDrv   = NULL;
-    p->pBsssList  = NULL;
+    p->pBsssEllList  = NULL;
 
     ellAdd(pDrvEllList, &p->node);
     return ellCount(pDrvEllList);
@@ -83,11 +96,11 @@ static int prep_drvAnonimous(void)
 
 
 
-bsssAsynDriver::bsssAsynDriver(const char *portName, const char *reg_path, ELLLIST *pBsssEllList,  const char *named_root)
+bsssAsynDriver::bsssAsynDriver(const char *portName, const char *reg_path, const int num_dyn_param, ELLLIST *pBsssEllList,  const char *named_root)
     : asynPortDriver(portName,
                                         1,  /* number of elements of this device */
 #if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 | 32)
-                                         NUM_BSA_DET_PARAMS +  num_dyn_param ,    /* number of asyn params to be cleared for each device */
+                                         NUM_BSSS_DET_PARAMS +  num_dyn_param ,    /* number of asyn params to be cleared for each device */
 #endif /* asyn version check, under 4.32 */
                                          asynInt32Mask | asynInt64Mask | asynFloat64Mask | asynOctetMask | asynDrvUserMask |
                                          asynInt32ArrayMask | asynInt64ArrayMask | asynFloat64ArrayMask,    /* Interface mask */
@@ -283,3 +296,63 @@ asynStatus bsssAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
 }
 
 
+extern "C" {
+
+
+int bsssAsynDriverConfigure(const char *portName, const char *reg_path, const char *named_root)
+{
+    pDrvList_t *pl = find_drvByPort(portName);
+    if(!pl) {
+        pl = find_drvLast();
+        if(pl) {
+            if(!pl->port && !pl->named_root && !pl->pBsssDrv) pl->port = epicsStrDup(portName);
+            else pl = NULL;
+        }
+    }
+    if(!pl) {
+        printf("BSSS list never been configured for port (%s)\n", portName);
+        return -1;
+    }
+
+    pl->named_root = (named_root && strlen(named_root))?epicsStrDup(named_root): cpswGetRootName();
+
+    if(!pl->pBsssEllList) return -1;
+
+    int i = 0;
+    bsssList_t *p = (bsssList_t *) ellFirst(pl->pBsssEllList);
+    while(p) {
+        i += (int) (&p->p_lastParam - &p->p_firstParam -1);
+        p = (bsssList_t *) ellNext(&p->node);
+
+    }
+
+    return 0;
+}
+
+
+
+/* EPICS driver support for bsssAsynDriver */
+
+static int bsssAsynDriverReport(int interest);
+static int bsssAsynDriverInitialize(void);
+
+static struct drvet bsssAsynDriver = {
+    2,
+    (DRVSUPFUN) bsssAsynDriverReport,
+    (DRVSUPFUN) bsssAsynDriverInitialize
+};
+
+epicsExportAddress(drvet, bsssAsynDriver);
+
+static int bsssAsynDriverReport(int interest)
+{
+    return 0;
+}
+
+static int bsssAsynDriverInitialize(void)
+{
+    return 0;
+}
+
+
+} /* extern "C" */
