@@ -1,5 +1,15 @@
+#
+#    bsaAsynDriver
+#
+
 registrar(bsaAsynDriverRegister)
 driver(bsaAsynDriver)
 variable(bsa_length, int)
 variable(fltb_length, int)
 variable(bsa_item_cnt, int)
+
+#
+#    bsssAsynDriver
+#
+
+driver(bsssAsynDriver)
