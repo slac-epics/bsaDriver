@@ -31,6 +31,7 @@
 #include <epicsExport.h>
 
 #include <bsssAsynDriver.h>
+#include <bsaAsynDriver.h>
 
 #include <yamlLoader.h>
 
@@ -41,7 +42,7 @@ static ELLLIST *pDrvEllList = NULL;
 typedef struct {
     ELLNODE         node;
     char            *named_root;
-    char            *port;
+    char            *port_name;
     char            *reg_path;
     bsssAsynDriver  *pBsssDrv;
     ELLLIST         *pBsssEllList;
@@ -66,13 +67,13 @@ static pDrvList_t *find_drvLast(void)
 
 }
 
-static pDrvList_t *find_drvByPort(const char *port)
+static pDrvList_t *find_drvByPort(const char *port_name)
 {
     init_drvList();
     pDrvList_t *p = (pDrvList_t *) ellFirst(pDrvEllList);
 
     while(p) {
-        if(p->port && strlen(p->port) && !strcmp(p->port, port)) break;
+        if(p->port_name && strlen(p->port_name) && !strcmp(p->port_name, port_name)) break;
         p = (pDrvList_t *) ellNext(&p->node);
     }
 
@@ -85,7 +86,7 @@ static int prep_drvAnonimous(void)
     pDrvList_t *p = (pDrvList_t *) mallocMustSucceed(sizeof(pDrvList_t), "bsssAsynDriver(prep_drvAnonimous)");
 
     p->named_root = NULL;
-    p->port       = NULL;
+    p->port_name  = NULL;
     p->reg_path   = NULL;
     p->pBsssDrv   = NULL;
     p->pBsssEllList  = NULL;
@@ -93,6 +94,59 @@ static int prep_drvAnonimous(void)
     ellAdd(pDrvEllList, &p->node);
     return ellCount(pDrvEllList);
 }
+
+
+static int bsssAdd(const char *bsssKey, bsssDataType_t type, double *slope, double *offset)
+{
+    pDrvList_t * pl = find_drvLast();
+
+    if(pl){
+        if(pl->pBsssDrv || (pl->port_name && strlen(pl->port_name))) pl = NULL;  /* the driver node has been configured,
+                                                                                    need to make another one */
+    }
+
+    while(!pl) {
+        prep_drvAnonimous();
+        pl = find_drvLast();
+    }
+
+    while(!pl->pBsssEllList) {   /* initialize the linked list once */
+        pl->pBsssEllList = (ELLLIST *) mallocMustSucceed(sizeof(ELLLIST), "bsssAsynDriver (bsssAdd)");
+        ellInit(pl->pBsssEllList);
+    }
+
+    bsssList_t *p = (bsssList_t *) mallocMustSucceed(sizeof(bsssList_t), "bsssAsynDriver (bsssAdd)");
+    strcpy(p->bsss_name, bsssKey);
+    for(int i = 0; i < NUM_BSSS_CHN; i++) {
+        p->p_bsss[i] = -1;              /* initialize paramters with invalid */
+        p->pname_bsss[i][0] = '\0';     /* initialize with a null string */
+        p->pname_bsssPID[i][0] = '\0';  /* initialize with a null string */ 
+    }
+
+    p->type    = type;
+    p->pslope  = slope;
+    p->poffset = offset;
+
+    ellAdd(pl->pBsssEllList, &p->node);
+    return 0;
+}
+
+
+static int associateBsaChannels(const char *port_name)
+{
+    ELLLIST *pBsaEllList = find_bsaChannelList(port_name);
+
+    if(!pBsaEllList) return -1;
+    bsaList_t * p = (bsaList_t *) ellFirst(pBsaEllList);
+
+    while(p) {
+        bsssAdd(p->bsa_name, bsssDataType_t(p->type), &p->slope, &p->offset);
+        p = (bsaList_t *) ellNext(&p->node);
+    }
+
+    return 0;
+}
+
 
 
 
@@ -174,6 +228,15 @@ void bsssAsynDriver::SetupAsynParams(void)
         sprintf(param_name, DESTMASK_STR, i);  createParam(param_name, asynParamInt32, &p_destMask[i]);
     }
 
+    // set up dyanamic paramters
+    for(int i = 0; i < NUM_BSSS_CHN; i++) {
+        bsssList_t *p  = (bsssList_t *) ellFirst(this->pBsssEllList);
+        while(p) {
+            sprintf(param_name, BSSSPV_STR,  p->bsss_name, i); createParam(param_name, asynParamFloat64, &p->p_bsss[i]);    strcpy(p->pname_bsss[i],    param_name);
+            sprintf(param_name, BSSSPID_STR, p->bsss_name, i); createParam(param_name, asynParamInt64,   &p->p_bsssPID[i]); strcpy(p->pname_bsssPID[i], param_name);
+            p = (bsssList_t *) ellNext(&p->node);
+        }
+    }
 
 }
 
@@ -305,7 +368,7 @@ int bsssAsynDriverConfigure(const char *portName, const char *reg_path, const ch
     if(!pl) {
         pl = find_drvLast();
         if(pl) {
-            if(!pl->port && !pl->named_root && !pl->pBsssDrv) pl->port = epicsStrDup(portName);
+            if(!pl->port_name && !pl->named_root && !pl->pBsssDrv) pl->port_name = epicsStrDup(portName);
             else pl = NULL;
         }
     }
@@ -324,10 +387,16 @@ int bsssAsynDriverConfigure(const char *portName, const char *reg_path, const ch
         i += (int) (&p->p_lastParam - &p->p_firstParam -1);
         p = (bsssList_t *) ellNext(&p->node);
 
-    }
+    }    /* calculate number of dyanmic parameters */
+
+    pl->port_name = epicsStrDup(portName);
+    pl->reg_path  = epicsStrDup(reg_path);
+    pl->pBsssDrv  = new bsssAsynDriver(portName, reg_path, i, pl->pBsssEllList, pl->named_root);
 
     return 0;
 }
+
+
 
 
 

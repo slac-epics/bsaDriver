@@ -36,6 +36,10 @@
 #define  UINT64STRING    "uint64"
 #define  FLOAT32STRING   "float32"
 
+extern "C" {
+// interface for BSSS driver
+ELLLIST * find_bsaChannelList(const char *port_name);
+}
 
 typedef enum {
     int32,

@@ -1069,6 +1069,14 @@ static bsaList_t * findBsa(ELLLIST *pBsaEllList, const char *bsaKey)
     return p;
 }
 
+// interface for BSSS driver
+ELLLIST * find_bsaChannelList(const char *port_name)
+{
+    pDrvList_t *p = find_drvByPort(port_name);
+    
+    if(p) return p->pBsaEllList;
+    else  return NULL;
+}
 
 /* EPICS iocsh shell commands */
 

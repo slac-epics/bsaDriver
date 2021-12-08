@@ -20,15 +20,29 @@
 
 #define NUM_BSSS_DATA_MAX    31
 
+typedef enum {
+    int32_bsss,
+    uint32_bsss,
+    uint64_bsss,
+    float32_bsss,
+    fault_bsss
+} bsssDataType_t;
+
 typedef struct {
     ELLNODE node;
     char    bsss_name[64];
 
     int     p_firstParam;
     int     p_bsss[NUM_BSSS_CHN];
+    int     p_bsssPID[NUM_BSSS_CHN];
     int     p_lastParam;
+    
+    bsssDataType_t type;
+    double  *pslope;
+    double  *poffset;
 
     char    pname_bsss[NUM_BSSS_CHN][64];
+    char    pname_bsssPID[NUM_BSSS_CHN][64];
 } bsssList_t;
 
 
@@ -124,6 +138,9 @@ class bsssAsynDriver: asynPortDriver {
 #define EXPSEQBIT_STR         "expSeqBit_%d"
 #define DESTMODE_STR          "destMode_%d"
 #define DESTMASK_STR          "destMask_%d"
+
+#define BSSSPV_STR            "%s_bsss_%d"
+#define BSSSPID_STR           "%s_bsssPID_%d"
 
 
 #endif /* BSSS_ASYN_DRIVER_H */
