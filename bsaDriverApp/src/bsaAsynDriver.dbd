@@ -11,5 +11,5 @@ variable(bsa_item_cnt, int)
 #
 #    bsssAsynDriver
 #
-
+registrar(bsssAsynDriverRegister)
 driver(bsssAsynDriver)

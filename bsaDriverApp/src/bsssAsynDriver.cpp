@@ -143,6 +143,7 @@ static int associateBsaChannels(const char *port_name)
         bsssAdd(p->bsa_name, bsssDataType_t(p->type), &p->slope, &p->offset);
         p = (bsaList_t *) ellNext(&p->node);
     }
+    printf("Associate %d of channels from bsa port(%s) \n", ellCount(find_drvLast()->pBsssEllList), port_name);
 
     return 0;
 }
@@ -396,6 +397,39 @@ int bsssAsynDriverConfigure(const char *portName, const char *reg_path, const ch
     return 0;
 }
 
+
+static const iocshArg initArg0 = { "portName",                                           iocshArgString };
+static const iocshArg initArg1 = { "register path (which should be described in yaml):", iocshArgString };
+static const iocshArg initArg2 = { "named_root (optional)",                              iocshArgString };
+static const iocshArg * const initArgs[] = { &initArg0,
+                                             &initArg1,
+                                             &initArg2 };
+static const iocshFuncDef initFuncDef = { "bsssAsynDriverConfigure", 3, initArgs };
+static void initCallFunc(const iocshArgBuf *args)
+{
+ 
+    bsssAsynDriverConfigure(args[0].sval,  /* port name */
+                           args[1].sval,  /* register path */
+                           (args[2].sval && strlen(args[2].sval))? args[2].sval: NULL);  /* named_root */
+}
+
+
+static const iocshArg associateArg0 = { "bsa port", iocshArgString };
+static const iocshArg * const associateArgs [] = { &associateArg0 };
+static const iocshFuncDef associateFuncDef = { "bsssAssociateBsaChannels", 1, associateArgs };
+static void associateCallFunc(const iocshArgBuf *args)
+{
+
+    associateBsaChannels(args[0].sval);
+}
+
+void bsssAsynDriverRegister(void)
+{
+    iocshRegister(&initFuncDef,        initCallFunc);
+    iocshRegister(&associateFuncDef,   associateCallFunc);
+}
+
+epicsExportRegistrar(bsssAsynDriverRegister);
 
 
 
