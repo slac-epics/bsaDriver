@@ -13,10 +13,10 @@ include $(TOP)/configure/CONFIG
 #
 #  BSA module
 #
-DB += bsaHst.db
-DB += bsaLinearConversion.db
-DB += bsa.substitutions
+
 DB += bsa.db
+DB += bsss.db
+DB += bsssCtrl.db
 
 
 # =======================================================================
