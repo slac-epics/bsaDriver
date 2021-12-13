@@ -1,6 +1,7 @@
 
 record(mbbo, "$(DEVICE):$(BSSS_INST):RATEMODE")
 {
+    field(DESC, "BSSS Rate Mode")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
     field(OUT, "@asyn($(PORT),0) rateMode_$(IDX)")
@@ -12,18 +13,22 @@ record(mbbo, "$(DEVICE):$(BSSS_INST):RATEMODE")
     field(ZRST, "Fixed Rate")
     field(ONST, "AC Rate")
     field(TWST, "Exp Seq")
+    info(autosaveFields, "VAL")
 }
 
 record(longout, "$(DEVICE):$(BSSS_INST):EXPSEQ")
 {
+    field(DESC, "BSSS Exp Sequence Mode")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT),0) expSeqNum_$(IDX)")
     field(SCAN, "Passive")
+    info(autosaveFields, "VAL")
 }
 
 record(mbbo, "$(DEVICE):$(BSSS_INST):FIXEDRATE")
 {
+    field(DESC, "BSSS Fixed Rate Controls")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
     field(OUT, "@asyn($(PORT),0) fixedRate_$(IDX)")
@@ -43,10 +48,12 @@ record(mbbo, "$(DEVICE):$(BSSS_INST):FIXEDRATE")
     field(FRST, "10kHz")
     field(FVST, "71.5kHz")
     field(SXST, "1MHz")
+    info(autosaveFields, "VAL")
 }
 
 record(mbbo, "$(DEVICE):$(BSSS_INST):ACRATE")
 {
+    field(DESC, "BSSS AC Rate Controls")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
     field(OUT, "@asyn($(PORT),0) acRate_$(IDX)")
@@ -64,26 +71,32 @@ record(mbbo, "$(DEVICE):$(BSSS_INST):ACRATE")
     field(THST, "10Hz")
     field(FRST, "30Hz")
     field(FVST, "60Hz")
+    info(autosaveFields, "VAL")
 }
 
 record(longout, "$(DEVICE):$(BSSS_INST):TSLOTMASK")
 {
+    field(DESC, "BSSS Timeslot Mask")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT),0) tsSlotMask_$(IDX)")
     field(SCAN, "Passive")
+    info(autosaveFields, "VAL")
 }
 
 record(longout, "$(DEVICE):$(BSSS_INST):EXPSEQBIT")
 {
+    field(DESC, "BSSS Exp Sequence Bit")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
     field(OUT, "@asyn($(PORT),0) expSeqBit_$(IDX)")
     field(SCAN, "Passive")
+    info(autosaveFields, "VAL")
 }
 
 record(mbbo, "$(DEVICE):$(BSSS_INST):DESTMODE")
 {
+    field(DESC, "BSSS Destination Mode")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
     field(OUT, "@asyn($(PORT),0) destMode_$(IDX)")
@@ -95,14 +108,17 @@ record(mbbo, "$(DEVICE):$(BSSS_INST):DESTMODE")
     field(ZRST, "Disable")
     field(ONST, "Exclusion")
     field(TWST, "Inclusion")
+    info(autosaveFields, "VAL")
 }
 
 record(longout, "$(DEVICE):$(BSSS_INST):DESTMASK")
 {
+    field(DESC, "BSSS Destinatin Mask")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
     field(OUT, "@asyn($(PORT),0) destMask_$(IDX)")
     field(SCAN, "Passive")
+    info(autosaveFields, "VAL")
 }
 
 
