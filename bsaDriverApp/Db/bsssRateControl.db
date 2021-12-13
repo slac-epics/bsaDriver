@@ -1,0 +1,108 @@
+
+record(mbbo, "$(DEVICE):$(BSSS_INST):RATEMODE")
+{
+    field(PINI, "YES")
+    field(DTYP, "asynInt32")
+    field(OUT, "@asyn($(PORT),0) rateMode_$(IDX)")
+    field(OMSL, "supervisory")
+    field(SCAN, "Passive")
+    field(ZRVL, "0")
+    field(ONVL, "1")
+    field(TWVL, "2")
+    field(ZRST, "Fixed Rate")
+    field(ONST, "AC Rate")
+    field(TWST, "Exp Seq")
+}
+
+record(longout, "$(DEVICE):$(BSSS_INST):EXPSEQ")
+{
+    field(PINI, "YES")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),0) expSeqNum_$(IDX)")
+    field(SCAN, "Passive")
+}
+
+record(mbbo, "$(DEVICE):$(BSSS_INST):FIXEDRATE")
+{
+    field(PINI, "YES")
+    field(DTYP, "asynInt32")
+    field(OUT, "@asyn($(PORT),0) fixedRate_$(IDX)")
+    field(SCAN, "Passive")
+    field(OMSL, "supervisory")
+    field(ZRVL, "0")
+    field(ONVL, "1")
+    field(TWVL, "2")
+    field(THVL, "3")
+    field(FRVL, "4")
+    field(FVVL, "5")
+    field(SXVL, "6")
+    field(ZRST, "1Hz")
+    field(ONST, "10Hz")
+    field(TWST, "100Hz")
+    field(THST, "1kHz")
+    field(FRST, "10kHz")
+    field(FVST, "71.5kHz")
+    field(SXST, "1MHz")
+}
+
+record(mbbo, "$(DEVICE):$(BSSS_INST):ACRATE")
+{
+    field(PINI, "YES")
+    field(DTYP, "asynInt32")
+    field(OUT, "@asyn($(PORT),0) acRate_$(IDX)")
+    field(SCAN, "Passive")
+    field(OMSL, "supervisory")
+    field(ZRVL, "0")
+    field(ONVL, "1")
+    field(TWVL, "2")
+    field(THVL, "3")
+    field(FRVL, "4")
+    field(FVVL, "5")
+    field(ZRST, "0.5Hz")
+    field(ONST, "1Hz")
+    field(TWST, "5Hz")
+    field(THST, "10Hz")
+    field(FRST, "30Hz")
+    field(FVST, "60Hz")
+}
+
+record(longout, "$(DEVICE):$(BSSS_INST):TSLOTMASK")
+{
+    field(PINI, "YES")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),0) tsSlotMask_$(IDX)")
+    field(SCAN, "Passive")
+}
+
+record(longout, "$(DEVICE):$(BSSS_INST):EXPSEQBIT")
+{
+    field(PINI, "YES")
+    field(DTYP, "asynInt32")
+    field(OUT, "@asyn($(PORT),0) expSeqBit_$(IDX)")
+    field(SCAN, "Passive")
+}
+
+record(mbbo, "$(DEVICE):$(BSSS_INST):DESTMODE")
+{
+    field(PINI, "YES")
+    field(DTYP, "asynInt32")
+    field(OUT, "@asyn($(PORT),0) destMode_$(IDX)")
+    field(OMSL, "supervisory")
+    field(SCAN, "Passive")
+    field(ZRVL, "0")
+    field(ONVL, "1")
+    field(TWVL, "2")
+    field(ZRST, "Disable")
+    field(ONST, "Exclusion")
+    field(TWST, "Inclusion")
+}
+
+record(longout, "$(DEVICE):$(BSSS_INST):DESTMASK")
+{
+    field(PINI, "YES")
+    field(DTYP, "asynInt32")
+    field(OUT, "@asyn($(PORT),0) destMask_$(IDX)")
+    field(SCAN, "Passive")
+}
+
+

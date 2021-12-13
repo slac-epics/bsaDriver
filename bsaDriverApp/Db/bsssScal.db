@@ -1,0 +1,29 @@
+#
+#    BSSS Scalar PV template
+#    macros: $(DEV), $(SECN), $(MDID), $(BSAKEY)
+#
+#    PV name                    asyn param                    field type   Description
+#    $(DEV):$(SECN)$(MDID)      $(BSAKEY)_bsss_$(MDID)        Float64      BSSS Scalar Value
+#    $(DEV):$(SECN)PID$(MDID)   $(BSAKEY)_bsssPID_$(MDID)     Int64        64 bit pulse id
+
+
+
+record(ai, "$(DEV):$(SECN)$(MDID)")
+{
+    field(DESC, "BSSS Scalar for $(MDID)")
+    field(DTYP, "asynFloat64")
+    field(INP,  "@asyn($(PORT), 0) $(BSAKEY)_bsss_$(IDX)")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(int64out, "$(DEV):$(SECN)PID$(MDID)")
+{
+    field(DESC, "BSSS PulseID for $(MDID)")
+    field(DTYP, "asynInt64")
+    field(INP,  "@asyn($(PORT),0) $(BSAKEY)_bsssPID_$(IDX)")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+
