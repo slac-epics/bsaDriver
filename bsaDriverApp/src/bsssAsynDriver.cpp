@@ -216,9 +216,8 @@ void bsssAsynDriver::SetupAsynParams(void)
     }
 
     // BSSS Rate Controls
-    sprintf(param_name, EDEFENABLE_STR);       createParam(param_name, asynParamInt32, &p_edefEnable);
-
     for(int i = 0; i < NUM_BSSS_CHN; i++) {
+        sprintf(param_name, EDEFENABLE_STR, i);createParam(param_name, asynParamInt32, &p_edefEnable[i]);
         sprintf(param_name, RATEMODE_STR, i);  createParam(param_name, asynParamInt32, &p_rateMode[i]);
         sprintf(param_name, FIXEDRATE_STR, i); createParam(param_name, asynParamInt32, &p_fixedRate[i]);
         sprintf(param_name, ACRATE_STR, i);    createParam(param_name, asynParamInt32, &p_acRate[i]);
@@ -324,7 +323,7 @@ asynStatus bsssAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
         pBsss->enablePacket((uint32_t) value);
         goto done;
     }
-    else if(function == p_edefEnable)
+
     for(int i = 0; i < NUM_BSSS_DATA_MAX; i++) {
         if(function == p_channelMask[i]) {
             pBsss->setChannelMask(i, (uint32_t) value);
@@ -350,6 +349,10 @@ asynStatus bsssAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
         else if(function == p_destMode[i] ||
                 function == p_destMask[i]) {
             SetDest(i);
+            goto done;
+        }
+        else if(function == p_edefEnable[i]) {
+            pBsss->setEdefEnable(i, (uint32_t) value);
             goto done;
         }
     }

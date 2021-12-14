@@ -89,7 +89,7 @@ class bsssAsynDriver: asynPortDriver {
         int p_channelSevr[NUM_BSSS_DATA_MAX];
 
         // BSSS Rate Controls
-        int p_edefEnable;
+        int p_edefEnable[NUM_BSSS_CHN];
         int p_rateMode[NUM_BSSS_CHN];
         int p_fixedRate[NUM_BSSS_CHN];
         int p_acRate[NUM_BSSS_CHN];
@@ -129,7 +129,7 @@ class bsssAsynDriver: asynPortDriver {
 #define CHANNELSEVR_STR         "channelSevr_%d"
 
 
-#define EDEFENABLE_STR        "edefEnable"
+#define EDEFENABLE_STR        "edefEnable_%d"
 #define RATEMODE_STR          "rateMode_%d"
 #define FIXEDRATE_STR         "fixedRate_%d"
 #define ACRATE_STR            "acRate_%d"
