@@ -1,4 +1,4 @@
-record(bo, "$(device):$(BSSS_INST):ENB")
+record(bo, "$(DEVICE):$(BSSS_INST):ENB")
 {
     field(DESC, "enable/disable for BSSS EDEF $(IDX)")
     field(PINI, "YES")
