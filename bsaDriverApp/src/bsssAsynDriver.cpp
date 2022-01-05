@@ -452,11 +452,33 @@ epicsExportAddress(drvet, bsssAsynDriver);
 
 static int bsssAsynDriverReport(int interest)
 {
+    pDrvList_t *p = (pDrvList_t *) ellFirst(pDrvEllList);
+
+    while(p) {
+        printf("named_root: %s, port: %s, driver instace: %p, number of BSSS varibles: %d\n",
+              (p->named_root && strlen(p->named_root))?p->named_root: "Unknown",
+              (p->port_name && strlen(p->port_name))? p->port_name: "Unknown",
+              p->pBsssDrv,
+              (p->pBsssEllList)? ellCount(p->pBsssEllList): -1);
+        p = (pDrvList_t *) ellNext(&p->node);
+    }
+
     return 0;
 }
 
 static int bsssAsynDriverInitialize(void)
 {
+
+   /* Implement EPICS driver initialization here */
+    init_drvList();
+
+    if(!pDrvEllList) {
+        printf("BSSS Driver never been configured\n");
+        return 0;
+    }
+
+    printf("BSSS driver: %d of bsss driver instance(s) has (have) been configured\n", ellCount(pDrvEllList));
+
     return 0;
 }
 
