@@ -1226,7 +1226,7 @@ static int bsaAsynDriverReport(int interest)
     }
 
     while(p) {
-        printf("named_root: %s, port: %s, driver instace: %p, number of BSA varibles %d\n",
+        printf("named_root: %s, port: %s, driver instace: %p, number of BSA varibles: %d\n",
               (p->named_root && strlen(p->named_root))?p->named_root: "Unknown",
               (p->port && strlen(p->port))? p->port: "Unknown",
               p->pBsaDrv,
