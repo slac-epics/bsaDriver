@@ -365,6 +365,19 @@ asynStatus bsssAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
 
 extern "C" {
 
+static int  bsssMonitorPoll(void)
+{
+    while(1) {
+        pDrvList_t *p = (pDrvList_t *) ellFirst(pDrvEllList);
+        while(p) {
+            if(p->pBsssDrv) p->pBsssDrv->MonitorStatus();
+            p = (pDrvList_t *) ellNext(&p->node);
+        }
+        epicsThreadSleep(1.);
+    }
+
+    return 0;
+}
 
 int bsssAsynDriverConfigure(const char *portName, const char *reg_path, const char *named_root)
 {
@@ -478,6 +491,10 @@ static int bsssAsynDriverInitialize(void)
     }
 
     printf("BSSS driver: %d of bsss driver instance(s) has (have) been configured\n", ellCount(pDrvEllList));
+
+    epicsThreadCreate("bsssDrvPoll", epicsThreadPriorityMedium,
+                      epicsThreadGetStackSize(epicsThreadStackMedium),
+                      (EPICSTHREADFUNC) bsssMonitorPoll, 0);
 
     return 0;
 }

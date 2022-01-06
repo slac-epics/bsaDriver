@@ -53,6 +53,7 @@ class bsssAsynDriver: asynPortDriver {
         ~bsssAsynDriver();
 
         asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
+        void MonitorStatus(void);
 
     private:
         ELLLIST *pBsssEllList;
@@ -62,7 +63,7 @@ class bsssAsynDriver: asynPortDriver {
         void SetupAsynParams(void);
         void SetRate(int chn);
         void SetDest(int chn);
-        void MonitorStatus(void);
+
 
     protected:
 #if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 | 32)
