@@ -1,19 +1,19 @@
 
 file bsssStatus.db {
-    pattern {              DUMMY }
-            {  "single instance" }
+    pattern {   DEVICE }
+            { "$(DEV)" }
 }
 
 
 file bsssRateControl.db {
-    pattern {  IDX,  BSSS_INST}
-            {  "0",  "SCDU1"}
-            {  "1",  "SCDU2"} 
-            {  "2",  "SCDU3"}
-            {  "3",  "SCS1H"}
-            {  "4",  "SCSTH"}
-            {  "5",  "SCSHH"}
-            {  "6",  "SCH1H"}
-            {  "7",  "SCHTH"}
-            {  "8",  "SCHHH"}
+    pattern {  IDX,  BSSS_INST,  DEVICE  }
+            {  "0",  "SCDU1",   "$(DEV)" }
+            {  "1",  "SCDU2",   "$(DEV)" } 
+            {  "2",  "SCDU3",   "$(DEV)" }
+            {  "3",  "SCS1H",   "$(DEV)" }
+            {  "4",  "SCSTH",   "$(DEV)" }
+            {  "5",  "SCSHH",   "$(DEV)" }
+            {  "6",  "SCH1H",   "$(DEV)" }
+            {  "7",  "SCHTH",   "$(DEV)" }
+            {  "8",  "SCHHH",   "$(DEV)" }
 }  
