@@ -1,4 +1,8 @@
-record(longin, "$(DEVICE):BSSS_ST:CRRPKTSZ")
+#
+#   BSSS status monitoring PVs
+#
+
+record(longin, "$(DEVICE):BSSS_ST:CRRPKSZ")
 {
     field(DESC, "BSSS Current Packet Size")
     field(DTYP, "asynInt32")
@@ -69,5 +73,6 @@ record(longin, "$(DEVICE):BSSS_ST:EVSELRATE")
     field(INP, "@asyn($(PORT), 0) eventSel0Rate")
     field(SCAN, "I/O Intr")
 }
+
 
 
