@@ -7,7 +7,7 @@
 record(longout, "$(DEVICE):BSSS_CTRL:PKSZ")
 {
     field(DESC, "BSSS Packet Size")
-    field(PINI, "YES")
+#    field(PINI, "YES")
     field(DTYP, "asynInt32")
     field(OUT, "@asyn($(POrt), 0) packSize")
     field(OMSL, "supervisory")
