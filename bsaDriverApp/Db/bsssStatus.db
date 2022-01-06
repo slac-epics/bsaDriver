@@ -1,0 +1,73 @@
+record(longin, "$(DEVICE):BSSS_ST:CRRPKTSZ")
+{
+    field(DESC, "BSSS Current Packet Size")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT), 0) currPacketSzie")
+    field(SCAN, "I/O Intr")
+}
+
+record(longin, "$(DEVICE):BSSS_ST:CRRPKTST")
+{
+    field(DESC, "BSSS Current Packet Status")
+    field(DTYP, "asynInt32")
+    field(INP, "@asyn($(PORT), 0) currPacketStatus")
+    field(SCAN, "I/O Intr")
+}
+
+record(longin, "$(DEVICE):BSSS_ST:CURRPIDL")
+{
+    field(DESC, "BSSS Current PIDL")
+    field(DTYP, "asynInt32")
+    field(INP, "@asyn($(PORT), 0) currPulseIdL")
+    field(SCAN, "I/O Intr")
+}
+
+record(longin, "$(DEVICE):BSSS_ST:CURRTSL")
+{
+    field(DESC, "BSSS Current TimeStampL")
+    field(DTYP, "asynInt32")
+    field(INP, "@asyn($(PORT), 0) currTimeStampL")
+    field(SCAN, "I/O Intr")
+}
+
+record(longin, "$(DEVICE):BSSS_ST:CURRDELTA")
+{
+    field(DESC, "BSSS Current Delta")
+    field(DTYP, "asynInt32")
+    field(INP, "@asyn($(PORT, 0) currDelta")
+    field(SCAN, "I/O Intr")
+}
+
+record(longin, "$(DEVICE):BSSS_ST:PAUSED")
+{
+    field(DESC, "BSSS Paused")
+    field(DTYP, "asynInt32")
+    field(INP, "@asyn($(PORT), 0) paused")
+    field(SCAN, "I/O Intr")
+}
+
+record(longin, "$(DEVICE):BSSS_ST:DGCLKRATE")
+{
+    field(DESC, "BSSS Diag Clock Rate")
+    field(DTYP, "asynInt32")
+    field(INP, "@asyn($(PORT), 0) diagnClockRate")
+    field(SCAN, "I/O Intr")
+}
+
+record(longin, "$(DEVICE):BSSS_ST:DGSTBRATE")
+{
+    field(DESC, "BSSS Diag Strobe Rate")
+    field(DTYP, "asynInt32")
+    field(INP, "@asyn($(PORT), 0) diagnStrobeRate")
+    field(SCAN, "I/O Intr")
+}
+
+record(longin, "$(DEVICE):BSSS_ST:EVSELRATE")
+{
+    field(DESC, "BSSS Event Select0 Rate")
+    field(DTYP, "asynInt32")
+    field(INP, "@asyn($(PORT), 0) eventSel0Rate")
+    field(SCAN, "I/O Intr")
+}
+
+

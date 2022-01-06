@@ -1,4 +1,8 @@
 
+file bsssStatus.db {
+    pattern {              DUMMY }
+            {  "single instance" }
+}
 
 
 file bsssRateControl.db {
