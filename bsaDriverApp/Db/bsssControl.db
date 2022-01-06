@@ -1,0 +1,32 @@
+
+#   BSSS control PVs
+#   affect entiere BSSS
+#
+
+
+record(longout, "$(DEVICE):BSSS_CTRL:PKSZ")
+{
+    field(DESC, "BSSS Packet Size")
+    field(PINI, "YES")
+    field(DTYP, "asynInt32")
+    field(OUT, "@asyn($(POrt), 0) packSize")
+    field(OMSL, "supervisory")
+    field(SCAN, "Passive")
+    info(autosaveFields, "VAL")
+}
+
+record(bo, "$(DEVICE):BSSS_CTRL:ENB")
+{
+    field(DESC, "Enable BSSS")
+    field(PINI, "YES")
+    field(DTYP, "asynInt32")
+    field(OUT, "@asyn($(PORT),0) enable")
+    field(OMSL, "supervisory")
+    field(SCAN, "Passive")
+    field(ZNAM, "Disable")
+    field(ONAM, "Enable")
+    field(VAL, "1")
+    info(autosaveFields, "VAL")
+}
+
+

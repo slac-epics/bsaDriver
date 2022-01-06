@@ -1,3 +1,7 @@
+file bsssControl.db {
+    pattern {   DEVICE }
+            { "$(DEV)" }
+}
 
 file bsssStatus.db {
     pattern {   DEVICE }
