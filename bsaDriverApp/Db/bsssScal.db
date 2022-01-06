@@ -17,7 +17,7 @@ record(ai, "$(DEV):$(SECN)$(MDID)")
     field(TSE,  "-2")
 }
 
-record(int64out, "$(DEV):$(SECN)PID$(MDID)")
+record(int64in, "$(DEV):$(SECN)PID$(MDID)")
 {
     field(DESC, "BSSS PulseID for $(MDID)")
     field(DTYP, "asynInt64")
