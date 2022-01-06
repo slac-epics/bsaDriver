@@ -2,7 +2,7 @@ record(longin, "$(DEVICE):BSSS_ST:CRRPKTSZ")
 {
     field(DESC, "BSSS Current Packet Size")
     field(DTYP, "asynInt32")
-    field(INP,  "@asyn($(PORT), 0) currPacketSzie")
+    field(INP,  "@asyn($(PORT), 0) currPacketSize")
     field(SCAN, "I/O Intr")
 }
 

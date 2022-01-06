@@ -89,7 +89,7 @@ record(longout, "$(DEVICE):$(BSSS_INST):TSLOTMASK")
     field(DESC, "BSSS Timeslot Mask")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
-    field(OUT,  "@asyn($(PORT),0) tsSlotMask_$(IDX)")
+    field(OUT,  "@asyn($(PORT),0) tSlotMask_$(IDX)")
     field(SCAN, "Passive")
     info(autosaveFields, "VAL")
 }
