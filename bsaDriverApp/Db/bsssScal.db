@@ -8,7 +8,7 @@
 
 
 
-record(ai, "$(DEV):$(SECN)$(MDID)")
+record(ai, "$(DEVICE):$(SECN)$(MDID)")
 {
     field(DESC, "BSSS Scalar for $(MDID)")
     field(DTYP, "asynFloat64")
@@ -17,7 +17,7 @@ record(ai, "$(DEV):$(SECN)$(MDID)")
     field(TSE,  "-2")
 }
 
-record(int64in, "$(DEV):$(SECN)PID$(MDID)")
+record(int64in, "$(DEVICE):$(SECN)PID$(MDID)")
 {
     field(DESC, "BSSS PulseID for $(MDID)")
     field(DTYP, "asynInt64")
