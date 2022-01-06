@@ -4,7 +4,7 @@
 #
 
 
-record(bo, "$(DEVICE):$(SECN)CHNMASK")
+record(bo, "$(DEVICE):$(SECN)BSSSCHNMASK")
 {
     field(DESC, "BSSS Channel Mask for  $(SECN)")
     field(PINI, "YES")
@@ -18,7 +18,7 @@ record(bo, "$(DEVICE):$(SECN)CHNMASK")
     info(autosaveFields, "VAL")
 }
 
-record(mbbo, "$(DEVICE):$(SECN)CHNSEVR")
+record(mbbo, "$(DEVICE):$(SECN)BSSSCHNSEVR")
 {
     field(DESC, "BSSS Channel Seveirty for $(SECN)")
     field(PINI, "YES")
