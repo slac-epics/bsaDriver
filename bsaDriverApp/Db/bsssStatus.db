@@ -2,7 +2,7 @@
 #   BSSS status monitoring PVs
 #
 
-record(longin, "$(DEVICE):BSSS_ST:CRRPKSZ")
+record(longin, "$(DEVICE):BSSS_ST:CURPKTSZ")
 {
     field(DESC, "BSSS Current Packet Size")
     field(DTYP, "asynInt32")
@@ -10,7 +10,7 @@ record(longin, "$(DEVICE):BSSS_ST:CRRPKSZ")
     field(SCAN, "I/O Intr")
 }
 
-record(longin, "$(DEVICE):BSSS_ST:CRRPKTST")
+record(longin, "$(DEVICE):BSSS_ST:CURPKTST")
 {
     field(DESC, "BSSS Current Packet Status")
     field(DTYP, "asynInt32")
@@ -18,7 +18,7 @@ record(longin, "$(DEVICE):BSSS_ST:CRRPKTST")
     field(SCAN, "I/O Intr")
 }
 
-record(longin, "$(DEVICE):BSSS_ST:CURRPIDL")
+record(longin, "$(DEVICE):BSSS_ST:CURPIDL")
 {
     field(DESC, "BSSS Current PIDL")
     field(DTYP, "asynInt32")
@@ -26,7 +26,7 @@ record(longin, "$(DEVICE):BSSS_ST:CURRPIDL")
     field(SCAN, "I/O Intr")
 }
 
-record(longin, "$(DEVICE):BSSS_ST:CURRTSL")
+record(longin, "$(DEVICE):BSSS_ST:CURTSL")
 {
     field(DESC, "BSSS Current TimeStampL")
     field(DTYP, "asynInt32")
@@ -34,11 +34,19 @@ record(longin, "$(DEVICE):BSSS_ST:CURRTSL")
     field(SCAN, "I/O Intr")
 }
 
-record(longin, "$(DEVICE):BSSS_ST:CURRDELTA")
+record(longin, "$(DEVICE):BSSS_ST:CURDLT")
 {
     field(DESC, "BSSS Current Delta")
     field(DTYP, "asynInt32")
-    field(INP, "@asyn($(PORT, 0) currDelta")
+    field(INP, "@asyn($(PORT), 0) currDelta")
+    field(SCAN, "I/O Intr")
+}
+
+record(longin, "$(DEVICE):BSSS_ST:PKTCNT")
+{
+    field(DESC, "BSSS Packet Count")
+    field(DTYP, "asynInt32")
+    field(INP, "@asyn($(PORT), 0) packetCount")
     field(SCAN, "I/O Intr")
 }
 
