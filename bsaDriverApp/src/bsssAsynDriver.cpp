@@ -226,6 +226,7 @@ void bsssAsynDriver::SetupAsynParams(void)
         sprintf(param_name, EXPSEQBIT_STR, i); createParam(param_name, asynParamInt32, &p_expSeqBit[i]);
         sprintf(param_name, DESTMODE_STR, i);  createParam(param_name, asynParamInt32, &p_destMode[i]);
         sprintf(param_name, DESTMASK_STR, i);  createParam(param_name, asynParamInt32, &p_destMask[i]);
+        sprintf(param_name, RATELIMIT_STR, i); createParam(param_name, asynParamInt32, &p_rateLimit[i]);
     }
 
     // set up dyanamic paramters
@@ -353,6 +354,10 @@ asynStatus bsssAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
         }
         else if(function == p_edefEnable[i]) {
             pBsss->setEdefEnable(i, (uint32_t) value);
+            goto done;
+        }
+        else if(function == p_rateLimit[i]) {
+            pBsss->setRateLimit(i, (uint32_t) value);
             goto done;
         }
     }

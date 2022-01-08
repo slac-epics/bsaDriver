@@ -99,6 +99,7 @@ class bsssAsynDriver: asynPortDriver {
         int p_expSeqBit[NUM_BSSS_CHN];
         int p_destMode[NUM_BSSS_CHN];
         int p_destMask[NUM_BSSS_CHN];
+        int p_rateLimit[NUM_BSSS_CHN];
 
 
 #if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 | 32)
@@ -139,6 +140,7 @@ class bsssAsynDriver: asynPortDriver {
 #define EXPSEQBIT_STR         "expSeqBit_%d"
 #define DESTMODE_STR          "destMode_%d"
 #define DESTMASK_STR          "destMask_%d"
+#define RATELIMIT_STR         "rateLimit_%d"
 
 #define BSSSPV_STR            "%s_bsss_%d"
 #define BSSSPID_STR           "%s_bsssPID_%d"
