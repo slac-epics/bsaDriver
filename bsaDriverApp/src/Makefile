@@ -24,6 +24,7 @@ DBD += bsaAsynDriver.dbd
 LIBRARY_IOC = bsaDriver
 
 bsaDriver_DBD += bsaAsynDriver.dbd
+bsaDriver_SRCS += bldStream.cpp
 bsaDriver_SRCS += bsaAsynDriver.cpp
 bsaDriver_SRCS += bsssAsynDriver.cpp
 
