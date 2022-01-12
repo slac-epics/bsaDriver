@@ -30,6 +30,7 @@
 #include <drvSup.h>
 #include <epicsExport.h>
 
+#include <bldStream.h>
 #include <bsssAsynDriver.h>
 #include <bsaAsynDriver.h>
 
@@ -149,7 +150,10 @@ static int associateBsaChannels(const char *port_name)
 }
 
 
-
+static void bsss_callback(void *pUsr, void *buf)
+{
+    ((bsssAsynDriver *)pUsr)->bsssCallback(buf);
+}
 
 bsssAsynDriver::bsssAsynDriver(const char *portName, const char *reg_path, const int num_dyn_param, ELLLIST *pBsssEllList,  const char *named_root)
     : asynPortDriver(portName,
@@ -184,6 +188,8 @@ bsssAsynDriver::bsssAsynDriver(const char *portName, const char *reg_path, const
     this->pBsss = new Bsss::BsssYaml(reg_);  /* create API interface */
 
     SetupAsynParams();
+
+    registerBsssCallback(named_root, bsss_callback, (void *) this);
 }
 
 bsssAsynDriver::~bsssAsynDriver()
@@ -275,13 +281,13 @@ void bsssAsynDriver::SetDest(int chn)
     getIntegerParam(p_destMask[chn], (epicsInt32*) &destMask);
 
     switch(destMode) {
-        case 0:  /* Inclusion */
+        case 2:  /* Inclusion */
             pBsss->setDestInclusion(chn, destMask);
             break;
         case 1:  /* Exclusion */
             pBsss->setDestExclusion(chn, destMask);
             break;
-        case 2:  /* Disable */
+        case 0:  /* Disable */
             pBsss->setDestDisable(chn);
             break;
         default:  /* nothing to do */
@@ -367,6 +373,10 @@ asynStatus bsssAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
     return status;
 }
 
+
+void bsssAsynDriver::bsssCallback(void *p)
+{
+}
 
 extern "C" {
 
