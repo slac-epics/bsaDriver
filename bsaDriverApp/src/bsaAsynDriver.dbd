@@ -9,6 +9,10 @@ variable(fltb_length, int)
 variable(bsa_item_cnt, int)
 
 #
+#   bldStreamDriver
+#
+driver(bldStreamDriver)
+#
 #    bsssAsynDriver
 #
 registrar(bsssAsynDriverRegister)
