@@ -40,6 +40,8 @@ typedef struct {
 
     ELLLIST         *free_list;
 
+    void            *p_last_buff;
+
 } pDrvList_t;
 
 typedef struct {
@@ -86,6 +88,7 @@ static pDrvList_t *get_drvNode(const char *named_root)
         p->read_count = 0;
         p->bld_count  = 0;
         p->bsss_count = 0;
+        p->p_last_buff   = NULL;
         p->free_list = (ELLLIST*) mallocMustSucceed(sizeof(ELLLIST), "bldStream drivr: get_drvNode()");
         ellInit(p->free_list);
 
@@ -110,6 +113,7 @@ static void listener(pDrvList_t *p)
         pBuff_t *np = (pBuff_t *) ellFirst(p->free_list);
         ellDelete(p->free_list, &np->node);
         p->read_size = bld_stream->read((uint8_t*)(np->buff), MAX_BUFF_SIZE, CTimeout());
+        p->p_last_buff = (void*) (np->buff);
 
         p->read_count++;
         ellAdd(p->free_list, &np->node);
@@ -157,6 +161,18 @@ int registerBldCallback(const char *named_root, void (*bld_callback)(void*, void
 }
 
 
+static void show_last_buffer(void *p, unsigned size)
+{
+    uint32_t *buff = (uint32_t *) p;
+
+    printf("\t\t timestamp, nsec  : %8x\n", *(buff++));
+    printf("\t\t timestamp, sec   : %8x\n", *(buff++));
+    printf("\t\t pulse id, lower  : %8x\n", *(buff++));
+    printf("\t\t pulse id, upper  : %8x\n", *(buff++));
+    printf("\t\t channel mask     : %8x\n", *(buff++));
+    printf("\t\t service mask     : %8x\n", *(buff++));
+}
+
 extern "C" {
 
 /* EPICS driver support for bldStreamDriver */
@@ -187,6 +203,9 @@ static int bldStreamDriverReport(int interest)
         printf("\t  bsss_callback: %p\n", p->bsss_callback);
         printf("\t  bsss_usr     : %p\n", p->pUsrBsss);
         printf("\t  free list    : %p\n", p->free_list);
+
+        if(interest) show_last_buffer(p->p_last_buff, p->read_size);
+
         p = (pDrvList_t *) ellNext(&p->node);
     }
 
