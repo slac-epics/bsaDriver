@@ -150,9 +150,9 @@ static int associateBsaChannels(const char *port_name)
 }
 
 
-static void bsss_callback(void *pUsr, void *buf)
+static void bsss_callback(void *pUsr, void *buf, unsigned size)
 {
-    ((bsssAsynDriver *)pUsr)->bsssCallback(buf);
+    ((bsssAsynDriver *)pUsr)->bsssCallback(buf, size);
 }
 
 bsssAsynDriver::bsssAsynDriver(const char *portName, const char *reg_path, const int num_dyn_param, ELLLIST *pBsssEllList,  const char *named_root)
@@ -374,8 +374,9 @@ asynStatus bsssAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
 }
 
 
-void bsssAsynDriver::bsssCallback(void *p)
+void bsssAsynDriver::bsssCallback(void *p, unsigned size)
 {
+     printf("bsss_callback: buf %p, size %u\n", p, size);
 }
 
 extern "C" {
