@@ -16,8 +16,8 @@
 #define BLDSTREAM_NAME "bldstream"
 
 
-int registerBsssCallback(const char *named_root, void (*bsss_callback)(void *pUsr, void *buff), void *pUsr);
-int registerBldCallback(const char *named_root, void (*bld_callback)(void *pUsr, void *buff), void *pUsr);
+int registerBsssCallback(const char *named_root, void (*bsss_callback)(void *pUsr, void *buff, unsigned size), void *pUsr);
+int registerBldCallback(const char *named_root, void (*bld_callback)(void *pUsr, void *buff, unsigned size), void *pUsr);
 
 
 #endif /* BLD_STREAM_H */

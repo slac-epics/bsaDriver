@@ -22,6 +22,9 @@
 #define  MAX_FREE_LIST 8
 #define  MAX_BUFF_SIZE 4096
 
+#define  IDX_SERVICE_MASK     5
+#define  BSSS_SERVICE_MASK    0x1ff
+
 static ELLLIST *pDrvEllList = NULL;
 
 typedef struct {
@@ -33,9 +36,9 @@ typedef struct {
     unsigned        bld_count;
     unsigned        bsss_count;
 
-    void (*bsss_callback)(void *, void *);
+    void (*bsss_callback)(void *, void *, unsigned);
     void *pUsrBsss;
-    void (*bld_callback)(void *, void *);
+    void (*bld_callback)(void *, void *, unsigned);
     void *pUsrBld;
 
     ELLLIST         *free_list;
@@ -115,6 +118,16 @@ static void listener(pDrvList_t *p)
         p->read_size = bld_stream->read((uint8_t*)(np->buff), MAX_BUFF_SIZE, CTimeout());
         p->p_last_buff = (void*) (np->buff);
 
+        uint32_t  *pu32 = (uint32_t *) (p->p_last_buff);
+        if(pu32[IDX_SERVICE_MASK] & BSSS_SERVICE_MASK) {
+            p->bsss_count++;
+            if(p->bsss_callback) (p->bsss_callback)(p->pUsrBsss, p->p_last_buff, p->read_size);
+        }
+        else {
+            p->bld_count++;
+            if(p->bld_callback) (p->bld_callback)(p->pUsrBld, p->p_last_buff, p->read_size);
+        }
+
         p->read_count++;
         ellAdd(p->free_list, &np->node);
     }
@@ -133,7 +146,7 @@ static void createListener(pDrvList_t *p) {
 }
 
 
-int registerBsssCallback(const char *named_root, void (*bsss_callback)(void*, void*), void *pUsrBsss)
+int registerBsssCallback(const char *named_root, void (*bsss_callback)(void*, void*, unsigned), void *pUsrBsss)
 {
 
     pDrvList_t *p = get_drvNode(named_root);
@@ -147,7 +160,7 @@ int registerBsssCallback(const char *named_root, void (*bsss_callback)(void*, vo
 }
 
 
-int registerBldCallback(const char *named_root, void (*bld_callback)(void*, void*), void *pUsrBld)
+int registerBldCallback(const char *named_root, void (*bld_callback)(void*, void*, unsigned), void *pUsrBld)
 {
     pDrvList_t *p = get_drvNode(named_root);
     p->bld_callback = bld_callback;
@@ -164,6 +177,8 @@ int registerBldCallback(const char *named_root, void (*bld_callback)(void*, void
 static void show_last_buffer(void *p, unsigned size)
 {
     uint32_t *buff = (uint32_t *) p;
+
+    printf("\t\t >>>>valid mask<<<: %x\n", *(buff +(size/4) -1)); 
 
     printf("\t\t timestamp, nsec  : %8x\n", *(buff++));
     printf("\t\t timestamp, sec   : %8x\n", *(buff++));
