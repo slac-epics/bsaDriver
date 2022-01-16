@@ -376,7 +376,38 @@ asynStatus bsssAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
 
 void bsssAsynDriver::bsssCallback(void *p, unsigned size)
 {
-     printf("bsss_callback: buf %p, size %u\n", p, size);
+     uint32_t *buf         = (uint32_t *) p;
+     uint32_t *p_data      = buf + IDX_DATA;
+     uint32_t service_mask = buf[IDX_SVC_MASK];
+     uint32_t valid_mask   = buf[IDX_VALID_MASK(size)];
+     uint64_t pulse_id     = ((uint64_t)(buf[IDX_PIDU])) << 32 | buf[IDX_PIDL];
+
+     epicsTimeStamp _ts;
+     _ts.nsec = buf[IDX_NSEC];
+     _ts.secPastEpoch  = buf[IDX_SEC];
+     setTimeStamp(&_ts);
+
+
+     bsssList_t *plist = (bsssList_t *) ellFirst(pBsssEllList);
+     int chn_mask = 0x1;
+     while(plist) {
+         for(int i = 0, svc_mask = 0x1; i < NUM_BSSS_CHN; i++, svc_mask <<= 1) {
+             if(service_mask & svc_mask) {
+                 setInteger64Param(plist->p_bsssPID[i], pulse_id);
+
+                 setDoubleParam(plist->p_bsss[i], (double) NAN);
+                 if(valid_mask & chn_mask) {
+                 }
+             }
+         }
+
+         plist = (bsssList_t *) ellNext(&plist->node);
+         chn_mask <<= 1;
+     }
+     
+
+     callParamCallbacks();
+
 }
 
 extern "C" {

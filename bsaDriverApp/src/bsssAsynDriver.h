@@ -20,6 +20,14 @@
 
 #define NUM_BSSS_DATA_MAX    31
 
+#define IDX_NSEC 0
+#define IDX_SEC  1
+#define IDX_PIDL 2
+#define IDX_PIDU 3
+#define IDX_SVC_MASK 5
+#define IDX_DATA 6
+#define IDX_VALID_MASK(size)  (size/4 -1)
+
 typedef enum {
     int32_bsss,
     uint32_bsss,
