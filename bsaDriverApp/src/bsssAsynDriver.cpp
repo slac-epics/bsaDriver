@@ -377,7 +377,8 @@ asynStatus bsssAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
 void bsssAsynDriver::bsssCallback(void *p, unsigned size)
 {
      uint32_t *buf         = (uint32_t *) p;
-     uint32_t *p_data      = buf + IDX_DATA;
+     uint32_t *p_int32     = buf + IDX_DATA;
+     float    *p_float32   = (float*)(buf + IDX_DATA);
      uint32_t service_mask = buf[IDX_SVC_MASK];
      uint32_t valid_mask   = buf[IDX_VALID_MASK(size)];
      uint64_t pulse_id     = ((uint64_t)(buf[IDX_PIDU])) << 32 | buf[IDX_PIDL];
@@ -395,9 +396,22 @@ void bsssAsynDriver::bsssCallback(void *p, unsigned size)
              if(service_mask & svc_mask) {
                  setInteger64Param(plist->p_bsssPID[i], pulse_id);
 
-                 setDoubleParam(plist->p_bsss[i], (double) NAN);
+                 setDoubleParam(plist->p_bsss[i], INFINITY);
+
                  if(valid_mask & chn_mask) {
-                 }
+                     switch(plist->type){
+                         case int32_bsss:
+                         case uint32_bsss:
+                             setDoubleParam(plist->p_bsss[i], (double)(p_int32[i]));
+                             break;
+                         case float32_bsss:
+                             setDoubleParam(plist->p_bsss[i], isnan(p_float32[i])? NAN: (p_float32[i] * (*plist->pslope) + (*plist->poffset)));
+                             break;
+                         case uint64_bsss:
+                         default:
+                             break;
+                     }
+                 } else setDoubleParam(plist->p_bsss[i], NAN);
              }
          }
 
