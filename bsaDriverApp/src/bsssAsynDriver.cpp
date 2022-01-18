@@ -386,37 +386,39 @@ void bsssAsynDriver::bsssCallback(void *p, unsigned size)
      epicsTimeStamp _ts;
      _ts.nsec = buf[IDX_NSEC];
      _ts.secPastEpoch  = buf[IDX_SEC];
-     setTimeStamp(&_ts);
+     setTimeStamp(&_ts);    // timestamp update for asyn port and related PVs
 
 
      bsssList_t *plist = (bsssList_t *) ellFirst(pBsssEllList);
      int chn_mask = 0x1;
+     int data_chn = 0;
      while(plist) {
          for(int i = 0, svc_mask = 0x1; i < NUM_BSSS_CHN; i++, svc_mask <<= 1) {
              if(service_mask & svc_mask) {
-                 setInteger64Param(plist->p_bsssPID[i], pulse_id);
+                 setInteger64Param(plist->p_bsssPID[i], pulse_id);  // pulse id update if service mask is set
 
-                 setDoubleParam(plist->p_bsss[i], INFINITY);
+                 setDoubleParam(plist->p_bsss[i], INFINITY);   // make asyn PV update even posting the same value with previous
 
-                 if(valid_mask & chn_mask) {
+                 if(valid_mask & chn_mask) {  // data update for valid mask
                      switch(plist->type){
                          case int32_bsss:
                          case uint32_bsss:
-                             setDoubleParam(plist->p_bsss[i], (double)(p_int32[i]));
+                             setDoubleParam(plist->p_bsss[i], (double)(p_int32[data_chn]));
                              break;
                          case float32_bsss:
-                             setDoubleParam(plist->p_bsss[i], isnan(p_float32[i])? NAN: (p_float32[i] * (*plist->pslope) + (*plist->poffset)));
+                             setDoubleParam(plist->p_bsss[i], isnan(p_float32[data_chn])? NAN: (p_float32[data_chn] * (*plist->pslope) + (*plist->poffset)));
                              break;
                          case uint64_bsss:
                          default:
                              break;
                      }
-                 } else setDoubleParam(plist->p_bsss[i], NAN);
+                 } else setDoubleParam(plist->p_bsss[i], NAN);  // put NAN for invalid mask
              }
          }
 
-         plist = (bsssList_t *) ellNext(&plist->node);
-         chn_mask <<= 1;
+         plist = (bsssList_t *) ellNext(&plist->node);  // evolve to next data channel
+         chn_mask <<= 1;  // evolve mask bit to next data channel
+         data_chn++;      // evolve data channel number to next channel
      }
      
 
