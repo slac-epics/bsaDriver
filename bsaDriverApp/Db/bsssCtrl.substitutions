@@ -10,14 +10,16 @@ file bsssStatus.db {
 
 
 file bsssRateControl.db {
-    pattern {  IDX,  BSSS_INST,  DEVICE  }
-            {  "0",  "SCUD1",   "$(DEV)" }
-            {  "1",  "SCUD2",   "$(DEV)" } 
-            {  "2",  "SCUD3",   "$(DEV)" }
-            {  "3",  "SCS1H",   "$(DEV)" }
-            {  "4",  "SCSTH",   "$(DEV)" }
-            {  "5",  "SCSHH",   "$(DEV)" }
-            {  "6",  "SCH1H",   "$(DEV)" }
-            {  "7",  "SCHTH",   "$(DEV)" }
-            {  "8",  "SCHHH",   "$(DEV)" }
-}  
+    pattern {  IDX,  BSSS_INST,  DEVICE,  GLOBAL       }
+            {  "0",  "SCUD1",   "$(DEV)", "TPG:SYS0:1" }
+            {  "1",  "SCUD2",   "$(DEV)", "TPG:SYS0:1" } 
+            {  "2",  "SCUD3",   "$(DEV)", "TPG:SYS0:1" }
+            {  "3",  "SCS1H",   "$(DEV)", "TPG:SYS0:1" }
+            {  "4",  "SCSTH",   "$(DEV)", "TPG:SYS0:1" }
+            {  "5",  "SCSHH",   "$(DEV)", "TPG:SYS0:1" }
+            {  "6",  "SCH1H",   "$(DEV)", "TPG:SYS0:1" }
+            {  "7",  "SCHTH",   "$(DEV)", "TPG:SYS0:1" }
+            {  "8",  "SCHHH",   "$(DEV)", "TPG:SYS0:1" }
+}
+
+
