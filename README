@@ -101,10 +101,13 @@ Requirements:
 DB_INSTALLS += $(BSADRIVER)/db/bsa.db
 DB_INSTALLS += $(BSADRIVER)/db/bsss.db
 DB_INSTALLS += $(BSADRIVER)/db/bsssCtrl.db
+(oprtional)
+DB_INSTALLS += $(BSADRIVER)/db/bsssCtrl_localTest.db
 
 - bsa.db  ;  BSA database template for each BSA data channel
 - bsss.db ;  BSSS database template for each BSSS data channel
 - bsssCtrl.db  ; BSSS controls database template 
+- bsssCtrl_localTest.db ;  BSSS controls databse template for local test (it doesn't have CA_LINK to the global PVs)
 
 
 
@@ -385,14 +388,22 @@ bldstream: &bldstream
 
 DB_INSTALLS += $(BSADRIVER)/db/bsss.db
 DB_INSTALLS += $(BSADRIVER)/db/bsssCtrl.db
+(oprtional)
+DB_INSTALLS += $(BSADRIVER)/db/bsssCtrl_localTest.db
 
 - bsss.db ;  BSSS database template for each BSSS data channel
 - bsssCtrl.db  ; BSSS controls database template 
+- bsssCtrl_localTest.db ;  BSSS controls databse template for local test (it doesn't have CA_LINK to the global PVs)
+
 
 2. load up BSSS control data base template in st.cmd
 example)
 # BSSS Control/Monintoring PVs
 dbLoadRecords("db/bsssCtrl.db", "DEV=${SYS_PV},PORT=bsssPort")
+
+remarks) use bsssCtrl_localTest.db for BSSS test without global PVs
+
+
 
 3. load up BSSS Scalar PVs (for each channel data)
 example)
