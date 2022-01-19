@@ -29,15 +29,15 @@ Requirements:
 - The epics ioc application should build with yamlLoader driver and with CPSW framework.
 
   API layer
-  . cpsw/framework R4.2.0
+  . cpsw/framework R4.3.2
   . yaml-cpp-0.5.3_boost-1.64.0
   . boost 1.64.0
-  . timing/bsa R1.1.4
+  . timing/bsa R2.2.0
 
   configure/CONFIG_SITE.Common.<platform> in application should have the followings:
 
   CPSW_FRAMEWORK_PACKAGE_NAME=cpsw/framework
-  CPSW_FRAMEWORK_VERSION=R4.2.0
+  CPSW_FRAMEWORK_VERSION=R4.3.2
   CPSW_FRAMEWORK=$(PACKAGE_AREA)/$(CPSW_FRAMEWORK_PACKAGE_NAME)/$(CPSW_FRAMEWORK_VERSION)/$(LINUXRT_BUILDROOT_VERSION)-x86_64
   CPSW_FRAMEWORK_LIB     = $(CPSW_FRAMEWORK)/lib
   CPSW_FRAMEWORK_INCLUDE = $(CPSW_FRAMEWORK)/include
@@ -57,7 +57,7 @@ Requirements:
   BOOST_INCLUDE = $(BOOST)/include
 
   BSA_PACKAGE_NAME=timing/bsa
-  BSA_VERSION=R1.1.4
+  BSA_VERSION=R2.0.0
   BSA_ARCH=$(LINUXRT_BUILDROOT_VERSION)-x86_64
   BSA=$(PACKAGE_AREA)/$(BSA_PACKAGE_NAME)/$(BSA_VERSION)/$(BSA_ARCH)
   BSA_LIB     = $(BSA)/lib
@@ -67,14 +67,14 @@ Requirements:
 
 
   EPICS module
-  . yamlLoader R1.1.4
-  . asyn R4.31-0.1.0
+  . yamlLoader R2.2.0
+  . asyn R4.39-1.0.1
 
   configure/RELEASE in application should have the followings:
 
-  ASYN_MODULE_VERSION=R4.31-0.1.0
-  YAMLLOADER_MODULE_VERSION=R1.1.3
-  BSADRIVER_MODULE_VERSION=R1.6.0
+  ASYN_MODULE_VERSION=R4.39-1.0.1
+  YAMLLOADER_MODULE_VERSION=R2.2.0
+  BSADRIVER_MODULE_VERSION=R2.0.0
 
   ASYN=$(EPICS_MODULES)/asyn/$(ASYN_MODULE_VERSION)
   YAMLLOADER=$(EPICS_MODULES)/yamlLoader/$(YAMLLOADER_MODULE_VERSION)
@@ -94,6 +94,18 @@ Requirements:
   <applicaiton>_LIBS += asyn
   <application>_LIBS += yamlLoader
   <application>_LIBS += bsaDriver
+
+
+<application>/Db/Makefile should have the followings:
+
+DB_INSTALLS += $(BSADRIVER)/db/bsa.db
+DB_INSTALLS += $(BSADRIVER)/db/bsss.db
+DB_INSTALLS += $(BSADRIVER)/db/bsssCtrl.db
+
+- bsa.db  ;  BSA database template for each BSA data channel
+- bsss.db ;  BSSS database template for each BSSS data channel
+- bsssCtrl.db  ; BSSS controls database template 
+
 
 
 - The yamlLoader driver should provide register hierarchy and path information.
@@ -339,6 +351,146 @@ Slope and Offset PV names are:
 These will be in autosave list.
 The database template bsa.db has default value for SLOPE=1 and OFFSET=0.
 These will be override by the autosave, once the user setting is saved.
+
+
+
+
+-------------------------------------
+Beam Synchronous Scalar Service (BSSS)
+--------------------------------------
+
+BSSS is implemented as a part of BSA driver in R2.0.0 or later.
+Thus ioc engineer does not need to add up ".dbd" file and library file if the ioc already had BSA.
+
+0. need to define BLD stream in 000TopLevel.yaml
+
+# BLD Stream
+bldstream: &bldstream
+  SRP:
+    protocolVersion: SRP_UDP_NONE
+  UDP:
+    port: 8197
+    numRxThreads: *udpThreads
+    threadPriority:  *udpPri
+    pollSecs: 1
+
+#  Inside NetIoDev session
+     bldstream:
+       class: Field
+       at:
+         <<: *bldstream
+
+
+1. need to install database template (add folowings in Db/Makefile)
+
+DB_INSTALLS += $(BSADRIVER)/db/bsss.db
+DB_INSTALLS += $(BSADRIVER)/db/bsssCtrl.db
+
+- bsss.db ;  BSSS database template for each BSSS data channel
+- bsssCtrl.db  ; BSSS controls database template 
+
+2. load up BSSS control data base template in st.cmd
+example)
+# BSSS Control/Monintoring PVs
+dbLoadRecords("db/bsssCtrl.db", "DEV=${SYS_PV},PORT=bsssPort")
+
+3. load up BSSS Scalar PVs (for each channel data)
+example)
+# BSSS Scalar PVs
+dbLoadRecords("db/bsss.db", "DEV=${SYS_PV},PORT=bsssPort,IDX=0,BSAKEY=PIDL,SECN=PIDL")
+dbLoadRecords("db/bsss.db", "DEV=${SYS_PV},PORT=bsssPort,IDX=1,BSAKEY=PIDU,SECN=PIDU")
+dbLoadRecords("db/bsss.db", "DEV=${SYS_PV},PORT=bsssPort,IDX=2,BSAKEY=TSL,SECN=TSL")
+dbLoadRecords("db/bsss.db", "DEV=${SYS_PV},PORT=bsssPort,IDX=3,BSAKEY=TSU,SECN=TSU")
+dbLoadRecords("db/bsss.db", "DEV=${SYS_PV},PORT=bsssPort,IDX=4,BSAKEY=RATES,SECN=RATES")
+......
+remark) use the same macros what we have used for BSA template. new macro, IDX macro should have a sequencial number from 0
+
+4. make association with BSA channel, BSSS can use BSA channel defintitions
+Use the following command to make association with BSA channels after bsaAsynDriverConfigure() command
+
+#
+#  Initialize BSSS driver
+#  make assoication with BSA channels: bsssAssociateBsaChannels(<BSA port name>)
+bsssAssociateBsaChannels("bsaPort")
+
+remark) the <BSA port name> should be the smae string id which has been used for bsaASynDriverConfigure()
+
+
+5. configure BSSS driver with the following command
+
+# confiugre BSSS driver: bsssAsynDriverConfigure(<bsss port>, <register path>)
+bsssAsynDriverConfigure("bsssPort", "mmio/AmcCarrierTimingGenerator/AmcCarrierCore/AmcCarrierBsa/Bsss")
+
+remark) the register path sould be different depends application
+
+6. report function
+
+- bldStream
+epics> dbior bldStreamDriver 5
+Driver: bldStreamDriver
+        BLD Stream for root_0
+          read size  : 152
+          read count : 959035
+          bld count  : 0
+          bsss count : 959035
+          bld callback : (nil)
+          bld_usr      : (nil)
+          bsss_callback: 0x695970
+          bsss_usr     : 0x275ef50
+          free list    : 0x28a0b70
+                 >>>>valid mask<<<: 7fffffff
+                 timestamp, nsec  : 24b14a1e
+                 timestamp, sec   : 3c48c4ce
+                 pulse id, lower  : 6b18ebbe
+                 pulse id, upper  :     eb11
+                 channel mask     : 7fffffff
+                 service mask     :        3
+
+- bsssAsynDriver
+epics> dbior bsssAsynDriver 1
+Driver: bsssAsynDriver
+named_root: root_0, port: bsssPort, driver instace: 0x275ef50, number of BSSS varibles: 31
+
+7. Simple Test
+
+Set up 10Hz fixed rate for SCUD1 (one of user defined rate) and monitor BSSS data and pulse id
+suppose) IOC name                  TPG:SYS2:2      (B84 TPG)
+         BSSS data channel name    ACVADCA         (AC voltage ADC phase A)
+
+
+caput TPG:SYS2:2:SCUD1:RATELIMIT "119Hz"           # set up rate limit to 119Hz
+caput TPG:SYS2:2:SCUD1:RATEMODE  "Fixed Rate"      # choose fixed rate mode
+caput TPG:SYS2:2:SCUD1:FIXEDRATE "10Hz"            # select 10Hz rate
+caput TPG:SYS2:2:SCUD1:DESTMODE  "Disable"         # disable destination, do not care about destination
+caput TPG:SYS2:2:ACVADCABSSSCHNSEVR "Invalid"      # setup max severity to Invalid (no severity filtering) for ACVADCA
+caput TPG:SYS2:2:SCUD1:ENB "Enable"                # Enable SCUD1
+
+# monitor ACVADCA and its pulse id for SCUD1
+
+camonitor -g 16 TPG:SYS2:2:ACVADCASCUD1   TPG:SYS2:2:ACVADCAPIDSCUD1
+TPG:SYS2:2:ACVADCAPIDSCUD1     2022-01-18 17:33:27.608926 258461968689718  
+TPG:SYS2:2:ACVADCASCUD1        2022-01-18 17:33:27.608926 53357  
+TPG:SYS2:2:ACVADCAPIDSCUD1     2022-01-18 17:33:27.706926 258461968780718  
+TPG:SYS2:2:ACVADCASCUD1        2022-01-18 17:33:27.706926 53359  
+TPG:SYS2:2:ACVADCAPIDSCUD1     2022-01-18 17:33:27.804926 258461968871718  
+TPG:SYS2:2:ACVADCASCUD1        2022-01-18 17:33:27.804926 53358  
+TPG:SYS2:2:ACVADCAPIDSCUD1     2022-01-18 17:33:27.902926 258461968962718  
+TPG:SYS2:2:ACVADCASCUD1        2022-01-18 17:33:27.902926 53358  
+TPG:SYS2:2:ACVADCAPIDSCUD1     2022-01-18 17:33:28.000926 258461969053718  
+TPG:SYS2:2:ACVADCASCUD1        2022-01-18 17:33:28.000926 53358  
+TPG:SYS2:2:ACVADCAPIDSCUD1     2022-01-18 17:33:28.098926 258461969144718  
+TPG:SYS2:2:ACVADCASCUD1        2022-01-18 17:33:28.098926 53360  
+TPG:SYS2:2:ACVADCAPIDSCUD1     2022-01-18 17:33:28.196926 258461969235718  
+TPG:SYS2:2:ACVADCASCUD1        2022-01-18 17:33:28.196926 53355  
+TPG:SYS2:2:ACVADCAPIDSCUD1     2022-01-18 17:33:28.294926 258461969326718  
+TPG:SYS2:2:ACVADCASCUD1        2022-01-18 17:33:28.294926 53357  
+
+Timestamp should be aligned between data and PID
+PID interval should be 91000 at 10Hz rate
+
+
+remark) BSSS PV names and descriptions in the following link:
+https://confluence.slac.stanford.edu/display/~khkim/BSSS+PV+Name+List
 
 
 # End of file
