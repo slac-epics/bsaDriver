@@ -15,6 +15,7 @@ record(ai, "$(DEVICE):$(SECN)$(MDID)")
     field(INP,  "@asyn($(PORT), 0) $(BSAKEY)_bsss_$(IDX)")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(MDEL, "-1")
 }
 
 record(int64in, "$(DEVICE):$(SECN)PID$(MDID)")
@@ -24,6 +25,7 @@ record(int64in, "$(DEVICE):$(SECN)PID$(MDID)")
     field(INP,  "@asyn($(PORT),0) $(BSAKEY)_bsssPID_$(IDX)")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(MDEL, "-1")
 }
 
 
