@@ -17,6 +17,7 @@ include $(TOP)/configure/CONFIG
 DB += bsa.db
 DB += bsss.db
 DB += bsssCtrl.db
+DB += bsssCtrl_localTest.db
 
 
 # =======================================================================

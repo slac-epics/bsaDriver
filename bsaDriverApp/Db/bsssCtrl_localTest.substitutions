@@ -1,0 +1,23 @@
+file bsssControl.db {
+    pattern {   DEVICE }
+            { "$(DEV)" }
+}
+
+file bsssStatus.db {
+    pattern {   DEVICE }
+            { "$(DEV)" }
+}
+
+
+file bsssRateControl_localTest.db {
+    pattern {  IDX,  BSSS_INST,  DEVICE  }
+            {  "0",  "SCUD1",   "$(DEV)" }
+            {  "1",  "SCUD2",   "$(DEV)" } 
+            {  "2",  "SCUD3",   "$(DEV)" }
+            {  "3",  "SCS1H",   "$(DEV)" }
+            {  "4",  "SCSTH",   "$(DEV)" }
+            {  "5",  "SCSHH",   "$(DEV)" }
+            {  "6",  "SCH1H",   "$(DEV)" }
+            {  "7",  "SCHTH",   "$(DEV)" }
+            {  "8",  "SCHHH",   "$(DEV)" }
+}  
