@@ -219,7 +219,7 @@ static int bldStreamDriverReport(int interest)
         printf("\t  bsss_usr     : %p\n", p->pUsrBsss);
         printf("\t  free list    : %p\n", p->free_list);
 
-        if(interest) show_last_buffer(p->p_last_buff, p->read_size);
+        if(interest && p->p_last_buff) show_last_buffer(p->p_last_buff, p->read_size);
 
         p = (pDrvList_t *) ellNext(&p->node);
     }
