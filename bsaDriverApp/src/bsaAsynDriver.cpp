@@ -289,7 +289,7 @@ void BsaPv::append(unsigned n, double mean, double rms2)
     uint32_t _u = (uint32_t) mean;
     double __mean;
 
-    /*
+
     switch(*_p_type) {
         case int32:
             __mean = (double)(*(int32_t*)&_u);
@@ -301,9 +301,7 @@ void BsaPv::append(unsigned n, double mean, double rms2)
             __mean = (double)(*(float*)&_u);
             break;
     }
-    */
 
-    __mean = mean;
 
     _n[loc]    = _n[loc + max_size]    = n;
     _mean[loc] = _mean[loc + max_size] = isnan(mean)? NAN: (*_p_slope * __mean + *_p_offset);
