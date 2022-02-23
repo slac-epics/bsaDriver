@@ -1,7 +1,5 @@
-R2.2.0      Feb 22, 2022
+R2.1.0      Feb 22, 2022
             - enable type conversion to support float32/uint32/int32
-
-R2.1.0      Jan 19, 2022
             - support global PVs for BSSS Rate Controls
 
 R2.0.0      Dec 6, 2021
