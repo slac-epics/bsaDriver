@@ -377,8 +377,10 @@ asynStatus bsssAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
 void bsssAsynDriver::bsssCallback(void *p, unsigned size)
 {
      uint32_t *buf         = (uint32_t *) p;
-     uint32_t *p_int32     = buf + IDX_DATA;
+     uint32_t *p_uint32    = buf + IDX_DATA;
+     int32_t  *p_int32     = (int32_t *) (buf + IDX_DATA);
      float    *p_float32   = (float*)(buf + IDX_DATA);
+     double   val;
      uint32_t service_mask = buf[IDX_SVC_MASK];
      uint32_t valid_mask   = buf[IDX_VALID_MASK(size)];
      uint64_t pulse_id     = ((uint64_t)(buf[IDX_PIDU])) << 32 | buf[IDX_PIDL];
@@ -402,17 +404,23 @@ void bsssAsynDriver::bsssCallback(void *p, unsigned size)
                  if(valid_mask & chn_mask) {  // data update for valid mask
                      switch(plist->type){
                          case int32_bsss:
+                             val = (double) (p_int32[data_chn]);
+                             break;
                          case uint32_bsss:
-                             setDoubleParam(plist->p_bsss[i], (double)(p_int32[data_chn]));
+                             val = (double) (p_uint32[data_chn]);
                              break;
                          case float32_bsss:
-                             setDoubleParam(plist->p_bsss[i], isnan(p_float32[data_chn])? NAN: (p_float32[data_chn] * (*plist->pslope) + (*plist->poffset)));
+                             val = (double) (p_float32[data_chn]);
                              break;
                          case uint64_bsss:
                          default:
+                              val = NAN;   // uint64 never defined
                              break;
                      }
-                 } else setDoubleParam(plist->p_bsss[i], NAN);  // put NAN for invalid mask
+                 } else val = NAN;  // put NAN for invalid mask
+
+                 if(!isnan(val)) val = val * (*plist->pslope) + (*plist->poffset);
+                 setDoubleParam(plist->p_bsss[i], val);
              }
          }
 
