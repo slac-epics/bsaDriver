@@ -10,12 +10,17 @@
 
 record(ai, "$(DEVICE):$(SECN)$(MDID)")
 {
-    field(DESC, "BSSS Scalar for $(MDID)")
+    field(DESC, "BSSS Scalar $(SECN) for $(MDID)")
     field(DTYP, "asynFloat64")
     field(INP,  "@asyn($(PORT), 0) $(BSAKEY)_bsss_$(IDX)")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
     field(MDEL, "-1")
+    field(ADEL, "$(ADEL)")
+    field(EGU,  "$(EGU)")
+    field(PREC, "$(PREC)")
+    field(HOPR, "$(HOPR)")
+    field(LOPR, "$(LOPR)")
 }
 
 record(int64in, "$(DEVICE):$(SECN)PID$(MDID)")

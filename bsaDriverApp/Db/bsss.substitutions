@@ -6,14 +6,14 @@ file bsssChannelCtrl.db {
 
 
 file bsssScal.db {
-    pattern {  IDX,     MDID,   DEVICE }
-            {  "0",  "SCUD1", "$(DEV)" }
-            {  "1",  "SCUD2", "$(DEV)" }
-            {  "2",  "SCUD3", "$(DEV)" }
-            {  "3",  "SCS1H", "$(DEV)" }
-            {  "4",  "SCSTH", "$(DEV)" }
-            {  "5",  "SCSHH", "$(DEV)" }
-            {  "6",  "SCH1H", "$(DEV)" }
-            {  "7",  "SCHTH", "$(DEV)" }
-            {  "8",  "SCHHH", "$(DEV)" }
+    pattern {  IDX,     MDID,   DEVICE,        EGU,        ADEL,        PREC,        LOPR,       HOPR }
+            {  "0",  "SCUD1", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR=)" }
+            {  "1",  "SCUD2", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR=)" }
+            {  "2",  "SCUD3", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR=)" }
+            {  "3",  "SCS1H", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR=)" }
+            {  "4",  "SCSTH", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR=)" }
+            {  "5",  "SCSHH", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR=)" }
+            {  "6",  "SCH1H", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR=)" }
+            {  "7",  "SCHTH", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR=)" }
+            {  "8",  "SCHHH", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR=)" }
 }  
