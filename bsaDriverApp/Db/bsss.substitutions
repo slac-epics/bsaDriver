@@ -6,7 +6,7 @@ file bsssChannelCtrl.db {
 
 
 file bsssScal.db {
-    pattern {  IDX,     MDID,   DEVICE,        EGU,        ADEL,        PREC,        LOPR,       HOPR }
+    pattern {  IDX,     MDID,   DEVICE,        EGU,        ADEL,        PREC,        HOPR,       LOPR }
             {  "0",  "SCUD1", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR=)" }
             {  "1",  "SCUD2", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR=)" }
             {  "2",  "SCUD3", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR=)" }
