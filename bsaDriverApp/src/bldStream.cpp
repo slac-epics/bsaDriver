@@ -25,6 +25,15 @@
 #define  IDX_SERVICE_MASK     5
 #define  BSSS_SERVICE_MASK    0x1ff
 
+#define  BSAS_IDTF_LOC        31
+#define  BSAS_IDTF_MASK       (0x1 << BSAS_IDTF_LOC)
+#define  BSAS_TBLCNT_LOC      20
+#define  BSAS_TBLCNT_MASK     (0xf << BSAS_TBLCNT_LOC)
+#define  BSAS_TBLID_LOC       16
+#define  BSAS_TBLID_MASK      (0Xf < <BSAS_TBLID_LOC)
+#define  BSAS_ROWNUM_LOC      0
+#define  BSAS_ROWNUM_MASK     (0xffff<<0BSAS_ROWNUM_LOC)
+
 static ELLLIST *pDrvEllList = NULL;
 
 typedef struct {
@@ -35,11 +44,14 @@ typedef struct {
     unsigned        read_count;
     unsigned        bld_count;
     unsigned        bsss_count;
+    unsigned        bsas_count;
 
     void (*bsss_callback)(void *, void *, unsigned);
     void *pUsrBsss;
     void (*bld_callback)(void *, void *, unsigned);
     void *pUsrBld;
+    void (*bsas_callback)(void *, void *, unsigned);
+    void *pUsrBsas;
 
     ELLLIST         *free_list;
 
@@ -88,9 +100,12 @@ static pDrvList_t *get_drvNode(const char *named_root)
         p->pUsrBsss      = NULL;
         p->bld_callback  = NULL;
         p->pUsrBld       = NULL;
+        p->bsas_callback = NULL;
+        p->pUsrBsas      = NULL;
         p->read_count = 0;
         p->bld_count  = 0;
         p->bsss_count = 0;
+        p->bsas_count = 0;
         p->p_last_buff   = NULL;
         p->free_list = (ELLLIST*) mallocMustSucceed(sizeof(ELLLIST), "bldStream drivr: get_drvNode()");
         ellInit(p->free_list);
@@ -119,11 +134,16 @@ static void listener(pDrvList_t *p)
         p->p_last_buff = (void*) (np->buff);
 
         uint32_t  *pu32 = (uint32_t *) (p->p_last_buff);
-        if(pu32[IDX_SERVICE_MASK] & BSSS_SERVICE_MASK) {
+
+        if(pu32[IDX_SERVICE_MASK] & BSAS_IDTF_MASK) {   /* bsas */
+            p->bsas_count++;
+            if(p->bsas_callback) (p->bsas_callback)(p->pUsrBsas, p->p_last_buff, p->read_size);
+        }
+        else if(pu32[IDX_SERVICE_MASK] & BSSS_SERVICE_MASK) { /* bsss */
             p->bsss_count++;
             if(p->bsss_callback) (p->bsss_callback)(p->pUsrBsss, p->p_last_buff, p->read_size);
         }
-        else {
+        else {  /* bld */
             p->bld_count++;
             if(p->bld_callback) (p->bld_callback)(p->pUsrBld, p->p_last_buff, p->read_size);
         }
@@ -173,6 +193,17 @@ int registerBldCallback(const char *named_root, void (*bld_callback)(void*, void
     return 0;
 }
 
+int registerBsasCallback(const char *named_root, void (*bsas_callback)(void *, void*, unsigned), void *pUsrBsas)
+{
+    pDrvList_t *p = get_drvNode(named_root);
+    p->bsas_callback = bsas_callback;
+    p->pUsrBsas      = pUsrBsas;
+
+    if(!p->listener_name) createListener(p);
+
+    return 0;
+}
+
 
 static void show_last_buffer(void *p, unsigned size)
 {
@@ -213,10 +244,13 @@ static int bldStreamDriverReport(int interest)
         printf("\t  read count : %u\n", p->read_count);
         printf("\t  bld count  : %u\n", p->bld_count);
         printf("\t  bsss count : %u\n", p->bsss_count);
+        printf("\t  bsas count : %u\n", p->bsas_count);
         printf("\t  bld callback : %p\n", p->bld_callback);
         printf("\t  bld_usr      : %p\n", p->pUsrBld);
         printf("\t  bsss_callback: %p\n", p->bsss_callback);
         printf("\t  bsss_usr     : %p\n", p->pUsrBsss);
+        printf("\t  bsas_callback: %p\n", p->bsas_callback);
+        printf("\t  bsas_usr     : %p\n", p->pUsrBsas);
         printf("\t  free list    : %p\n", p->free_list);
 
         if(interest && p->p_last_buff) show_last_buffer(p->p_last_buff, p->read_size);
