@@ -18,6 +18,7 @@
 
 int registerBsssCallback(const char *named_root, void (*bsss_callback)(void *pUsr, void *buff, unsigned size), void *pUsr);
 int registerBldCallback(const char *named_root, void (*bld_callback)(void *pUsr, void *buff, unsigned size), void *pUsr);
+int registerBsasCallback(const char *named_root, void(*bsas_callback)(void *pUsr, void *buff, unsigned isze), void *PUsr);
 
 
 #endif /* BLD_STREAM_H */
