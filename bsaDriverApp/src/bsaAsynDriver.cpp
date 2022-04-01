@@ -345,7 +345,7 @@ BsaPvArray::BsaPvArray(unsigned array, const std::vector <Bsa::Pv*>& pvs, int p_
 void BsaPvArray::reset(unsigned sec, unsigned nsec)
 {
 
-    printf("BsaPvArray::reset\n");
+//    printf("BsaPvArray::reset\n");
 
     _ts_sec = sec;
     _ts_nsec = nsec;
