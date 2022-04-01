@@ -2,6 +2,7 @@ R2.1.0      Feb 22, 2022
             - enable type conversion to support float32/uint32/int32
             - support global PVs for BSSS Rate Controls
             - add macros $(SECN), $(EGU), $(ADEL), $(HOPR) and $(LOPR) for BSSS scalar
+            - workaround for the off by one issue on the BSSS edef severity
 
 R2.0.0      Dec 6, 2021
             - support Beam Synchronous Scalar Service (BSSS)
