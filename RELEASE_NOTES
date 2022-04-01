@@ -1,5 +1,6 @@
 R2.1.0-prep-bsas   March 30, 2022      Kukhee Kim (khkim)
             - branch out from R2.1.0 for developing/testing BSAS
+            - build against timing/bsa R2.0.0-prep-bsas for developing
 
 
 R2.1.0      Feb 22, 2022
