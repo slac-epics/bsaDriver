@@ -337,7 +337,7 @@ asynStatus bsssAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
             goto done;
         }
         else if(function == p_channelSevr[i]) {
-            pBsss->setChannelSevr(i, (uint64_t) value);
+            pBsss->setChannelSevr(i, (uint64_t) (value?value-1:value));
             goto done;
         }
     }
