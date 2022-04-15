@@ -18,6 +18,7 @@ INCLUDES += $(addprefix -I,$(BSA_INCLUDE))
 
 INC += bsaAsynDriver.h
 INC += bsssAsynDriver.h
+INC += bsasAsynDriver.h
 DBD += bsaAsynDriver.dbd
 
 
@@ -27,6 +28,7 @@ bsaDriver_DBD += bsaAsynDriver.dbd
 bsaDriver_SRCS += bldStream.cpp
 bsaDriver_SRCS += bsaAsynDriver.cpp
 bsaDriver_SRCS += bsssAsynDriver.cpp
+bsaDriver_SRCS += bsasAsynDriver.cpp
 
 cpsw_DIR = $(CPSW_FRAMEWORK_LIB)
 bsaDriver_LIBS += cpsw
