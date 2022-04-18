@@ -186,6 +186,7 @@ bsssAsynDriver::bsssAsynDriver(const char *portName, const char *reg_path, const
         return;
     }
     this->pBsss = new Bsss::BsssYaml(reg_);  /* create API interface */
+    channelSevr = 0;
 
     SetupAsynParams();
 
@@ -295,6 +296,20 @@ void bsssAsynDriver::SetDest(int chn)
     }
 }
 
+void bsssAsynDriver::SetChannelSevr(int chn, int sevr)
+{
+    uint64_t mask = 0x3 << (chn*2);
+
+    channelSevr &= ~mask;
+    channelSevr |= (uint64_t(sevr) << (chn*2)) & mask;
+
+}
+
+int bsssAsynDriver::GetChannelSevr(int chn)
+{
+   return int((channelSevr >> (chn *2)) & 0x3);
+}
+
 void bsssAsynDriver::MonitorStatus(void)
 {
     uint32_t v;
@@ -337,7 +352,7 @@ asynStatus bsssAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
             goto done;
         }
         else if(function == p_channelSevr[i]) {
-            pBsss->setChannelSevr(i, (uint64_t) (value?value-1:value));
+            SetChannelSevr(i, value);
             goto done;
         }
     }
@@ -382,7 +397,7 @@ void bsssAsynDriver::bsssCallback(void *p, unsigned size)
      float    *p_float32   = (float*)(buf + IDX_DATA);
      double   val;
      uint32_t service_mask = buf[IDX_SVC_MASK];
-     uint32_t valid_mask   = buf[IDX_VALID_MASK(size)];
+     uint64_t sevr_mask    = *(uint64_t*) (buf+IDX_SEVR_MASK(size));
      uint64_t pulse_id     = ((uint64_t)(buf[IDX_PIDU])) << 32 | buf[IDX_PIDL];
 
      epicsTimeStamp _ts;
@@ -392,7 +407,6 @@ void bsssAsynDriver::bsssCallback(void *p, unsigned size)
 
 
      bsssList_t *plist = (bsssList_t *) ellFirst(pBsssEllList);
-     int chn_mask = 0x1;
      int data_chn = 0;
      while(plist) {
          for(int i = 0, svc_mask = 0x1; i < NUM_BSSS_CHN; i++, svc_mask <<= 1) {
@@ -401,7 +415,7 @@ void bsssAsynDriver::bsssCallback(void *p, unsigned size)
 
                  setDoubleParam(plist->p_bsss[i], INFINITY);   // make asyn PV update even posting the same value with previous
 
-                 if(valid_mask & chn_mask) {  // data update for valid mask
+                 if(((sevr_mask >> (data_chn*2)) & 0x3) <= GetChannelSevr(data_chn) ) {  // data update for valid mask
                      switch(plist->type){
                          case int32_bsss:
                              val = (double) (p_int32[data_chn]);
@@ -425,7 +439,6 @@ void bsssAsynDriver::bsssCallback(void *p, unsigned size)
          }
 
          plist = (bsssList_t *) ellNext(&plist->node);  // evolve to next data channel
-         chn_mask <<= 1;  // evolve mask bit to next data channel
          data_chn++;      // evolve data channel number to next channel
      }
      

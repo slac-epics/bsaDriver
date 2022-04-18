@@ -26,7 +26,7 @@
 #define IDX_PIDU 3
 #define IDX_SVC_MASK 5
 #define IDX_DATA 6
-#define IDX_VALID_MASK(size)  (size/4 -1)
+#define IDX_SEVR_MASK(size)  (size/4 -2)
 
 typedef enum {
     int32_bsss,
@@ -65,13 +65,17 @@ class bsssAsynDriver: asynPortDriver {
         void bsssCallback(void *p, unsigned size);
 
     private:
+
+        uint64_t channelSevr;        
+
         ELLLIST *pBsssEllList;
         Bsss::BsssYaml *pBsss;
-        
 
         void SetupAsynParams(void);
         void SetRate(int chn);
         void SetDest(int chn);
+        void SetChannelSevr(int chn, int sevr);
+        int  GetChannelSevr(int chn);
 
 
     protected:
