@@ -206,7 +206,7 @@ bsasAsynDriver::bsasAsynDriver(const char *portName, const char *reg_path, const
             printf("BSAS driver: could not find module %s\n", module_name);
             return;
         }
-        this->pBsas[i] = new Bsas::BsasModuleYaml(reg_bsas);  /* create API interface */
+        this->pBsas[i] = new Bsas::BsasModuleYaml(reg_module);  /* create API interface */
     }
 
     SetupAsynParams();
