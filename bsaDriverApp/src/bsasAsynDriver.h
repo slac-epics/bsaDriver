@@ -45,6 +45,7 @@ typedef enum {
 typedef struct {
     ELLNODE               node;
     char                  bsas_name[64];
+    char                  pv_name[128];
 
     int                   p_firstParam;
     int                   p_ts[NUM_BSAS_MODULES];

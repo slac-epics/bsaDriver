@@ -119,6 +119,7 @@ static int bsasAdd(const char *bsasKey, bsasDataType_t type, double *slope, doub
 
     bsasList_t *p = (bsasList_t *) mallocMustSucceed(sizeof(bsasList_t) , "bsasAsynDriver (bsasAdd)");
     strcpy(p->bsas_name, bsasKey);
+    p->pv_name[0] = '\0';
     for(int i = 0; i < NUM_BSAS_MODULES; i++) {
         p->p_ts[i] = -1;    p->pname_ts[i][0]  = '\0';
         p->p_pid[i] = -1;   p->pname_pid[i][0] = '\0';
@@ -140,7 +141,7 @@ static int bsasAdd(const char *bsasKey, bsasDataType_t type, double *slope, doub
 
 
 
-static int associateBsasChannels(const char *port_name)
+static int associateBsaChannels(const char *port_name)
 {
     ELLLIST *pBsaEllList = find_bsaChannelList(port_name);
 
@@ -211,6 +212,12 @@ bsasAsynDriver::bsasAsynDriver(const char *portName, const char *reg_path, const
     SetupAsynParams();
     registerBsasCallback(named_root, bsas_callback, (void *) this);
 }
+
+
+bsasAsynDriver::~bsasAsynDriver()
+{
+}
+
 
 asynStatus bsasAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
 {
@@ -405,6 +412,105 @@ void bsasAsynDriver::bsasCallback(void *p, unsigned size)
 {
 }
 
+
+extern "C" {
+
+
+int bsasAsynDriverConfigure(const char *portName, const char *reg_path, const char *named_root)
+{
+    pDrvList_t *pl = find_drvByPort(portName);
+    if(!pl) {
+        pl = find_drvLast();
+        if(pl) {
+            if(!pl->port_name && !pl->named_root && !pl->pBsasDrv) pl->port_name = epicsStrDup(portName);
+            else pl = NULL;
+        }
+    }
+
+    if(!pl) {
+        printf("BSAS list never been configured for port (%s)\n", portName);
+        return -1;
+    }
+
+    pl->named_root = (named_root && strlen(named_root))? epicsStrDup(named_root): cpswGetRootName();
+
+    if(!pl->pBsasEllList) return -1;
+
+    int i = 0;
+    bsasList_t *p = (bsasList_t *) ellFirst(pl->pBsasEllList);
+    while(p) {
+        i += (int) (&p->p_lastParam - &p->p_firstParam -1);
+        p = (bsasList_t *) ellNext(&p->node);
+    }    /* calculate number of dynamic parameters */
+
+
+    pl->port_name = epicsStrDup(portName);
+    pl->reg_path  = epicsStrDup(reg_path);
+    pl->pBsasDrv  = new bsasAsynDriver(portName, reg_path, i, pl->pBsasEllList, pl->named_root);
+
+    return 0;
+}
+
+
+static const iocshArg initArg0 = {"port name",                                            iocshArgString};
+static const iocshArg initArg1 = {"register path (which should be described in yaml): ",  iocshArgString};
+static const iocshArg initArg2 = {"named_root (optional)",                                iocshArgString};
+static const iocshArg *const initArgs[] = { &initArg0,
+                                            &initArg1, 
+                                            &initArg2 };
+static const iocshFuncDef initFuncDef = {"bsasAsynDriverConfigure", 3, initArgs};
+static void initCallFunc(const iocshArgBuf *args)
+{
+    bsasAsynDriverConfigure(args[0].sval,                                                   /* port name */
+                            args[1].sval,                                                   /* register path */
+                            (args[2].sval && strlen(args[2].sval))? args[2].sval: NULL);    /* named root */
+}
+
+static const iocshArg associateArg0 = {"bsa port", iocshArgString};
+static const iocshArg * const associateArgs[] = { &associateArg0 };
+static const iocshFuncDef associateFuncDef = {"bsasAssociateBsaChannels", 1, associateArgs};
+static void associateCallFunc(const iocshArgBuf *args)
+{
+    associateBsaChannels(args[0].sval);
+}
+
+void bsasAsynDriverRegister(void)
+{
+    iocshRegister(&initFuncDef,      initCallFunc);
+    iocshRegister(&associateFuncDef, associateCallFunc);
+}
+
+epicsExportRegistrar(bsasAsynDriverRegister);
+
+
+
+/* EPICS driver support for bsasAsynDriver */
+
+static int bsasAsynDriverReport(int interest);
+static int bsasAsynDriverInitialize(void);
+
+static struct drvet bsasAsynDriver = {
+    2, 
+    (DRVSUPFUN) bsasAsynDriverReport,
+    (DRVSUPFUN) bsasAsynDriverInitialize
+};
+
+epicsExportAddress(drvet, bsasAsynDriver);
+
+static int bsasAsynDriverReport(int interest)
+{
+
+    return 0;
+}
+
+
+static int bsasAsynDriverInitialize(void)
+{
+
+    return 0;
+}
+
+}    /* extern C */
 
 
 
