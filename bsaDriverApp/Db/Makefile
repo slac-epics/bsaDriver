@@ -18,6 +18,7 @@ DB += bsa.db
 DB += bsss.db
 DB += bsssCtrl.db
 DB += bsssCtrl_localTest.db
+DB += bsasCtrl_localTest.db
 
 
 # =======================================================================
