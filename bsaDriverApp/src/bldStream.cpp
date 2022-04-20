@@ -19,6 +19,10 @@
 #include <yamlLoader.h>
 #include "bldStream.h"
 
+#define  BLD_PACKET  1
+#define  BSSS_PACKET 2
+#define  BSAS_PACKET 3
+
 #define  MAX_FREE_LIST 8
 #define  MAX_BUFF_SIZE 4096
 
@@ -35,6 +39,13 @@
 #define  BSAS_ROWNUM_MASK     (0xffff<<0BSAS_ROWNUM_LOC)
 
 static ELLLIST *pDrvEllList = NULL;
+
+typedef enum {
+    none,
+    bld_packet,
+    bsss_packet,
+    bsas_packet
+} packet_type_t;
 
 typedef struct {
     ELLNODE         node;
@@ -61,6 +72,8 @@ typedef struct {
 
 typedef struct {
     ELLNODE         node;
+    packet_type_t   type;
+    unsigned        size;
     char            buff[MAX_BUFF_SIZE];
 } pBuff_t;
 
@@ -131,21 +144,25 @@ static void listener(pDrvList_t *p)
         pBuff_t *np = (pBuff_t *) ellFirst(p->free_list);
         ellDelete(p->free_list, &np->node);
         p->read_size = bld_stream->read((uint8_t*)(np->buff), MAX_BUFF_SIZE, CTimeout());
-        p->p_last_buff = (void*) (np->buff);
+        np->size = p->read_size;
+        p->p_last_buff = (void*) np;
 
-        uint32_t  *pu32 = (uint32_t *) (p->p_last_buff);
+        uint32_t  *pu32 = (uint32_t *) np->buff;
 
         if(pu32[IDX_SERVICE_MASK] & BSAS_IDTF_MASK) {   /* bsas */
             p->bsas_count++;
-            if(p->bsas_callback) (p->bsas_callback)(p->pUsrBsas, p->p_last_buff, p->read_size);
+            np->type = bsas_packet;
+            if(p->bsas_callback) (p->bsas_callback)(p->pUsrBsas, (void *) np->buff, np->size);
         }
         else if(pu32[IDX_SERVICE_MASK] & BSSS_SERVICE_MASK) { /* bsss */
             p->bsss_count++;
-            if(p->bsss_callback) (p->bsss_callback)(p->pUsrBsss, p->p_last_buff, p->read_size);
+            np->type = bsss_packet;
+            if(p->bsss_callback) (p->bsss_callback)(p->pUsrBsss, (void *) np->buff, np->size);
         }
         else {  /* bld */
             p->bld_count++;
-            if(p->bld_callback) (p->bld_callback)(p->pUsrBld, p->p_last_buff, p->read_size);
+            np->type = bld_packet;
+            if(p->bld_callback) (p->bld_callback)(p->pUsrBld, (void *) np->buff, np->size);
         }
 
         p->read_count++;
@@ -205,18 +222,38 @@ int registerBsasCallback(const char *named_root, void (*bsas_callback)(void *, v
 }
 
 
-static void show_last_buffer(void *p, unsigned size)
+static void show_bsss_buffer(void *p, unsigned size)
 {
     uint32_t *buff = (uint32_t *) p;
+    uint64_t *psv  = (uint64_t *) (buff + (size/4) -2);
 
-    printf("\t\t >>>>valid mask<<<: %x\n", *(buff +(size/4) -1)); 
-
+    printf("\t\t --------------------------------\n");
+    printf("\t\t BSSSS Packet: size(%d)\n", size);
+    printf("\t\t --------------------------------\n");
     printf("\t\t timestamp, nsec  : %8x\n", *(buff++));
     printf("\t\t timestamp, sec   : %8x\n", *(buff++));
     printf("\t\t pulse id, lower  : %8x\n", *(buff++));
     printf("\t\t pulse id, upper  : %8x\n", *(buff++));
     printf("\t\t channel mask     : %8x\n", *(buff++));
     printf("\t\t service mask     : %8x\n", *(buff++));
+    printf("\t\t severity mask    : %16x\n", *psv); 
+}
+
+
+static void show_bsas_buffer(void *p, unsigned size)
+{
+
+    printf("\t\t --------------------------------\n");
+    printf("\t\t BSAS Packet: size(%d)\n", size);
+    printf("\t\t --------------------------------\n");
+}
+
+static void show_bld_buffer(void *p, unsigned size)
+{
+
+    printf("\t\t --------------------------------\n");
+    printf("\t\t BLD Packet: size(%d)\n", size);
+    printf("\t\t --------------------------------\n");
 }
 
 extern "C" {
@@ -253,7 +290,21 @@ static int bldStreamDriverReport(int interest)
         printf("\t  bsas_usr     : %p\n", p->pUsrBsas);
         printf("\t  free list    : %p\n", p->free_list);
 
-        if(interest && p->p_last_buff) show_last_buffer(p->p_last_buff, p->read_size);
+        if(interest && p->p_last_buff) {
+            pBuff_t  *np = (pBuff_t *) p->p_last_buff;
+
+            switch(np->type) {
+                case bsas_packet:
+                    show_bsas_buffer(np->buff, np->size);
+                    break;
+                case bsss_packet:
+                    show_bsss_buffer(np->buff, np->size);
+                    break;
+                case bld_packet:
+                    show_bld_buffer(np->buff, np->size);
+                    break;
+            }
+        }
 
         p = (pDrvList_t *) ellNext(&p->node);
     }
