@@ -360,6 +360,16 @@ void BsaPvArray::reset(unsigned sec, unsigned nsec)
 
 }
 
+void BsaPvArray::set(unsigned sec, unsigned nsec)
+{
+    _ts_sec = sec;
+    _ts_nsec = nsec;
+
+    for(unsigned i = 0; i < _pvs.size(); i++) {
+        _pvs[i]->setTimestamp(_ts_sec, _ts_nsec);
+    }
+}
+
 
 void BsaPvArray::append(uint64_t pulseId)
 {
