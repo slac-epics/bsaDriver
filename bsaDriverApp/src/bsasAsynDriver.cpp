@@ -261,7 +261,7 @@ void bsasAsynDriver::SetupAsynParams(void)
                                 (const char *)PARAM_TBLRESET_STR };
 
     for(int i = 0; i < NUM_BSAS_MODULES; i++) {
-        for(int j = 0; j < sizeof(param_str); j++) {
+        for(int j = 0; j < sizeof(param_str)/sizeof(const char *); j++) {
             sprintf(param_name, EDEFENABLE_STR, i, param_str[j]); createParam(param_name, asynParamInt32, &p_module[i].idx.p_idx[j].p_edefEnable);
             sprintf(param_name, RATEMODE_STR,   i, param_str[j]); createParam(param_name, asynParamInt32, &p_module[i].idx.p_idx[j].p_rateMode);
             sprintf(param_name, FIXEDRATE_STR,  i, param_str[j]); createParam(param_name, asynParamInt32, &p_module[i].idx.p_idx[j].p_fixedRate);
