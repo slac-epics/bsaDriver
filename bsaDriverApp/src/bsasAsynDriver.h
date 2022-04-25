@@ -20,6 +20,7 @@
 
 #include <BsasYaml.hh>
 
+#define PVNAME_LEN              128
 
 #define NUM_BSAS_DATA_MAX       31
 #define NUM_BSAS_MODULES        4
@@ -45,7 +46,7 @@ typedef enum {
 typedef struct {
     ELLNODE               node;
     char                  bsas_name[64];
-    char                  pv_name[128];
+    char                  pv_name[PVNAME_LEN];
 
     int                   p_firstParam;
     int                   p_ts[NUM_BSAS_MODULES];
@@ -55,19 +56,21 @@ typedef struct {
     int                   p_rms[NUM_BSAS_MODULES];
     int                   p_min[NUM_BSAS_MODULES];
     int                   p_max[NUM_BSAS_MODULES];
+    int                   p_val[NUM_BSAS_MODULES];
     int                   p_lastParam;
 
     bsasDataType_t        type;
     double                *pslope;
     double                *poffset;
 
-    char                  pname_ts[NUM_BSAS_MODULES][64];
-    char                  pname_pid[NUM_BSAS_MODULES][64];
-    char                  pname_cnt[NUM_BSAS_MODULES][64];
-    char                  pname_avg[NUM_BSAS_MODULES][64];
-    char                  pname_rms[NUM_BSAS_MODULES][64];
-    char                  pname_min[NUM_BSAS_MODULES][64];
-    char                  pname_max[NUM_BSAS_MODULES][64];
+    char                  pname_ts[PVNAME_LEN];
+    char                  pname_pid[PVNAME_LEN];
+    char                  pname_cnt[PVNAME_LEN];
+    char                  pname_avg[PVNAME_LEN];
+    char                  pname_rms[PVNAME_LEN];
+    char                  pname_min[PVNAME_LEN];
+    char                  pname_max[PVNAME_LEN];
+    char                  pname_val[PVNAME_LEN];
 } bsasList_t;
 
 
@@ -98,6 +101,35 @@ typedef union {
     ctrlName_asynParam_t  name;
     ctrlIdx_asynParam_t   idx;
 } module_asynParam_t;
+
+
+typedef struct __attribute__ ((packed)) {
+    uint64_t timestamp:    64;
+    uint64_t pulse_id:     64;
+    uint32_t channelMask:  32;
+    uint16_t row_number:   16;
+    uint8_t  table_count:   4;
+    uint8_t  edef_index:    4;
+    uint8_t  byte_pad:      8;
+} header_t;     /*  24 bytes header */
+
+typedef struct __attribute__ ((packed)) {
+    uint16_t sample_count: 13;
+    bool     exception_sum: 1;
+    bool     exception_var: 1;
+    bool     flag_fixed:    1;
+    uint32_t val:          32;
+    uint32_t sum:          32;
+    uint32_t sum_square:   32;
+    uint32_t min:          32;
+    uint32_t max:          32;       
+} payload_t;     /* 22 bytes payload for each channel */
+
+typedef struct __attribute__((packed)) {
+    header_t      hd;
+    payload_t     pl[];
+} packet_t;
+
 
 
 class bsasAsynDriver: asynPortDriver {

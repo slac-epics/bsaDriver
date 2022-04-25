@@ -121,20 +121,77 @@ static int bsasAdd(const char *bsasKey, bsasDataType_t type, double *slope, doub
     strcpy(p->bsas_name, bsasKey);
     p->pv_name[0] = '\0';
     for(int i = 0; i < NUM_BSAS_MODULES; i++) {
-        p->p_ts[i] = -1;    p->pname_ts[i][0]  = '\0';
-        p->p_pid[i] = -1;   p->pname_pid[i][0] = '\0';
-        p->p_cnt[i] = -1;   p->pname_cnt[i][0] = '\0';
-        p->p_avg[i] = -1;   p->pname_avg[i][0] = '\0';
-        p->p_rms[i] = -1;   p->pname_rms[i][0] = '\0';
-        p->p_min[i] = -1;   p->pname_min[i][0] = '\0';
-        p->p_max[i] = -1;   p->pname_max[i][0] = '\0';
+        p->p_ts[i] = -1;
+        p->p_pid[i] = -1;
+        p->p_cnt[i] = -1;
+        p->p_avg[i] = -1;
+        p->p_rms[i] = -1;
+        p->p_min[i] = -1;
+        p->p_max[i] = -1;
+        p->p_val[i] = -1;
     }
+
+    p->pname_ts[0]  = '\0';
+    p->pname_pid[0] = '\0';
+    p->pname_cnt[0] = '\0';
+    p->pname_avg[0] = '\0';
+    p->pname_rms[0] = '\0';
+    p->pname_min[0] = '\0';
+    p->pname_max[0] = '\0';
+    p->pname_val[0] = '\0';
 
     p->type    = type;
     p->pslope  = slope;
     p->poffset = offset;
 
     ellAdd(pl->pBsasEllList, &p->node);
+
+    return 0;
+}
+
+static int bsasPVName(const char *bsasKey, const char *pv_name)
+{
+    pDrvList_t *pl = find_drvLast();
+
+    if(pl) {
+        if(pl->pBsasDrv || (pl->port_name && strlen(pl->port_name))) pl = NULL;
+    }
+
+    if(!pl) {
+        printf("No BSAS data channel list is available\n");
+        return 0;
+    }
+
+    if(!pl->pBsasEllList) {
+        printf("Internal issue on the BSAS data channe list\n");
+        return 0;
+    }
+
+    bsasList_t *p = (bsasList_t *) ellFirst(pl->pBsasEllList);
+    while(p) {
+        if(!strcmp(p->bsas_name, bsasKey)) break;
+        p = (bsasList_t *) ellNext(&p->node);
+    }
+
+    if(!p) {
+        printf("Could not find the BSAS name: (%s)\n", bsasKey);
+        return 0;
+    }
+
+    if(p->pv_name[0]) {
+        printf("The BSAS (%s) already has PV name(%s)\n", p->bsas_name, p->pv_name);
+        return 0;
+    }
+
+    sprintf(p->pv_name,   "%s",     pv_name);
+    sprintf(p->pname_ts,  "%s.TS",  pv_name);
+    sprintf(p->pname_pid, "%s.PID", pv_name);
+    sprintf(p->pname_cnt, "%s.CNT", pv_name);
+    sprintf(p->pname_avg, "%s.AVG", pv_name);
+    sprintf(p->pname_rms, "%s.RMS", pv_name);
+    sprintf(p->pname_min, "%s.MIN", pv_name);
+    sprintf(p->pname_max, "%s.MAX", pv_name);
+    sprintf(p->pname_val, "%s.VAL", pv_name);
 
     return 0;
 }
@@ -474,10 +531,23 @@ static void associateCallFunc(const iocshArgBuf *args)
     associateBsaChannels(args[0].sval);
 }
 
+
+static const iocshArg baseNameArg0 = {"bsss name",           iocshArgString};
+static const iocshArg baseNameArg1 = {"base name (PV name)", iocshArgString};
+static const iocshArg *const baseNameArgs[] = { &baseNameArg0,
+                                                &baseNameArg1 };
+static const iocshFuncDef baseNameFuncDef = {"bsasBaseName", 2, baseNameArgs};
+static void baseNameCallFunc(const iocshArgBuf *args)
+{
+    bsasPVName(args[0].sval, args[1].sval);
+}
+
+
 void bsasAsynDriverRegister(void)
 {
     iocshRegister(&initFuncDef,      initCallFunc);
     iocshRegister(&associateFuncDef, associateCallFunc);
+    iocshRegister(&baseNameFuncDef,  baseNameCallFunc);
 }
 
 epicsExportRegistrar(bsasAsynDriverRegister);
