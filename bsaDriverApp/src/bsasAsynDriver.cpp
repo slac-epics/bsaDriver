@@ -13,6 +13,7 @@
 #include <sstream>
 
 
+
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -224,7 +225,12 @@ static void bsas_callback(void *pUsr, void *buf, unsigned size)
 
 
 
-bsasAsynDriver::bsasAsynDriver(const char *portName, const char *reg_path, const int num_dyn_param, ELLLIST *pBsasEllList,  const char *named_root)
+bsasAsynDriver::bsasAsynDriver(const char *portName, const char *reg_path, const int num_dyn_param, ELLLIST *pBsasEllList,
+                               const char *ntTable_name1,
+                               const char *ntTable_name2,
+                               const char *ntTable_name3,
+                               const char *ntTable_name4,
+                               const char *named_root)
     : asynPortDriver(portName,
                                         1,  /* number of elements of this device */
 #if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 | 32)
@@ -266,6 +272,26 @@ bsasAsynDriver::bsasAsynDriver(const char *portName, const char *reg_path, const
         this->pBsas[i] = new Bsas::BsasModuleYaml(reg_module);  /* create API interface */
     }
 
+
+    strcpy(ntTableName[0], ntTable_name1);
+    strcpy(ntTableName[1], ntTable_name2);
+    strcpy(ntTableName[2], ntTable_name3);
+    strcpy(ntTableName[3], ntTable_name4);
+
+    this->channelMask = 0;
+    activeChannels = new std::vector<void *>;
+    bsasList_t *p = (bsasList_t *) ellFirst(this->pBsasEllList);
+    int i = 0;
+    while(p) {
+        if(p->pv_name[0]) {
+            this->channelMask |= (0x1) <<i;
+            activeChannels->push_back((void *) p);
+        }
+        i++;
+        p = (bsasList_t *) ellNext(&p->node);
+    }
+    
+    printf("channel maksk: %8.8x, (%d)\n", this->channelMask, activeChannels->size());
     SetupAsynParams();
     registerBsasCallback(named_root, bsas_callback, (void *) this);
 }
@@ -473,7 +499,12 @@ void bsasAsynDriver::bsasCallback(void *p, unsigned size)
 extern "C" {
 
 
-int bsasAsynDriverConfigure(const char *portName, const char *reg_path, const char *named_root)
+int bsasAsynDriverConfigure(const char *portName, const char *reg_path,
+                            const char *ntTable_name1,
+                            const char *ntTable_name2,
+                            const char *ntTable_name3,
+                            const char *ntTable_name4,
+                            const char *named_root)
 {
     pDrvList_t *pl = find_drvByPort(portName);
     if(!pl) {
@@ -503,7 +534,12 @@ int bsasAsynDriverConfigure(const char *portName, const char *reg_path, const ch
 
     pl->port_name = epicsStrDup(portName);
     pl->reg_path  = epicsStrDup(reg_path);
-    pl->pBsasDrv  = new bsasAsynDriver(portName, reg_path, i, pl->pBsasEllList, pl->named_root);
+    pl->pBsasDrv  = new bsasAsynDriver(portName, reg_path, i, pl->pBsasEllList,
+                                       ntTable_name1,
+                                       ntTable_name2,
+                                       ntTable_name3,
+                                       ntTable_name4,
+                                       pl->named_root);
 
     return 0;
 }
@@ -511,16 +547,28 @@ int bsasAsynDriverConfigure(const char *portName, const char *reg_path, const ch
 
 static const iocshArg initArg0 = {"port name",                                            iocshArgString};
 static const iocshArg initArg1 = {"register path (which should be described in yaml): ",  iocshArgString};
-static const iocshArg initArg2 = {"named_root (optional)",                                iocshArgString};
+static const iocshArg initArg2 = {"NTTable Name 1: ",                                     iocshArgString};
+static const iocshArg initArg3 = {"NTTable Name 2: ",                                     iocshArgString};
+static const iocshArg initArg4 = {"NTTable Name 3: ",                                     iocshArgString};
+static const iocshArg initArg5 = {"NTTable name 4: ",                                     iocshArgString};
+static const iocshArg initArg6 = {"named_root (optional)",                                iocshArgString};
 static const iocshArg *const initArgs[] = { &initArg0,
-                                            &initArg1, 
-                                            &initArg2 };
-static const iocshFuncDef initFuncDef = {"bsasAsynDriverConfigure", 3, initArgs};
+                                            &initArg1,
+                                            &initArg2, 
+                                            &initArg3, 
+                                            &initArg4, 
+                                            &initArg5, 
+                                            &initArg6 };
+static const iocshFuncDef initFuncDef = {"bsasAsynDriverConfigure", 7, initArgs};
 static void initCallFunc(const iocshArgBuf *args)
 {
     bsasAsynDriverConfigure(args[0].sval,                                                   /* port name */
                             args[1].sval,                                                   /* register path */
-                            (args[2].sval && strlen(args[2].sval))? args[2].sval: NULL);    /* named root */
+                            args[2].sval,                                                   /* NTTable name 1 */
+                            args[3].sval,                                                   /* NTTable name 2 */
+                            args[4].sval,                                                   /* NTTable name 3 */
+                            args[5].sval,                                                   /* NTTable name 4 */
+                            (args[6].sval && strlen(args[6].sval))? args[6].sval: NULL);    /* named root */
 }
 
 static const iocshArg associateArg0 = {"bsa port", iocshArgString};

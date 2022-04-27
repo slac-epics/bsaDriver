@@ -10,6 +10,7 @@
 #include <new>
 #include <arpa/inet.h>
 #include <sstream>
+#include <vector>
 
 #include <asynPortDriver.h>
 #include <epicsEvent.h>
@@ -45,7 +46,7 @@ typedef enum {
 
 typedef struct {
     ELLNODE               node;
-    char                  bsas_name[64];
+    char                  bsas_name[PVNAME_LEN];
     char                  pv_name[PVNAME_LEN];
 
     int                   p_firstParam;
@@ -126,15 +127,20 @@ typedef struct __attribute__ ((packed)) {
 } payload_t;     /* 22 bytes payload for each channel */
 
 typedef struct __attribute__((packed)) {
-    header_t      hd;
-    payload_t     pl[];
+    header_t      hd;      // bsas header
+    payload_t     pl[];    // bsas payloader (arbitrary length
 } packet_t;
 
 
 
 class bsasAsynDriver: asynPortDriver {
     public:
-        bsasAsynDriver(const char *portName, const char *reg_path, const int num_dyn_param, ELLLIST *pBsasList, const char *named_root = NULL);
+        bsasAsynDriver(const char *portName, const char *reg_path, const int num_dyn_param, ELLLIST *pBsasList, 
+                       const char *ntTable_name1,
+                       const char *ntTable_name2,
+                       const char *ntTable_name3,
+                       const char *ntTable_name4,
+                       const char *named_root = NULL);
         ~bsasAsynDriver();
 
         asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
@@ -142,6 +148,10 @@ class bsasAsynDriver: asynPortDriver {
     private:
         ELLLIST                 *pBsasEllList;
         Bsas::BsasModuleYaml    *pBsas[NUM_BSAS_MODULES];
+
+        char              ntTableName[NUM_BSAS_MODULES][PVNAME_LEN];
+        uint32_t          channelMask;
+        std::vector <void *> *activeChannels;
 
         void              SetupAsynParams(void);
         void              SetRate(int module, ctrlIdx_t ctrl);
