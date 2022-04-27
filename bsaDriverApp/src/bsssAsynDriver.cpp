@@ -396,6 +396,7 @@ void bsssAsynDriver::bsssCallback(void *p, unsigned size)
      int32_t  *p_int32     = (int32_t *) (buf + IDX_DATA);
      float    *p_float32   = (float*)(buf + IDX_DATA);
      double   val;
+     uint32_t channel_mask = buf[IDX_CHN_MASK];
      uint32_t service_mask = buf[IDX_SVC_MASK];
      uint64_t sevr_mask    = *(uint64_t*) (buf+IDX_SEVR_MASK(size));
      uint64_t pulse_id     = ((uint64_t)(buf[IDX_PIDU])) << 32 | buf[IDX_PIDL];
@@ -408,7 +409,10 @@ void bsssAsynDriver::bsssCallback(void *p, unsigned size)
 
      bsssList_t *plist = (bsssList_t *) ellFirst(pBsssEllList);
      int data_chn = 0;
+     int index = 0;
      while(plist) {
+         if(!(channel_mask & (uint32_t(0x1) << data_chn))) goto skip;   // skipping the channel, if the channel is not in the mask
+
          for(int i = 0, svc_mask = 0x1; i < NUM_BSSS_CHN; i++, svc_mask <<= 1) {
              if(service_mask & svc_mask) {
                  setInteger64Param(plist->p_bsssPID[i], pulse_id);  // pulse id update if service mask is set
@@ -418,13 +422,13 @@ void bsssAsynDriver::bsssCallback(void *p, unsigned size)
                  if(((sevr_mask >> (data_chn*2)) & 0x3) <= GetChannelSevr(data_chn) ) {  // data update for valid mask
                      switch(plist->type){
                          case int32_bsss:
-                             val = (double) (p_int32[data_chn]);
+                             val = (double) (p_int32[index]);
                              break;
                          case uint32_bsss:
-                             val = (double) (p_uint32[data_chn]);
+                             val = (double) (p_uint32[index]);
                              break;
                          case float32_bsss:
-                             val = (double) (p_float32[data_chn]);
+                             val = (double) (p_float32[index]);
                              break;
                          case uint64_bsss:
                          default:
@@ -437,6 +441,9 @@ void bsssAsynDriver::bsssCallback(void *p, unsigned size)
                  setDoubleParam(plist->p_bsss[i], val);
              }
          }
+         index++;
+
+         skip:
 
          plist = (bsssList_t *) ellNext(&plist->node);  // evolve to next data channel
          data_chn++;      // evolve data channel number to next channel

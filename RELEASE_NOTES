@@ -3,6 +3,9 @@ R2.1.0-prep-bsas   March 30, 2022      Kukhee Kim (khkim)
             - build against timing/bsa R2.0.0-prep-bsas for developing
             - support incremental timestamp update for the BSA history buffer
               cooperate with the timing/bsa API layer changes from the last_timestamp branch
+            - allow skipping data channels in BSSS 
+              if the database template is not loaded for the particular data channel
+              or, the channel is diabled by control PV
 
 
 R2.1.0      Feb 22, 2022

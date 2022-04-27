@@ -24,6 +24,7 @@
 #define IDX_SEC  1
 #define IDX_PIDL 2
 #define IDX_PIDU 3
+#define IDX_CHN_MASK 4
 #define IDX_SVC_MASK 5
 #define IDX_DATA 6
 #define IDX_SEVR_MASK(size)  (size/4 -2)
