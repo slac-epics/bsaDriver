@@ -4,6 +4,10 @@ include $(TOP)/configure/CONFIG
 
 USR_CXXFLAGS += -DHAVE_YAML
 
+# Uncomment to use with gdb
+#USR_CXXFLAGS += -g3 -O0
+#USR_CFLAGS += -g3 -O0
+
 #----------------------------------------
 #  ADD MACRO DEFINITIONS AFTER THIS LINE
 #========================================
@@ -19,6 +23,8 @@ INCLUDES += $(addprefix -I,$(BSA_INCLUDE))
 INC += bsaAsynDriver.h
 INC += bsssAsynDriver.h
 INC += bsasAsynDriver.h
+INC += bldStream.h
+
 DBD += bsaAsynDriver.dbd
 
 ifeq ($(T_A),linuxRT-x86_64)
