@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>437</width>
+    <height>335</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="label">
+     <property name="font">
+      <font>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="text">
+      <string>Choose a channel to check data from all BSSS rate definitions</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="PyDMTemplateRepeater" name="PyDMTemplateRepeater">
+       <property name="toolTip">
+        <string/>
+       </property>
+       <property name="countShownInDesigner" stdset="0">
+        <number>10</number>
+       </property>
+       <property name="templateFilename" stdset="0">
+        <string>bsssBld_dataMainSingle.ui</string>
+       </property>
+       <property name="dataSource" stdset="0">
+        <string>bsssBld_dataMainColumn1.json</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="PyDMTemplateRepeater" name="PyDMTemplateRepeater_2">
+       <property name="toolTip">
+        <string/>
+       </property>
+       <property name="countShownInDesigner" stdset="0">
+        <number>10</number>
+       </property>
+       <property name="templateFilename" stdset="0">
+        <string>bsssBld_dataMainSingle.ui</string>
+       </property>
+       <property name="dataSource" stdset="0">
+        <string>bsssBld_dataMainColumn2.json</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="PyDMTemplateRepeater" name="PyDMTemplateRepeater_3">
+       <property name="toolTip">
+        <string/>
+       </property>
+       <property name="countShownInDesigner" stdset="0">
+        <number>10</number>
+       </property>
+       <property name="templateFilename" stdset="0">
+        <string>bsssBld_dataMainSingle.ui</string>
+       </property>
+       <property name="dataSource" stdset="0">
+        <string>bsssBld_dataMainColumn3.json</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PyDMTemplateRepeater</class>
+   <extends>QFrame</extends>
+   <header>pydm.widgets.template_repeater</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>872</width>
+    <height>668</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="PyDMTemplateRepeater" name="PyDMTemplateRepeater">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="layoutType" stdset="0">
+      <enum>PyDMTemplateRepeater::Horizontal</enum>
+     </property>
+     <property name="layoutSpacing" stdset="0">
+      <number>0</number>
+     </property>
+     <property name="countShownInDesigner" stdset="0">
+      <number>16</number>
+     </property>
+     <property name="templateFilename" stdset="0">
+      <string>bsssBld_channelMask.ui</string>
+     </property>
+     <property name="dataSource" stdset="0">
+      <string>bsssBld_channelMask1.json</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="PyDMTemplateRepeater" name="PyDMTemplateRepeater_2">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="layoutType" stdset="0">
+      <enum>PyDMTemplateRepeater::Horizontal</enum>
+     </property>
+     <property name="layoutSpacing" stdset="0">
+      <number>0</number>
+     </property>
+     <property name="countShownInDesigner" stdset="0">
+      <number>15</number>
+     </property>
+     <property name="templateFilename" stdset="0">
+      <string>bsssBld_channelMask.ui</string>
+     </property>
+     <property name="dataSource" stdset="0">
+      <string>bsssBld_channelMask2.json</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PyDMTemplateRepeater</class>
+   <extends>QFrame</extends>
+   <header>pydm.widgets.template_repeater</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

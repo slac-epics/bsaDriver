@@ -1,0 +1,418 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>683</width>
+    <height>441</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>${BSSS_RATEID} Rate Control</string>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout_3">
+   <item>
+    <layout class="QVBoxLayout" name="verticalLayout_5">
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_7">
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>${BSSS_RATEID}</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="PyDMEnumButton" name="PyDMEnumButton">
+           <property name="minimumSize">
+            <size>
+             <width>200</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>23</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string/>
+           </property>
+           <property name="channel" stdset="0">
+            <string>ca://${DEVICE}:${BSSS_RATEID}:ENB</string>
+           </property>
+           <property name="orientation" stdset="0">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="marginTop" stdset="0">
+            <number>0</number>
+           </property>
+           <property name="marginBottom" stdset="0">
+            <number>0</number>
+           </property>
+           <property name="marginLeft" stdset="0">
+            <number>0</number>
+           </property>
+           <property name="horizontalSpacing" stdset="0">
+            <number>4</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QFormLayout" name="formLayout">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_5">
+           <property name="text">
+            <string>Destination mode</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="PyDMEnumButton" name="PyDMEnumButton_5">
+           <property name="minimumSize">
+            <size>
+             <width>230</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>23</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string/>
+           </property>
+           <property name="channel" stdset="0">
+            <string>ca://${DEVICE}:${BSSS_RATEID}:DESTMODE</string>
+           </property>
+           <property name="orientation" stdset="0">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="marginTop" stdset="0">
+            <number>0</number>
+           </property>
+           <property name="marginBottom" stdset="0">
+            <number>0</number>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_4">
+           <property name="text">
+            <string>Destination mask</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="PyDMLineEdit" name="PyDMLineEdit_4">
+           <property name="toolTip">
+            <string/>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="channel" stdset="0">
+            <string>ca://${DEVICE}:${BSSS_RATEID}:DESTMASK</string>
+           </property>
+           <property name="displayFormat" stdset="0">
+            <enum>PyDMLineEdit::Hex</enum>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QGroupBox" name="groupBox">
+       <property name="title">
+        <string>Rate mode</string>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_3">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="PyDMEnumButton" name="PyDMEnumButton_2">
+          <property name="minimumSize">
+           <size>
+            <width>300</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>23</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string/>
+          </property>
+          <property name="channel" stdset="0">
+           <string>ca://${DEVICE}:${BSSS_RATEID}:RATEMODE</string>
+          </property>
+          <property name="orientation" stdset="0">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="marginTop" stdset="0">
+           <number>0</number>
+          </property>
+          <property name="marginBottom" stdset="0">
+           <number>0</number>
+          </property>
+          <property name="marginLeft" stdset="0">
+           <number>0</number>
+          </property>
+          <property name="marginRight" stdset="0">
+           <number>0</number>
+          </property>
+          <property name="horizontalSpacing" stdset="0">
+           <number>20</number>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,1,1">
+          <property name="spacing">
+           <number>20</number>
+          </property>
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_6">
+            <item>
+             <widget class="PyDMEnumButton" name="PyDMEnumButton_3">
+              <property name="toolTip">
+               <string/>
+              </property>
+              <property name="rules" stdset="0">
+               <string>[{&quot;name&quot;: &quot;Fixed rate visible&quot;, &quot;property&quot;: &quot;Visible&quot;, &quot;initial_value&quot;: &quot;&quot;, &quot;expression&quot;: &quot;ch[0]==0&quot;, &quot;channels&quot;: [{&quot;channel&quot;: &quot;ca://${DEVICE}:${BSSS_RATEID}:RATEMODE&quot;, &quot;trigger&quot;: true, &quot;use_enum&quot;: false}]}]</string>
+              </property>
+              <property name="channel" stdset="0">
+               <string>ca://${DEVICE}:${BSSS_RATEID}:FIXEDRATE</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_3">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout">
+            <item>
+             <widget class="PyDMEnumButton" name="PyDMEnumButton_4">
+              <property name="toolTip">
+               <string/>
+              </property>
+              <property name="rules" stdset="0">
+               <string>[{&quot;name&quot;: &quot;AC rate visible&quot;, &quot;property&quot;: &quot;Visible&quot;, &quot;initial_value&quot;: &quot;&quot;, &quot;expression&quot;: &quot;ch[0]==1&quot;, &quot;channels&quot;: [{&quot;channel&quot;: &quot;ca://${DEVICE}:${BSSS_RATEID}:RATEMODE&quot;, &quot;trigger&quot;: true, &quot;use_enum&quot;: false}]}]</string>
+              </property>
+              <property name="channel" stdset="0">
+               <string>ca://${DEVICE}:${BSSS_RATEID}:ACRATE</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="PyDMLabel" name="PyDMLabel">
+              <property name="toolTip">
+               <string/>
+              </property>
+              <property name="text">
+               <string>AC time slot mask</string>
+              </property>
+              <property name="rules" stdset="0">
+               <string>[{&quot;name&quot;: &quot;AC rate visible&quot;, &quot;property&quot;: &quot;Visible&quot;, &quot;initial_value&quot;: &quot;&quot;, &quot;expression&quot;: &quot;ch[0]==1&quot;, &quot;channels&quot;: [{&quot;channel&quot;: &quot;ca://${DEVICE}:${BSSS_RATEID}:RATEMODE&quot;, &quot;trigger&quot;: true, &quot;use_enum&quot;: false}]}]</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="PyDMLineEdit" name="PyDMLineEdit_3">
+              <property name="toolTip">
+               <string/>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="rules" stdset="0">
+               <string>[{&quot;name&quot;: &quot;AC rate visible&quot;, &quot;property&quot;: &quot;Visible&quot;, &quot;initial_value&quot;: &quot;&quot;, &quot;expression&quot;: &quot;ch[0]==1&quot;, &quot;channels&quot;: [{&quot;channel&quot;: &quot;ca://${DEVICE}:${BSSS_RATEID}:RATEMODE&quot;, &quot;trigger&quot;: true, &quot;use_enum&quot;: false}]}]</string>
+              </property>
+              <property name="channel" stdset="0">
+               <string>ca://${DEVICE}:${BSSS_RATEID}:TSLOTMASK</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_2">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_2">
+            <item>
+             <widget class="PyDMLabel" name="PyDMLabel_2">
+              <property name="toolTip">
+               <string/>
+              </property>
+              <property name="text">
+               <string>Sequence engine number</string>
+              </property>
+              <property name="rules" stdset="0">
+               <string>[{&quot;name&quot;: &quot;Exp seq rate visible&quot;, &quot;property&quot;: &quot;Visible&quot;, &quot;initial_value&quot;: &quot;&quot;, &quot;expression&quot;: &quot;ch[0]==2&quot;, &quot;channels&quot;: [{&quot;channel&quot;: &quot;ca://${DEVICE}:${BSSS_RATEID}:RATEMODE&quot;, &quot;trigger&quot;: true, &quot;use_enum&quot;: false}]}]</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="PyDMLineEdit" name="PyDMLineEdit">
+              <property name="toolTip">
+               <string/>
+              </property>
+              <property name="rules" stdset="0">
+               <string>[{&quot;name&quot;: &quot;Exp seq rate visible&quot;, &quot;property&quot;: &quot;Visible&quot;, &quot;initial_value&quot;: &quot;&quot;, &quot;expression&quot;: &quot;ch[0]==2&quot;, &quot;channels&quot;: [{&quot;channel&quot;: &quot;ca://${DEVICE}:${BSSS_RATEID}:RATEMODE&quot;, &quot;trigger&quot;: true, &quot;use_enum&quot;: false}]}]</string>
+              </property>
+              <property name="channel" stdset="0">
+               <string>ca://${DEVICE}:${BSSS_RATEID}:EXPSEQ</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="PyDMLabel" name="PyDMLabel_3">
+              <property name="toolTip">
+               <string/>
+              </property>
+              <property name="text">
+               <string>Sequence bit number</string>
+              </property>
+              <property name="rules" stdset="0">
+               <string>[{&quot;name&quot;: &quot;Exp seq rate visible&quot;, &quot;property&quot;: &quot;Visible&quot;, &quot;initial_value&quot;: &quot;&quot;, &quot;expression&quot;: &quot;ch[0]==2&quot;, &quot;channels&quot;: [{&quot;channel&quot;: &quot;ca://${DEVICE}:${BSSS_RATEID}:RATEMODE&quot;, &quot;trigger&quot;: true, &quot;use_enum&quot;: false}]}]</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="PyDMLineEdit" name="PyDMLineEdit_2">
+              <property name="toolTip">
+               <string/>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="rules" stdset="0">
+               <string>[{&quot;name&quot;: &quot;Exp seq rate visible&quot;, &quot;property&quot;: &quot;Visible&quot;, &quot;initial_value&quot;: &quot;&quot;, &quot;expression&quot;: &quot;ch[0]==2&quot;, &quot;channels&quot;: [{&quot;channel&quot;: &quot;ca://${DEVICE}:${BSSS_RATEID}:RATEMODE&quot;, &quot;trigger&quot;: true, &quot;use_enum&quot;: false}]}]</string>
+              </property>
+              <property name="channel" stdset="0">
+               <string>ca://${DEVICE}:${BSSS_RATEID}:EXPSEQBIT</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0,1">
+     <item>
+      <widget class="QLabel" name="label_6">
+       <property name="text">
+        <string>Rate limit</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="PyDMEnumButton" name="PyDMEnumButton_6">
+       <property name="minimumSize">
+        <size>
+         <width>100</width>
+         <height>400</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string/>
+       </property>
+       <property name="channel" stdset="0">
+        <string>ca://${DEVICE}:${BSSS_RATEID}:RATELIMIT</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PyDMLabel</class>
+   <extends>QLabel</extends>
+   <header>pydm.widgets.label</header>
+  </customwidget>
+  <customwidget>
+   <class>PyDMEnumButton</class>
+   <extends>QWidget</extends>
+   <header>pydm.widgets.enum_button</header>
+  </customwidget>
+  <customwidget>
+   <class>PyDMLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>pydm.widgets.line_edit</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

@@ -1,0 +1,5 @@
+[
+{"BSSS_RATEID":"SCH1H","DESC":"SC to Hard at 1Hz"},
+{"BSSS_RATEID":"SCHTH","DESC":"SC to Hard at 10Hz"},
+{"BSSS_RATEID":"SCHHH","DESC":"SC to Hard at 100Hz"}
+]
