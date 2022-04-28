@@ -291,9 +291,11 @@ bsasAsynDriver::bsasAsynDriver(const char *portName, const char *reg_path, const
         p = (bsasList_t *) ellNext(&p->node);
     }
     
-    printf("channel maksk: %8.8x, (%d)\n", this->channelMask, activeChannels->size());
+
     SetupAsynParams();
     registerBsasCallback(named_root, bsas_callback, (void *) this);
+
+    SetChannelMask(this->channelMask);
 }
 
 
@@ -324,6 +326,11 @@ asynStatus bsasAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
                     function == p_module[i].idx.p_idx[j].p_expSeqNum  ||
                     function == p_module[i].idx.p_idx[j].p_expSeqBit) {
                  SetRate(i, ctrlIdx_t(j));
+                 goto done;
+             }
+             else if(function == p_module[i].idx.p_idx[j].p_destMode ||
+                     function == p_module[i].idx.p_idx[j].p_destMask) {
+                 SetDest(i, ctrlIdx_t(j));
                  goto done;
              }
             
@@ -488,6 +495,25 @@ void bsasAsynDriver::EdefEnable(int module, ctrlIdx_t ctrl, int enable)
         default:
             break;
     }
+}
+
+void bsasAsynDriver::SetChannelMask(uint32_t mask)
+{
+    for(int i =0; i < NUM_BSAS_MODULES; i++) {
+        SetChannelMask(i, mask);
+    }
+}
+
+void bsasAsynDriver::SetChannelMask (int module, uint32_t mask)
+{
+    pBsas[module]->SetChannelMask(mask);
+    pBsas[module]->Enable(mask?1:0);
+    pBsas[module]->SetChannelSeverity(uint64_t(0xffffffffffffffff));
+}
+
+void bsasAsynDriver::SetChannelMask(int module, int channel, uint32_t mask)
+{
+    pBsas[module]->SetChannelMask(channel, mask);
 }
 
 

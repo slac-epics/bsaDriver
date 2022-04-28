@@ -157,6 +157,9 @@ class bsasAsynDriver: asynPortDriver {
         void              SetRate(int module, ctrlIdx_t ctrl);
         void              SetDest(int module, ctrlIdx_t ctrl);
         void              EdefEnable(int module, ctrlIdx_t ctrl, int enable);
+        void              SetChannelMask(uint32_t mask);
+        void              SetChannelMask(int module, uint32_t mask);
+        void              SetChannelMask(int module, int channel, uint32_t mask);
 
     protected:
 #if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 | 32)
