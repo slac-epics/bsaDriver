@@ -3,18 +3,18 @@ file bsasRateControl_localTest.db {
     pattern {  IDX,  CTRL_PV,        CTRL,    DEVICE  }
 #
             {  "0",    "ACQ",       "acq",   "$(DEV)" }
-            {  "0", "ROWADV",    "rawAdv",   "$(DEV)" } 
+            {  "0", "ROWADV",    "rowAdv",   "$(DEV)" } 
             {  "0", "TBLRST",  "tblReset",   "$(DEV)" }
 #
             {  "1",    "ACQ",       "acq",   "$(DEV)" }
-            {  "1", "ROWADV",    "rawAdv",   "$(DEV)" } 
+            {  "1", "ROWADV",    "rowAdv",   "$(DEV)" } 
             {  "1", "TBLRST",  "tblReset",   "$(DEV)" }
 #
             {  "2",    "ACQ",       "acq",   "$(DEV)" }
-            {  "2", "ROWADV",    "rawAdv",   "$(DEV)" } 
+            {  "2", "ROWADV",    "rowAdv",   "$(DEV)" } 
             {  "2", "TBLRST",  "tblReset",   "$(DEV)" }
 #
             {  "3",    "ACQ",       "acq",   "$(DEV)" }
-            {  "3", "ROWADV",    "rawAdv",   "$(DEV)" } 
+            {  "3", "ROWADV",    "rowAdv",   "$(DEV)" } 
             {  "3", "TBLRST",  "tblReset",   "$(DEV)" }
 }  
