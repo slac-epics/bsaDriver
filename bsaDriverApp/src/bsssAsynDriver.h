@@ -41,7 +41,11 @@ typedef struct {
     ELLNODE node;
     char    bsss_name[64];
 
+    int     index;
+
     int     p_firstParam;
+    int     p_channelMask;
+    int     p_channelSevr;
     int     p_bsss[NUM_BSSS_CHN];
     int     p_bsssPID[NUM_BSSS_CHN];
     int     p_lastParam;
@@ -100,8 +104,7 @@ class bsssAsynDriver: asynPortDriver {
         // BSSS Status Control
         int p_packetSize;
         int p_enable;
-        int p_channelMask[NUM_BSSS_DATA_MAX];
-        int p_channelSevr[NUM_BSSS_DATA_MAX];
+
 
         // BSSS Rate Controls
         int p_edefEnable[NUM_BSSS_CHN];
@@ -141,8 +144,8 @@ class bsssAsynDriver: asynPortDriver {
 
 #define PACKETSIZE_STR          "packetSize"
 #define ENABLE_STR              "enable"
-#define CHANNELMASK_STR         "channelMask_%d"
-#define CHANNELSEVR_STR         "channelSevr_%d"
+#define CHANNELMASK_STR         "channelMask_%s"
+#define CHANNELSEVR_STR         "channelSevr_%s"
 
 
 #define EDEFENABLE_STR        "edefEnable_%d"

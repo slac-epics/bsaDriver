@@ -408,11 +408,11 @@ remarks) use bsssCtrl_localTest.db for BSSS test without global PVs
 3. load up BSSS Scalar PVs (for each channel data)
 example)
 # BSSS Scalar PVs
-dbLoadRecords("db/bsss.db", "DEV=${SYS_PV},PORT=bsssPort,IDX=0,BSAKEY=PIDL,SECN=PIDL")
-dbLoadRecords("db/bsss.db", "DEV=${SYS_PV},PORT=bsssPort,IDX=1,BSAKEY=PIDU,SECN=PIDU")
-dbLoadRecords("db/bsss.db", "DEV=${SYS_PV},PORT=bsssPort,IDX=2,BSAKEY=TSL,SECN=TSL")
-dbLoadRecords("db/bsss.db", "DEV=${SYS_PV},PORT=bsssPort,IDX=3,BSAKEY=TSU,SECN=TSU")
-dbLoadRecords("db/bsss.db", "DEV=${SYS_PV},PORT=bsssPort,IDX=4,BSAKEY=RATES,SECN=RATES")
+dbLoadRecords("db/bsss.db", "DEV=${SYS_PV},PORT=bsssPort,BSAKEY=PIDL,SECN=PIDL")
+dbLoadRecords("db/bsss.db", "DEV=${SYS_PV},PORT=bsssPort,BSAKEY=PIDU,SECN=PIDU")
+dbLoadRecords("db/bsss.db", "DEV=${SYS_PV},PORT=bsssPort,BSAKEY=TSL,SECN=TSL")
+dbLoadRecords("db/bsss.db", "DEV=${SYS_PV},PORT=bsssPort,BSAKEY=TSU,SECN=TSU")
+dbLoadRecords("db/bsss.db", "DEV=${SYS_PV},PORT=bsssPort,BSAKEY=RATES,SECN=RATES")
 ......
 remark) use the same macros what we have used for BSA template. new macro, IDX macro should have a sequencial number from 0
 

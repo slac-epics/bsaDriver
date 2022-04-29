@@ -118,6 +118,9 @@ static int bsssAdd(const char *bsssKey, bsssDataType_t type, double *slope, doub
 
     bsssList_t *p = (bsssList_t *) mallocMustSucceed(sizeof(bsssList_t), "bsssAsynDriver (bsssAdd)");
     strcpy(p->bsss_name, bsssKey);
+    p->index = 0;
+    p->p_channelMask = -1;
+    p->p_channelSevr = -1;
     for(int i = 0; i < NUM_BSSS_CHN; i++) {
         p->p_bsss[i] = -1;              /* initialize paramters with invalid */
         p->pname_bsss[i][0] = '\0';     /* initialize with a null string */
@@ -188,6 +191,13 @@ bsssAsynDriver::bsssAsynDriver(const char *portName, const char *reg_path, const
     this->pBsss = new Bsss::BsssYaml(reg_);  /* create API interface */
     channelSevr = 0;
 
+    int i = 0;
+    bsssList_t *p = (bsssList_t *) ellFirst(pBsssEllList);
+    while(p) {
+        p->index = i++;
+        p = (bsssList_t *) ellNext(&p->node);
+    }
+
     SetupAsynParams();
 
     registerBsssCallback(named_root, bsss_callback, (void *) this);
@@ -217,9 +227,11 @@ void bsssAsynDriver::SetupAsynParams(void)
     sprintf(param_name, PACKETSIZE_STR);       createParam(param_name, asynParamInt32, &p_packetSize);
     sprintf(param_name, ENABLE_STR);           createParam(param_name, asynParamInt32, &p_enable);
 
-    for(int i = 0; i < NUM_BSSS_DATA_MAX; i++) {
-        sprintf(param_name, CHANNELMASK_STR, i); createParam(param_name, asynParamInt32, &p_channelMask[i]);
-        sprintf(param_name, CHANNELSEVR_STR, i); createParam(param_name, asynParamInt32, &p_channelSevr[i]);
+    bsssList_t *p = (bsssList_t *) ellFirst(pBsssEllList);
+    while(p) {
+        sprintf(param_name, CHANNELMASK_STR, p->bsss_name); createParam(param_name, asynParamInt32, &(p->p_channelMask)); 
+        sprintf(param_name, CHANNELSEVR_STR, p->bsss_name); createParam(param_name, asynParamInt32, &(p->p_channelSevr));
+        p = (bsssList_t *) ellNext(&p->node);
     }
 
     // BSSS Rate Controls
@@ -337,6 +349,20 @@ asynStatus bsssAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
     /* set the parameter in the parameter library */
     status = (asynStatus) setIntegerParam(function, value);
 
+    bsssList_t *p = (bsssList_t *) ellFirst(pBsssEllList);
+    while(p) {
+       if(function == p->p_channelMask) {
+           pBsss->setChannelMask(p->index, uint32_t(value));
+           goto done;
+       }
+       if(function == p->p_channelSevr) {
+           SetChannelSevr(p->index, value);
+           goto done;
+       }
+        p = (bsssList_t *) ellNext(&p->node);
+    }
+
+
     if(function == p_packetSize) {
         pBsss->setPacketSize((uint32_t) value);
         goto done;
@@ -346,16 +372,6 @@ asynStatus bsssAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
         goto done;
     }
 
-    for(int i = 0; i < NUM_BSSS_DATA_MAX; i++) {
-        if(function == p_channelMask[i]) {
-            pBsss->setChannelMask(i, (uint32_t) value);
-            goto done;
-        }
-        else if(function == p_channelSevr[i]) {
-            SetChannelSevr(i, value);
-            goto done;
-        }
-    }
 
     for(int i = 0; i < NUM_BSSS_CHN; i++) {
         if(function == p_rateMode[i]  ||
