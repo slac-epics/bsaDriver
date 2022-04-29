@@ -67,6 +67,9 @@ typedef struct {
     ELLLIST         *free_list;
 
     void            *p_last_buff;
+    void            *p_last_bsss;
+    void            *p_last_bsas;
+    void            *p_last_bld;
 
 } pDrvList_t;
 
@@ -120,6 +123,9 @@ static pDrvList_t *get_drvNode(const char *named_root)
         p->bsss_count = 0;
         p->bsas_count = 0;
         p->p_last_buff   = NULL;
+        p->p_last_bsss   = NULL;
+        p->p_last_bsas   = NULL;
+        p->p_last_bld    = NULL;
         p->free_list = (ELLLIST*) mallocMustSucceed(sizeof(ELLLIST), "bldStream drivr: get_drvNode()");
         ellInit(p->free_list);
 
@@ -151,16 +157,19 @@ static void listener(pDrvList_t *p)
 
         if(pu32[IDX_SERVICE_MASK] & BSAS_IDTF_MASK) {   /* bsas */
             p->bsas_count++;
+            p->p_last_bsas = (void *) np;
             np->type = bsas_packet;
             if(p->bsas_callback) (p->bsas_callback)(p->pUsrBsas, (void *) np->buff, np->size);
         }
         else if(pu32[IDX_SERVICE_MASK] & BSSS_SERVICE_MASK) { /* bsss */
             p->bsss_count++;
+            p->p_last_bsss = (void *) np;
             np->type = bsss_packet;
             if(p->bsss_callback) (p->bsss_callback)(p->pUsrBsss, (void *) np->buff, np->size);
         }
         else {  /* bld */
             p->bld_count++;
+            p->p_last_bld = (void *) np;
             np->type = bld_packet;
             if(p->bld_callback) (p->bld_callback)(p->pUsrBld, (void *) np->buff, np->size);
         }
@@ -243,9 +252,65 @@ static void show_bsss_buffer(void *p, unsigned size)
 static void show_bsas_buffer(void *p, unsigned size)
 {
 
+typedef struct __attribute__ ((packed)) {
+    uint64_t timestamp:    64;
+    uint64_t pulse_id:     64;
+    uint32_t channelMask:  32;
+    uint16_t row_number:   16;
+    uint8_t  table_count:   4;
+    uint8_t  edef_index:    4;
+    uint8_t  byte_pad:      8;
+} header_t;     /*  24 bytes header */
+
+typedef struct __attribute__ ((packed)) {
+    uint16_t sample_count: 13;
+    bool     exception_sum: 1;
+    bool     exception_var: 1;
+    bool     flag_fixed:    1;
+    uint32_t val:          32;
+    uint32_t sum:          32;
+    uint64_t sum_square:   48;
+    uint32_t min:          32;
+    uint32_t max:          32;       
+} payload_t;     /* 24 bytes payload for each channel */
+
+typedef struct __attribute__((packed)) {
+    header_t      hd;      // bsas header
+    payload_t     pl[];    // bsas payloader (arbitrary length)
+} packet_t;
+
+
+    packet_t *pk = (packet_t *) p;
+
     printf("\t\t --------------------------------\n");
     printf("\t\t BSAS Packet: size(%d)\n", size);
     printf("\t\t --------------------------------\n");
+    printf("\t\t timestamp (64bit): %16x\n", pk->hd.timestamp);
+    printf("\t\t pulse id  (64bit): %16x\n", pk->hd.pulse_id);
+    printf("\t\t channel mask     : %8x\n",  pk->hd.channelMask);
+    printf("\t\t row number       : %d\n",   pk->hd.row_number);
+    printf("\t\t table_count      : %d\n",   pk->hd.table_count);
+    printf("\t\t edef_index       : %d\n",   pk->hd.edef_index);
+    printf("\t\t byte pad (0x80)  : %2x\n",  pk->hd.byte_pad);
+
+               printf("\t\t PL CH    CNT EVL ESQ FIX     VAL       SUM       SQUARE      MIN      MAX\n");
+               printf("\t\t -------------------------------------------------------------------------\n");
+    int j =0;
+    for(int i = 0; i < 31; i++) {
+        if(pk->hd.channelMask & (uint32_t(0x1) << i)) {
+            printf("\t\t %2d %2d %6d   %c   %c   %c %8x %8x %12x %8x %8x\n", j, i, pk->pl[j].sample_count,
+                                                                                  pk->pl[j].exception_sum? 'E': 'N',
+                                                                                  pk->pl[j].exception_var? 'E': 'N',
+                                                                                  pk->pl[j].flag_fixed?    'F': 'N',
+                                                                                  pk->pl[j].val,
+                                                                                  pk->pl[j].sum,
+                                                                                  pk->pl[j].sum_square,
+                                                                                  pk->pl[j].min,
+                                                                                  pk->pl[j].max);
+            j++;
+        }
+    }
+
 }
 
 static void show_bld_buffer(void *p, unsigned size)
@@ -291,19 +356,16 @@ static int bldStreamDriverReport(int interest)
         printf("\t  free list    : %p\n", p->free_list);
 
         if(interest && p->p_last_buff) {
-            pBuff_t  *np = (pBuff_t *) p->p_last_buff;
+            pBuff_t *np;
 
-            switch(np->type) {
-                case bsas_packet:
-                    show_bsas_buffer(np->buff, np->size);
-                    break;
-                case bsss_packet:
-                    show_bsss_buffer(np->buff, np->size);
-                    break;
-                case bld_packet:
-                    show_bld_buffer(np->buff, np->size);
-                    break;
-            }
+            np = (pBuff_t *) p->p_last_bsss;
+            if(np) show_bsss_buffer(np->buff, np->size);
+
+            np = (pBuff_t *) p->p_last_bsas;
+            if(np) show_bsas_buffer(np->buff, np->size);
+
+            np = (pBuff_t *) p->p_last_bld;
+            if(np) show_bld_buffer(np->buff, np->size);
         }
 
         p = (pDrvList_t *) ellNext(&p->node);
