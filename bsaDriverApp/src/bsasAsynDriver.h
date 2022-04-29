@@ -49,7 +49,10 @@ typedef struct {
     char                  bsas_name[PVNAME_LEN];
     char                  pv_name[PVNAME_LEN];
 
+    int                   index;
     int                   p_firstParam;
+    int                   p_channelMask;
+    int                   p_channelSevr;
     int                   p_ts[NUM_BSAS_MODULES];
     int                   p_pid[NUM_BSAS_MODULES];
     int                   p_cnt[NUM_BSAS_MODULES];
@@ -151,15 +154,19 @@ class bsasAsynDriver: asynPortDriver {
 
         char              ntTableName[NUM_BSAS_MODULES][PVNAME_LEN];
         uint32_t          channelMask;
+        uint64_t          channelSevr;
         std::vector <void *> *activeChannels;
 
         void              SetupAsynParams(void);
         void              SetRate(int module, ctrlIdx_t ctrl);
         void              SetDest(int module, ctrlIdx_t ctrl);
         void              EdefEnable(int module, ctrlIdx_t ctrl, int enable);
+        void              SetChannelMask(int chn, bool flag);
         void              SetChannelMask(uint32_t mask);
-        void              SetChannelMask(int module, uint32_t mask);
-        void              SetChannelMask(int module, int channel, uint32_t mask);
+        void              SetChannelSevr(int chn, uint64_t sevr);
+        void              SetChannelSevr(uint64_t sevr);
+
+
 
     protected:
 #if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 | 32)
@@ -185,6 +192,9 @@ class bsasAsynDriver: asynPortDriver {
 #define PARAM_ACQUIRE_STR     "acq"
 #define PARAM_ROWADV_STR      "rowAdv"
 #define PARAM_TBLRESET_STR    "tblReset"
+
+#define CHANNEL_MASK_STR      "channelMask_%s"
+#define CHANNEL_SEVR_STR      "channelSevr_%s"
 
 #define EDEFENABLE_STR        "edefEnable_%d_%s"
 #define RATEMODE_STR          "rateMode_%d_%s"

@@ -121,6 +121,9 @@ static int bsasAdd(const char *bsasKey, bsasDataType_t type, double *slope, doub
     bsasList_t *p = (bsasList_t *) mallocMustSucceed(sizeof(bsasList_t) , "bsasAsynDriver (bsasAdd)");
     strcpy(p->bsas_name, bsasKey);
     p->pv_name[0] = '\0';
+    p->index = 0;
+    p->p_channelMask = -1;
+    p->p_channelSevr = -1;
     for(int i = 0; i < NUM_BSAS_MODULES; i++) {
         p->p_ts[i] = -1;
         p->p_pid[i] = -1;
@@ -279,6 +282,7 @@ bsasAsynDriver::bsasAsynDriver(const char *portName, const char *reg_path, const
     strcpy(ntTableName[3], ntTable_name4);
 
     this->channelMask = 0;
+    this->channelSevr = 0;
     activeChannels = new std::vector<void *>;
     bsasList_t *p = (bsasList_t *) ellFirst(this->pBsasEllList);
     int i = 0;
@@ -337,6 +341,19 @@ asynStatus bsasAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
         }  /* seeking CTRLs */
     }  /* seeking modules */
 
+    for(std::vector<void*>::iterator  it = activeChannels->begin(); it != activeChannels->end(); it++) {
+        bsasList_t *p = (bsasList_t *) (*it);
+        if(function == p->p_channelMask) {
+            SetChannelMask(p->index, value?true:false);
+            goto done;
+        }
+        if(function == p->p_channelSevr) {
+            SetChannelSevr(p->index, value);
+            goto done;
+        }
+    }
+
+
     done:
     callParamCallbacks();
     return status;
@@ -363,6 +380,14 @@ void bsasAsynDriver::SetupAsynParams(void)
             sprintf(param_name, DESTMASK_STR,   i, param_str[j]); createParam(param_name, asynParamInt32, &p_module[i].idx.p_idx[j].p_destMask);
         }
     }
+
+
+    for(std::vector<void *>::iterator it = activeChannels->begin(); it != activeChannels->end(); it++) {
+        bsasList_t *p = (bsasList_t *) (*it);
+        sprintf(param_name, CHANNEL_MASK_STR, p->bsas_name); createParam(param_name, asynParamInt32, &(p->p_channelMask));
+        sprintf(param_name, CHANNEL_SEVR_STR, p->bsas_name); createParam(param_name, asynParamInt32, &(p->p_channelSevr));
+    }
+
 }
 
 void bsasAsynDriver::SetRate(int module, ctrlIdx_t ctrl)
@@ -497,24 +522,43 @@ void bsasAsynDriver::EdefEnable(int module, ctrlIdx_t ctrl, int enable)
     }
 }
 
+
+void bsasAsynDriver::SetChannelMask(int chn, bool flag)
+{
+    channelMask &= ~(uint32_t(0x1) << chn);    // clear bit location
+    channelMask |=  (uint32_t(flag?0x1:0x0) << chn);  // set bit location
+
+    SetChannelMask(channelMask);
+}
+
 void bsasAsynDriver::SetChannelMask(uint32_t mask)
 {
-    for(int i =0; i < NUM_BSAS_MODULES; i++) {
-        SetChannelMask(i, mask);
+
+    for(int module = 0; module < NUM_BSAS_MODULES; module++) {
+        pBsas[module]->SetChannelMask(mask);
+        pBsas[module]->Enable(mask?1:0);
+    }
+
+}
+
+void bsasAsynDriver::SetChannelSevr(int chn, uint64_t sevr)
+{
+    channelSevr &= ~(uint64_t(0x3) << (chn*2));
+    channelSevr |= ((uint64_t(0x3) & sevr) << (chn*2));
+
+    SetChannelSevr(channelSevr);
+}
+
+void bsasAsynDriver::SetChannelSevr(uint64_t sevr)
+{
+    for(int module = 0; module < NUM_BSAS_MODULES; module++) {
+        pBsas[module]->SetChannelSeverity(sevr);
     }
 }
 
-void bsasAsynDriver::SetChannelMask (int module, uint32_t mask)
-{
-    pBsas[module]->SetChannelMask(mask);
-    pBsas[module]->Enable(mask?1:0);
-    pBsas[module]->SetChannelSeverity(uint64_t(0xffffffffffffffff));
-}
 
-void bsasAsynDriver::SetChannelMask(int module, int channel, uint32_t mask)
-{
-    pBsas[module]->SetChannelMask(channel, mask);
-}
+
+
 
 
 void bsasAsynDriver::bsasCallback(void *p, unsigned size)
@@ -551,9 +595,11 @@ int bsasAsynDriverConfigure(const char *portName, const char *reg_path,
     if(!pl->pBsasEllList) return -1;
 
     int i = 0;
+    int j = 0;
     bsasList_t *p = (bsasList_t *) ellFirst(pl->pBsasEllList);
     while(p) {
         i += (int) (&p->p_lastParam - &p->p_firstParam -1);
+        p->index = j++;
         p = (bsasList_t *) ellNext(&p->node);
     }    /* calculate number of dynamic parameters */
 
