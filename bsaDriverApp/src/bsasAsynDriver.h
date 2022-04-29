@@ -124,10 +124,10 @@ typedef struct __attribute__ ((packed)) {
     bool     flag_fixed:    1;
     uint32_t val:          32;
     uint32_t sum:          32;
-    uint32_t sum_square:   32;
+    uint32_t sum_square:   48;
     uint32_t min:          32;
     uint32_t max:          32;       
-} payload_t;     /* 22 bytes payload for each channel */
+} payload_t;     /* 24 bytes payload for each channel */
 
 typedef struct __attribute__((packed)) {
     header_t      hd;      // bsas header
