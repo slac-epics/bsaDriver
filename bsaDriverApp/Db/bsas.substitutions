@@ -1,0 +1,6 @@
+
+file bsasChannelCtrl.db {
+    pattern {   DEVICE    }
+            {   "$(DEV)"  }
+}
+
