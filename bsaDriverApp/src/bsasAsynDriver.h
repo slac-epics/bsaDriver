@@ -27,6 +27,8 @@
 #define NUM_BSAS_MODULES        4
 #define NUM_BSAS_CTRL           3    // acquire, rowAdvance, tableReset
 
+#define MAXROWS                  1000   // max row in NTTable
+
 
 
 typedef enum {
@@ -135,6 +137,50 @@ typedef struct __attribute__((packed)) {
 } packet_t;
 
 
+class chnCol {
+    uint32_t cnt[MAXROWS];
+    double   val[MAXROWS];
+    double   avg[MAXROWS];
+    double   rms[MAXROWS];
+    double   min[MAXROWS];
+    double   max[MAXROWS];
+
+    public:
+    void     init(void);
+    int      store(int row, uint32_t cnt, double val, double avg, double rms, double min, double max);
+    
+};
+
+class ntTbl {
+    uint64_t timestamp[MAXROWS];
+    uint64_t pulse_id[MAXROWS];
+    chnCol   *col;
+    int      num_chn;
+    public:
+    ntTbl(int num_chn);
+    ~ntTbl() {}
+
+    void init(void);
+    int store(int row, uint64_t timestamp, uint64_t pulse_id);
+    int store(int col, int row, uint32_t cnt, double val, double avg, double rms, double min, double max);
+};
+
+
+class edefNTTbl {
+    int   table_count;
+    int   swing_idx;
+    ntTbl *pTbl[2];
+    public:
+    edefNTTbl(int num_chn);
+    ~edefNTTbl() {}
+
+    inline void swing(void);
+    int checkUpdate(int table_count);
+    int store(int row, uint64_t timestamp, uint64_t pulse_id);
+    int store(int col, int row, uint32_t cnt, double val, double avg, double rms, double min, double max);
+};
+
+
 
 class bsasAsynDriver: asynPortDriver {
     public:
@@ -156,6 +202,7 @@ class bsasAsynDriver: asynPortDriver {
         uint32_t          channelMask;
         uint64_t          channelSevr;
         std::vector <void *> *activeChannels;
+        edefNTTbl         *pEdefNTTbl[NUM_BSAS_MODULES];
 
         void              SetupAsynParams(void);
         void              SetRate(int module, ctrlIdx_t ctrl);

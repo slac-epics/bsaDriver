@@ -228,6 +228,105 @@ static void bsas_callback(void *pUsr, void *buf, unsigned size)
 
 
 
+void chnCol::init(void)
+{
+    for(int i = 0; i < MAXROWS; i++) {
+        cnt[i] = 0;
+        val[i] = NAN;
+        avg[i] = NAN;
+        rms[i] = NAN;
+        min[i] = NAN;
+        max[i] = NAN;
+    }
+}
+
+int chnCol::store(int row, uint32_t cnt, double val, double avg, double rms, double min, double max)
+{
+    if(row< 0 || row > MAXROWS-1) return -1;
+
+    this->cnt[row] = cnt;
+    this->val[row] = val;
+    this->avg[row] = avg;
+    this->rms[row] = rms;
+    this->min[row] = min;
+    this->max[row] = max;
+
+    return 0;
+}
+
+ntTbl::ntTbl(int num_chn)
+{
+    this->num_chn = num_chn;
+    col = new chnCol[num_chn];    // allocate columns
+    init();                       // initialize all of the columns
+}
+
+void ntTbl::init(void)
+{
+    for(int i = 0; i < num_chn; i++) (col+i)->init();
+}
+
+int ntTbl::store(int row, uint64_t timestamp, uint64_t pulse_id)
+{
+    if(row <0 || row > MAXROWS-1) return -1;
+
+    this->timestamp[row] = timestamp;
+    this->pulse_id[row]  = pulse_id;
+
+    return 0;
+}
+
+int ntTbl::store(int col, int row, uint32_t cnt, double val, double avg, double rms, double min, double max)
+{
+    if(col<0 || col > num_chn-1) return -1;
+
+    return (this->col + col)->store(row, cnt, val, avg, rms, min, max);
+
+
+}
+
+edefNTTbl::edefNTTbl(int num_chn)
+{
+    table_count = -1;
+                // indicator for active buffer
+    swing_idx   = 0;
+                // implement swing buffer one for active, the other one for standby
+    pTbl[0] = new ntTbl(num_chn);
+    pTbl[1] = new ntTbl(num_chn);
+}
+
+
+inline void edefNTTbl::swing(void)
+{
+                // switch active and standby
+    swing_idx = swing_idx?0:1;
+    pTbl[swing_idx]->init();
+}
+
+
+int edefNTTbl::checkUpdate(int table_count)
+{
+    if((this->table_count != -1) &&
+       (this->table_count != table_count)) {
+          this->table_count = table_count;
+          return -1; 
+    }
+
+    return 0;
+}
+
+int edefNTTbl::store(int row, uint64_t timestamp, uint64_t pulse_id)
+{
+    return pTbl[swing_idx]->store(row, timestamp, pulse_id);
+}
+
+int edefNTTbl::store(int col, int row, uint32_t cnt, double val, double avg, double rms, double min, double max)
+{
+                // store data into active buffer
+    return pTbl[swing_idx]->store(col, row, cnt, val, avg, rms, min, max);
+    
+}
+
 bsasAsynDriver::bsasAsynDriver(const char *portName, const char *reg_path, const int num_dyn_param, ELLLIST *pBsasEllList,
                                const char *ntTable_name1,
                                const char *ntTable_name2,
@@ -294,7 +393,8 @@ bsasAsynDriver::bsasAsynDriver(const char *portName, const char *reg_path, const
         i++;
         p = (bsasList_t *) ellNext(&p->node);
     }
-    
+
+    for(int i =0; i < NUM_BSAS_MODULES; i++) pEdefNTTbl[i] = new edefNTTbl(activeChannels->size());
 
     SetupAsynParams();
     registerBsasCallback(named_root, bsas_callback, (void *) this);
@@ -563,6 +663,92 @@ void bsasAsynDriver::SetChannelSevr(uint64_t sevr)
 
 void bsasAsynDriver::bsasCallback(void *p, unsigned size)
 {
+    packet_t     *pk = (packet_t *) p ;
+    header_t     *hd = &pk->hd;
+    payload_t    *pl = pk->pl;
+    int          i   = 0;
+
+    uint32_t cnt;
+    double   val, avg, rms, min, max, sq;
+    uint32_t _val, _sum, _sum_square, _min, _max;
+
+    if(pEdefNTTbl[hd->edef_index]->checkUpdate(hd->table_count)) {
+        // put NTTable UPdate
+        pEdefNTTbl[hd->edef_index]->swing();  // swing buffer
+    }
+
+    pEdefNTTbl[hd->edef_index]->store(hd->row_number, hd->timestamp, hd->pulse_id);
+    
+    for(std::vector<void*>::iterator it = activeChannels->begin(); it != activeChannels->end(); it++, i++) {
+        bsasList_t *plist = (bsasList_t *)(*it);
+        _val        = (pl+i)->val;
+        _sum        = (pl+i)->sum;
+        _sum_square = (pl+i)->sum_square;
+        _min        = (pl+i)->min;
+        _max        = (pl+i)->max;
+        switch(plist->type) {
+            case int32_bsas:
+                val = double(*(int32_t *) &_val);
+                avg = double(*(int32_t *) &_sum);
+                rms = double(*(int32_t *) &_sum_square);
+                min = double(*(int32_t *) &_min);
+                max = double(*(int32_t *) &_max);
+                break;
+            case uint32_bsas:
+                val = double(*(uint32_t *) &_val);
+                avg = double(*(uint32_t *) &_sum);
+                rms = double(*(uint32_t *) &_sum_square);
+                min = double(*(uint32_t *) &_min);
+                max = double(*(uint32_t *) &_max);
+                break;
+            case float32_bsas:
+                val = double(*(float*) &_val);
+                avg = double(*(float*) &_sum);
+                rms = double(*(float*) &_sum_square);
+                min = double(*(float*) &_min);
+                max = double(*(float*) &_max);
+                break;
+            case uint64_bsas:
+            default:
+                val = avg = rms = min = max = NAN;
+                break;
+        }
+
+        cnt = (pl+i)->sample_count;
+
+        if((pl+i)->flag_fixed || cnt < 2 ) {   // no-statistics
+            cnt = 1;
+            rms = 0.;
+            min = max = avg = val;
+            goto done;
+        }
+        if((pl+i)->exception_sum) {   // exception on sum
+            avg = NAN;
+        }
+        if((pl+i)->exception_var) {   // exception on sum of sequares
+            rms = NAN;
+        }
+
+
+        if(cnt >1) {
+            if(avg != NAN) {
+                sq = avg * avg;
+                avg /= cnt;
+            } else sq = NAN;
+
+            if(sq != NAN && rms != NAN) rms = sqrt((rms - sq / cnt) / (cnt -1));
+            else                        rms = NAN;
+        }
+
+        done:    // linear conversion
+        if(val != NAN) val = val * (*plist->pslope) + (*plist->poffset);
+        if(avg != NAN) avg = avg * (*plist->pslope) + (*plist->poffset);
+        if(rms != NAN) rms = rms * (*plist->pslope);
+        if(min != NAN) min = min * (*plist->pslope) + (*plist->poffset);
+        if(max != NAN) max = max * (*plist->pslope) + (*plist->poffset);
+    }
+
+
 }
 
 
