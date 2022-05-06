@@ -306,8 +306,10 @@ inline void edefNTTbl::swing(void)
 
 int edefNTTbl::checkUpdate(int table_count)
 {
-    if((this->table_count != -1) &&
-       (this->table_count != table_count)) {
+
+    if(this->table_count == -1) this->table_count = table_count;
+    else
+    if(this->table_count != table_count) {
           this->table_count = table_count;
           return -1; 
     }
