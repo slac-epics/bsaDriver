@@ -31,6 +31,13 @@
 #include <drvSup.h>
 #include <epicsExport.h>
 
+#include <pvxs/server.h>
+#include <pvxs/sharedpv.h>
+#include <pvxs/log.h>
+#include <pvxs/iochooks.h>
+#include <pvxs/nt.h>
+
+
 #include <bldStream.h>
 #include <bsasAsynDriver.h>
 #include <bsaAsynDriver.h>

@@ -38,6 +38,8 @@ bsaDriver_LIBS += bsa
 
 bsaDriver_LIBS += asyn
 bsaDriver_LIBS += yamlLoader
+bsaDriver_LIBS += pvxs
+bsaDriver_LIbS += pvxsIoc
 bsaDriver_LIBS += $(EPICS_BASE_IOC_LIBS)
 
 
