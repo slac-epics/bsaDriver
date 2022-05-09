@@ -22,7 +22,7 @@ INC += bsasAsynDriver.h
 DBD += bsaAsynDriver.dbd
 
 
-LIBRARY_IOC = bsaDriver
+LIBRARY_IOC_linuxRT = bsaDriver
 
 bsaDriver_DBD += bsaAsynDriver.dbd
 bsaDriver_SRCS += bldStream.cpp
