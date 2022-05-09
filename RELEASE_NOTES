@@ -1,3 +1,6 @@
+linuxRT_build_only    May 9, Kukhee Kim
+            - branch out from R2.1.0-prep-bsas to try to build linuxRT only
+
 R2.1.0-prep-bsas   March 30, 2022      Kukhee Kim (khkim)
             - branch out from R2.1.0 for developing/testing BSAS
             - build against timing/bsa R2.0.0-prep-bsas for developing
