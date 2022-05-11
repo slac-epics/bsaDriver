@@ -21,8 +21,8 @@ INC += bsssAsynDriver.h
 INC += bsasAsynDriver.h
 DBD += bsaAsynDriver.dbd
 
-
-LIBRARY_IOC_linuxRT = bsaDriver
+ifeq ($(T_A),linuxRT-x86_64)
+LIBRARY_IOC = bsaDriver
 
 bsaDriver_DBD += bsaAsynDriver.dbd
 bsaDriver_SRCS += bldStream.cpp
@@ -41,7 +41,7 @@ bsaDriver_LIBS += yamlLoader
 bsaDriver_LIBS += pvxs
 bsaDriver_LIbS += pvxsIoc
 bsaDriver_LIBS += $(EPICS_BASE_IOC_LIBS)
-
+endif
 
 
 
