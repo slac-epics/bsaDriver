@@ -24,7 +24,7 @@
 
 YAMLLOADER_MODULE_VERSION=R2.2.0
 ASYN_MODULE_VERSION=R4.39-1.0.1
-PVXS_MODULE_VERSION= pvxs-git-khkim
+PVXS_MODULE_VERSION= pvxs-git
 
 
 # ==========================================================
