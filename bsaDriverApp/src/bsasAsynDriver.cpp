@@ -144,12 +144,12 @@ static int bsasAdd(const char *bsasKey, bsasDataType_t type, double *slope, doub
 
     p->pname_ts[0]  = '\0';
     p->pname_pid[0] = '\0';
-    p->pname_cnt[0] = '\0';
-    p->pname_avg[0] = '\0';
-    p->pname_rms[0] = '\0';
-    p->pname_min[0] = '\0';
-    p->pname_max[0] = '\0';
-    p->pname_val[0] = '\0';
+    p->pname_cnt[0] = '\0'; p->fname_cnt[0] = '\0';
+    p->pname_avg[0] = '\0'; p->fname_avg[0] = '\0';
+    p->pname_rms[0] = '\0'; p->fname_rms[0] = '\0';
+    p->pname_min[0] = '\0'; p->fname_min[0] = '\0';
+    p->pname_max[0] = '\0'; p->fname_max[0] = '\0';
+    p->pname_val[0] = '\0'; p->fname_val[0] = '\0';
 
     p->type    = type;
     p->pslope  = slope;
@@ -251,6 +251,8 @@ int chnCol::store(int row, uint32_t cnt, double val, double avg, double rms, dou
 {
     if(row< 0 || row > MAXROWS-1) return -1;
 
+    this->last_row = row;
+
     this->cnt[row] = cnt;
     this->val[row] = val;
     this->avg[row] = avg;
@@ -259,6 +261,18 @@ int chnCol::store(int row, uint32_t cnt, double val, double avg, double rms, dou
     this->max[row] = max;
 
     return 0;
+}
+
+void chnCol::pushPV(pvxs::Value *ppv, void *pChn)
+{
+    bsasList_t *p = (bsasList_t *) pChn;
+
+    (*ppv)[VALUE_FIELD][p->fname_cnt] = pvxs::shared_array<const uint32_t>(cnt, cnt + last_row + 1);
+    (*ppv)[VALUE_FIELD][p->fname_val] = pvxs::shared_array<const double>  (val, val + last_row + 1);
+    (*ppv)[VALUE_FIELD][p->fname_avg] = pvxs::shared_array<const double>  (avg, avg + last_row + 1);
+    (*ppv)[VALUE_FIELD][p->fname_rms] = pvxs::shared_array<const double>  (rms, rms + last_row + 1);
+    (*ppv)[VALUE_FIELD][p->fname_min] = pvxs::shared_array<const double>  (min, min + last_row + 1);
+    (*ppv)[VALUE_FIELD][p->fname_max] = pvxs::shared_array<const double>  (max, max + last_row + 1);
 }
 
 ntTbl::ntTbl(int num_chn)
@@ -271,13 +285,29 @@ ntTbl::ntTbl(int num_chn)
 void ntTbl::init(void)
 {
     for(int i = 0; i < num_chn; i++) (col+i)->init();
+    for(int row = 0; row < MAXROWS; row++) {
+//        this->timestmap[row] = 0;
+        this->sec[row] = 0;
+        this->nsec[row] = 0;
+        this->pulse_id[row] = 0;
+    }
 }
 
 int ntTbl::store(int row, uint64_t timestamp, uint64_t pulse_id)
 {
+    typedef struct {
+        uint32_t nsec;
+        uint32_t  sec;
+    } ts_t;
+
+    ts_t *p = (ts_t *) &timestamp;
+
     if(row <0 || row > MAXROWS-1) return -1;
 
-    this->timestamp[row] = timestamp;
+    this->last_row       = row;
+//    this->timestamp[row] = timestamp;
+    this->sec[row]       = p->sec;
+    this->nsec[row]      = p->nsec;
     this->pulse_id[row]  = pulse_id;
 
     return 0;
@@ -292,6 +322,21 @@ int ntTbl::store(int col, int row, uint32_t cnt, double val, double avg, double 
 
 }
 
+
+void ntTbl::pushPV(pvxs::Value *ppv, std::vector<void *> *pActiveChannels)
+{
+    int col = 0;
+    (*ppv)[VALUE_FIELD][SEC_COL]  = pvxs::shared_array<const uint32_t>(sec,      sec+last_row+1);
+    (*ppv)[VALUE_FIELD][NSEC_COL] = pvxs::shared_array<const uint32_t>(nsec,     nsec+last_row+1);
+    (*ppv)[VALUE_FIELD][PID_COL]  = pvxs::shared_array<const uint64_t>(pulse_id, pulse_id+last_row+1);
+
+    for(auto it = pActiveChannels->begin(); it < pActiveChannels->end(); it++) {
+        (this->col + (col++))->pushPV(ppv, *it);
+    }
+}
+
+
+
 edefNTTbl::edefNTTbl(int num_chn)
 {
     table_count = -1;
@@ -303,9 +348,55 @@ edefNTTbl::edefNTTbl(int num_chn)
 }
 
 
+pvxs::server::SharedPV edefNTTbl::lateInit(const char *ntTableName, std::vector <void *> *pActiveChannels)
+{
+    auto labels = std::vector<std::string>();
+    auto value  = pvxs::TypeDef(pvxs::TypeCode::Struct, {});
+
+    pv = pvxs::server::SharedPV::buildReadonly();
+
+    value += {pvxs::Member(pvxs::TypeCode::UInt32A, SEC_COL)};    labels.push_back(SEC_COL);
+    value += {pvxs::Member(pvxs::TypeCode::UInt32A, NSEC_COL)};   labels.push_back(NSEC_COL);
+    value += {pvxs::Member(pvxs::TypeCode::UInt64A, PID_COL)};    labels.push_back(PID_COL);
+
+
+    for(auto it = pActiveChannels->begin(); it < pActiveChannels->end(); it++) {
+        bsasList_t *p = (bsasList_t *) (*it);
+        
+        value += {pvxs::Member(pvxs::TypeCode::UInt32A,  p->fname_cnt)}; labels.push_back(p->pname_cnt);
+        value += {pvxs::Member(pvxs::TypeCode::Float64A, p->fname_val)}; labels.push_back(p->pname_val);
+        value += {pvxs::Member(pvxs::TypeCode::Float64A, p->fname_avg)}; labels.push_back(p->pname_avg);
+        value += {pvxs::Member(pvxs::TypeCode::Float64A, p->fname_rms)}; labels.push_back(p->pname_rms);
+        value += {pvxs::Member(pvxs::TypeCode::Float64A, p->fname_min)}; labels.push_back(p->pname_min);
+        value += {pvxs::Member(pvxs::TypeCode::Float64A, p->fname_max)}; labels.push_back(p->pname_max);
+        
+    }
+
+    _labels = pvxs::shared_array<const std::string>(labels.begin(), labels.end());
+    _def = pvxs::TypeDef(pvxs::TypeCode::Struct, NTTBL_ID, {
+                         pvxs::members::StringA(LABEL_FIELD),
+                         value.as(VALUE_FIELD)
+                         });
+    
+    _initial              = _def.create();
+    _initial[LABEL_FIELD] = _labels;
+
+    pv.open(_initial);
+
+    return pv;
+}
+
+void edefNTTbl::pushPV(std::vector<void *> *pActiveChannels)
+{
+    int idx = swing_idx?0:1;
+    
+    pTbl[idx]->pushPV(&_initial, pActiveChannels);
+    pv.post(_initial);
+}
+
 inline void edefNTTbl::swing(void)
 {
-                // switch active and standby
+    // switch active and standby
     swing_idx = swing_idx?0:1;
     pTbl[swing_idx]->init();
 }
@@ -397,6 +488,12 @@ bsasAsynDriver::bsasAsynDriver(const char *portName, const char *reg_path, const
     while(p) {
         if(p->pv_name[0]) {
             this->channelMask |= (0x1) <<i;
+            sprintf(p->fname_cnt, CNT_STR, i);
+            sprintf(p->fname_val, VAL_STR, i);
+            sprintf(p->fname_avg, AVG_STR, i);
+            sprintf(p->fname_rms, RMS_STR, i);
+            sprintf(p->fname_min, MIN_STR, i);
+            sprintf(p->fname_max, MAX_STR, i);
             activeChannels->push_back((void *) p);
         }
         i++;
@@ -667,7 +764,15 @@ void bsasAsynDriver::SetChannelSevr(uint64_t sevr)
 
 
 
+void bsasAsynDriver::lateInit(void)
+{
+    static auto server = pvxs::ioc::server();
 
+    for(int i = 0; i < NUM_BSAS_MODULES; i++)  {
+        server.addPV(ntTableName[i], pEdefNTTbl[i]->lateInit(ntTableName[i], activeChannels));
+
+   }
+}
 
 
 void bsasAsynDriver::bsasCallback(void *p, unsigned size)
@@ -679,11 +784,12 @@ void bsasAsynDriver::bsasCallback(void *p, unsigned size)
 
     uint32_t cnt;
     double   val, avg, rms, min, max, sq;
-    uint32_t _val, _sum, _sum_square, _min, _max;
+    uint32_t _val, _sum, _min, _max;
+    uint64_t _sum_square;
 
     if(pEdefNTTbl[hd->edef_index]->checkUpdate(hd->table_count)) {
-        // put NTTable UPdate
         pEdefNTTbl[hd->edef_index]->swing();  // swing buffer
+        pEdefNTTbl[hd->edef_index]->pushPV(activeChannels);
     }
 
     pEdefNTTbl[hd->edef_index]->store(hd->row_number, hd->timestamp, hd->pulse_id);
@@ -699,14 +805,14 @@ void bsasAsynDriver::bsasCallback(void *p, unsigned size)
             case int32_bsas:
                 val = double(*(int32_t *) &_val);
                 avg = double(*(int32_t *) &_sum);
-                rms = double(*(int32_t *) &_sum_square);
+                rms = double(*(int64_t *) &_sum_square);
                 min = double(*(int32_t *) &_min);
                 max = double(*(int32_t *) &_max);
                 break;
             case uint32_bsas:
                 val = double(*(uint32_t *) &_val);
                 avg = double(*(uint32_t *) &_sum);
-                rms = double(*(uint32_t *) &_sum_square);
+                rms = double(*(uint64_t *) &_sum_square);
                 min = double(*(uint32_t *) &_min);
                 max = double(*(uint32_t *) &_max);
                 break;
@@ -755,6 +861,8 @@ void bsasAsynDriver::bsasCallback(void *p, unsigned size)
         if(rms != NAN) rms = rms * (*plist->pslope);
         if(min != NAN) min = min * (*plist->pslope) + (*plist->poffset);
         if(max != NAN) max = max * (*plist->pslope) + (*plist->poffset);
+
+       pEdefNTTbl[hd->edef_index]->store(i, hd->row_number, cnt, val, avg, rms, min, max);
     }
 
 
@@ -891,6 +999,14 @@ static int bsasAsynDriverReport(int interest)
 
 static int bsasAsynDriverInitialize(void)
 {
+
+    init_drvList();
+    pDrvList_t *p = (pDrvList_t *) ellFirst(pDrvEllList);
+
+    while(p) {
+        p->pBsasDrv->lateInit();    // prepare NTTable PVs
+        p = (pDrvList_t *) ellNext(&p->node);
+    }
 
     return 0;
 }

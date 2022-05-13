@@ -29,6 +29,18 @@
 
 #define MAXROWS                  1000   // max row in NTTable
 
+#define NTTBL_ID                "epics:nt/NTTable:1.0"
+#define LABEL_FIELD             "labels"
+#define VALUE_FIELD             "value"
+#define SEC_COL                 "secondsPastEpoch"
+#define NSEC_COL                "nanoseconds"
+#define PID_COL                 "pulseId"
+#define CNT_STR                 "pv%d_cnt"
+#define VAL_STR                 "pv%d_val"
+#define AVG_STR                 "pv%d_avg"
+#define RMS_STR                 "pv%d_rms"
+#define MIN_STR                 "pv%d_min"
+#define MAX_STR                 "pv%d_max"
 
 
 typedef enum {
@@ -77,6 +89,13 @@ typedef struct {
     char                  pname_min[PVNAME_LEN];
     char                  pname_max[PVNAME_LEN];
     char                  pname_val[PVNAME_LEN];
+    
+    char                  fname_cnt[PVNAME_LEN];
+    char                  fname_avg[PVNAME_LEN];
+    char                  fname_rms[PVNAME_LEN];
+    char                  fname_min[PVNAME_LEN];
+    char                  fname_max[PVNAME_LEN];
+    char                  fname_val[PVNAME_LEN];
 } bsasList_t;
 
 
@@ -126,7 +145,7 @@ typedef struct __attribute__ ((packed)) {
     bool     flag_fixed:    1;
     uint32_t val:          32;
     uint32_t sum:          32;
-    uint32_t sum_square:   48;
+    uint64_t sum_square:   48;
     uint32_t min:          32;
     uint32_t max:          32;       
 } payload_t;     /* 24 bytes payload for each channel */
@@ -138,6 +157,7 @@ typedef struct __attribute__((packed)) {
 
 
 class chnCol {
+    int      last_row;
     uint32_t cnt[MAXROWS];
     double   val[MAXROWS];
     double   avg[MAXROWS];
@@ -148,11 +168,15 @@ class chnCol {
     public:
     void     init(void);
     int      store(int row, uint32_t cnt, double val, double avg, double rms, double min, double max);
+    void     pushPV(pvxs::Value *ppv, void *pChn);
     
 };
 
 class ntTbl {
-    uint64_t timestamp[MAXROWS];
+    int      last_row;
+//    uint64_t timestamp[MAXROWS];
+    uint32_t sec[MAXROWS];
+    uint32_t nsec[MAXROWS];
     uint64_t pulse_id[MAXROWS];
     chnCol   *col;
     int      num_chn;
@@ -163,6 +187,7 @@ class ntTbl {
     void init(void);
     int store(int row, uint64_t timestamp, uint64_t pulse_id);
     int store(int col, int row, uint32_t cnt, double val, double avg, double rms, double min, double max);
+    void pushPV(pvxs::Value *ppv, std::vector<void *> *pActiveChannels);
 };
 
 
@@ -170,10 +195,19 @@ class edefNTTbl {
     int   table_count;
     int   swing_idx;
     ntTbl *pTbl[2];
+
+    // NTTable PV stuff
+    pvxs::shared_array<const std::string> _labels;  
+    pvxs::TypeDef                         _def;
+    pvxs::Value                           _initial;
+    pvxs::server::SharedPV                pv;
+
     public:
     edefNTTbl(int num_chn);
     ~edefNTTbl() {}
 
+    pvxs::server::SharedPV lateInit(const char *ntTablename, std::vector<void *> *pActiveChannels);
+    void pushPV(std::vector<void *> *pActiveChannels);
     inline void swing(void);
     int checkUpdate(int table_count);
     int store(int row, uint64_t timestamp, uint64_t pulse_id);
@@ -194,6 +228,8 @@ class bsasAsynDriver: asynPortDriver {
 
         asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
         void bsasCallback(void *p, unsigned size);
+
+        void lateInit(void);
     private:
         ELLLIST                 *pBsasEllList;
         Bsas::BsasModuleYaml    *pBsas[NUM_BSAS_MODULES];
