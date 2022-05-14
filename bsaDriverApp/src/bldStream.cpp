@@ -245,7 +245,7 @@ static void show_bsss_buffer(void *p, unsigned size)
     printf("\t\t pulse id, upper  : %8x\n", *(buff++));
     printf("\t\t channel mask     : %8x\n", *(buff++));
     printf("\t\t service mask     : %8x\n", *(buff++));
-    printf("\t\t severity mask    : %16llx\n", *psv); 
+    printf("\t\t severity mask    : %16llx\n", (long long unsigned int)(*psv)); 
 }
 
 
@@ -285,8 +285,8 @@ typedef struct __attribute__((packed)) {
     printf("\t\t --------------------------------\n");
     printf("\t\t BSAS Packet: size(%d)\n", size);
     printf("\t\t --------------------------------\n");
-    printf("\t\t timestamp (64bit): %16llx\n", pk->hd.timestamp);
-    printf("\t\t pulse id  (64bit): %16llx\n", pk->hd.pulse_id);
+    printf("\t\t timestamp (64bit): %16llx\n", (long long unsigned int)(pk->hd.timestamp));
+    printf("\t\t pulse id  (64bit): %16llx\n", (long long unsigned int)(pk->hd.pulse_id));
     printf("\t\t channel mask     : %8x\n",  pk->hd.channelMask);
     printf("\t\t row number       : %d\n",   pk->hd.row_number);
     printf("\t\t table_count      : %d\n",   pk->hd.table_count);
@@ -304,7 +304,7 @@ typedef struct __attribute__((packed)) {
                                                                                   pk->pl[j].flag_fixed?    'F': 'N',
                                                                                   pk->pl[j].val,
                                                                                   pk->pl[j].sum,
-                                                                                  pk->pl[j].sum_square,
+                                                                                  (long long unsigned int) (pk->pl[j].sum_square),
                                                                                   pk->pl[j].min,
                                                                                   pk->pl[j].max);
             j++;
