@@ -286,20 +286,30 @@ void BsaPv::append()
 
 void BsaPv::append(unsigned n, double mean, double rms2)
 {
-    uint32_t _u = (uint32_t) mean;
+    union {
+        uint32_t u32;
+        int32_t  i32;
+        float    f32;
+    } u;
     double __mean;
+
+    u.u32 = (uint32_t) mean;
+
 
 
     switch(*_p_type) {
         case int32:
-            __mean = (double)(*(int32_t*)&_u);
+            __mean = (double) u.i32;
             break;
         case uint32:
-            __mean = (double)_u;
+            __mean = (double) u.u32;
             break;
         case float32:
-            __mean = (double)(*(float*)&_u);
+            __mean = (double) u.f32;
             break;
+        default:
+           __mean = 0.;
+           break;
     }
 
 
@@ -489,7 +499,7 @@ bsaAsynDriver::~bsaAsynDriver()
 
 void bsaAsynDriver::SetupAsynParams(void)
 {
-    char param_name[64];
+    char param_name[80];
 
     sprintf(param_name, enableString); createParam(param_name, asynParamInt32, &p_enable);
 
