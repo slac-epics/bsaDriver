@@ -36,7 +36,7 @@
 
 #include <yamlLoader.h>
 
-static const char *drverName = "bsssAsynDriver";
+static const char *driverName = "bsssAsynDriver";
 
 static ELLLIST *pDrvEllList = NULL;
 
