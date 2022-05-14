@@ -209,7 +209,7 @@ bsssAsynDriver::~bsssAsynDriver()
 
 void bsssAsynDriver::SetupAsynParams(void)
 {
-    char param_name[64];
+    char param_name[80];
 
     // BSSS Status Monitoring
     sprintf(param_name, CURRPACKETSIZE_STR);   createParam(param_name, asynParamInt32, &p_currPacketSize);
@@ -435,7 +435,7 @@ void bsssAsynDriver::bsssCallback(void *p, unsigned size)
 
                  setDoubleParam(plist->p_bsss[i], INFINITY);   // make asyn PV update even posting the same value with previous
 
-                 if(((sevr_mask >> (data_chn*2)) & 0x3) <= GetChannelSevr(data_chn) ) {  // data update for valid mask
+                 if(int((sevr_mask >> (data_chn*2)) & 0x3) <= GetChannelSevr(data_chn) ) {  // data update for valid mask
                      switch(plist->type){
                          case int32_bsss:
                              val = (double) (p_int32[index]);

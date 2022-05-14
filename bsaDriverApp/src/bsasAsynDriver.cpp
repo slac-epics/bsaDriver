@@ -568,7 +568,7 @@ asynStatus bsasAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
 
 void bsasAsynDriver::SetupAsynParams(void)
 {
-    char param_name[64];
+    char param_name[140];
     const char *param_str[] = { (const char *)PARAM_ACQUIRE_STR,
                                 (const char *)PARAM_ROWADV_STR,
                                 (const char *)PARAM_TBLRESET_STR };
