@@ -784,8 +784,13 @@ void bsasAsynDriver::bsasCallback(void *p, unsigned size)
 
     uint32_t cnt;
     double   val, avg, rms, min, max, sq;
-    uint32_t _val, _sum, _min, _max;
-    uint64_t _sum_square;
+    union {
+        uint32_t u32;
+        int32_t  i32;
+        float    f32;
+        uint64_t u64;
+        int64_t  i64;
+    }  _val, _sum, _min, _max, _sum_square;
 
     if(pEdefNTTbl[hd->edef_index]->checkUpdate(hd->table_count)) {
         pEdefNTTbl[hd->edef_index]->swing();  // swing buffer
@@ -796,32 +801,32 @@ void bsasAsynDriver::bsasCallback(void *p, unsigned size)
     
     for(std::vector<void*>::iterator it = activeChannels->begin(); it != activeChannels->end(); it++, i++) {
         bsasList_t *plist = (bsasList_t *)(*it);
-        _val        = (pl+i)->val;
-        _sum        = (pl+i)->sum;
-        _sum_square = (pl+i)->sum_square;
-        _min        = (pl+i)->min;
-        _max        = (pl+i)->max;
+        _val.u32        = (pl+i)->val;
+        _sum.u32        = (pl+i)->sum;
+        _sum_square.u64 = (pl+i)->sum_square;
+        _min.u32        = (pl+i)->min;
+        _max.u32        = (pl+i)->max;
         switch(plist->type) {
             case int32_bsas:
-                val = double(*(int32_t *) &_val);
-                avg = double(*(int32_t *) &_sum);
-                rms = double(*(int64_t *) &_sum_square);
-                min = double(*(int32_t *) &_min);
-                max = double(*(int32_t *) &_max);
+                val = double(_val.i32);
+                avg = double(_sum.i32);
+                rms = double(_sum_square.i64);
+                min = double(_min.i32);
+                max = double(_max.i32);
                 break;
             case uint32_bsas:
-                val = double(*(uint32_t *) &_val);
-                avg = double(*(uint32_t *) &_sum);
-                rms = double(*(uint64_t *) &_sum_square);
-                min = double(*(uint32_t *) &_min);
-                max = double(*(uint32_t *) &_max);
+                val = double(_val.u32);
+                avg = double(_sum.u32);
+                rms = double(_sum_square.u64);
+                min = double(_min.u32);
+                max = double(_max.u32);
                 break;
             case float32_bsas:
-                val = double(*(float*) &_val);
-                avg = double(*(float*) &_sum);
-                rms = double(*(float*) &_sum_square);
-                min = double(*(float*) &_min);
-                max = double(*(float*) &_max);
+                val = double(_val.f32);
+                avg = double(_sum.f32);
+                rms = double(_sum_square.f32);
+                min = double(_min.f32);
+                max = double(_max.f32);
                 break;
             case uint64_bsas:
             default:
