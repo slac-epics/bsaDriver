@@ -39,6 +39,7 @@
 #define  BSAS_ROWNUM_MASK     (0xffff<<0BSAS_ROWNUM_LOC)
 
 static ELLLIST *pDrvEllList = NULL;
+static bool listener_ready  = false;
 
 typedef enum {
     none,
@@ -155,6 +156,7 @@ static void listener(pDrvList_t *p)
 
         uint32_t  *pu32 = (uint32_t *) np->buff;
 
+        if(listener_ready) {
         if(pu32[IDX_SERVICE_MASK] & BSAS_IDTF_MASK) {   /* bsas */
             p->bsas_count++;
             p->p_last_bsas = (void *) np;
@@ -173,7 +175,7 @@ static void listener(pDrvList_t *p)
             np->type = bld_packet;
             if(p->bld_callback) (p->bld_callback)(p->pUsrBld, (void *) np->buff, np->size);
         }
-
+        }  // if(listener_ready)
         p->read_count++;
         ellAdd(p->free_list, &np->node);
     }
@@ -387,11 +389,7 @@ static int bldStreamDriverInitialize(void)
 
     printf("BLD Stream driver: %d of driver instance(s) has (have) been configured\n", ellCount(pDrvEllList));
 
-    /*
-    epicsThreadCreate("bsssDrvPoll", epicsThreadPriorityMedium,
-                      epicsThreadGetStackSize(epicsThreadStackMedium),
-                      (EPICSTHREADFUNC) bsssMonitorPoll, 0);
-    */
+    listener_ready = true;     // postpone to activate listener until the driver instialization is done
 
     return 0;
 }
