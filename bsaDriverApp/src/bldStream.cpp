@@ -38,8 +38,36 @@
 #define  BSAS_ROWNUM_LOC      0
 #define  BSAS_ROWNUM_MASK     (0xffff<<0BSAS_ROWNUM_LOC)
 
+#ifdef __rtems__
+#ifdef __PPC__
+#define MFTB(var) asm volatile("mftb %0":"=r"(var))
+#else
+#define MFTB(var) (var)=Read_timer()
+#endif
+#endif
+
+#if defined(i386) || defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(_X86_)  /*  for 32bits */ \
+     || defined(__x86_64) || defined(__x86_64__) || defined(_M_X64)                              /*  for 64bits */
+/* __inline__ static unsigned long long int rdtsc(void)
+{
+        unsigned long long int x;
+        __asm__ volatile (".byte 0x0f, 0x31": "=A" (x));
+        return x;
+} */
+
+__inline__ static uint64_t rdtsc(void)
+{
+   uint32_t lo, hi;
+    __asm__ __volatile__("rdtsc" : "=a"(lo), "=d"(hi));
+    return (((uint64_t)hi) << 32) | ((uint64_t)lo);
+}
+
+#define MFTB(var)  ((var)=(uint32_t) rdtsc())
+#endif
+
 static ELLLIST *pDrvEllList = NULL;
 static bool listener_ready  = false;
+static uint32_t  ticks_in_sec = 0;
 
 typedef enum {
     none,
@@ -57,6 +85,13 @@ typedef struct {
     unsigned        bld_count;
     unsigned        bsss_count;
     unsigned        bsas_count;
+
+    struct {
+        uint32_t start;
+        uint32_t end;
+        uint32_t min;
+        uint32_t max;
+    } time_bld, time_bsss, time_bsas;
 
     void (*bsss_callback)(void *, void *, unsigned);
     void *pUsrBsss;
@@ -123,6 +158,11 @@ static pDrvList_t *get_drvNode(const char *named_root)
         p->bld_count  = 0;
         p->bsss_count = 0;
         p->bsas_count = 0;
+
+        p->time_bld = {};  p->time_bld.min  = 0xffffffff;
+        p->time_bsss = {}; p->time_bsss.min = 0xffffffff;
+        p->time_bsas = {}; p->time_bsas.min = 0xffffffff;
+
         p->p_last_buff   = NULL;
         p->p_last_bsss   = NULL;
         p->p_last_bsas   = NULL;
@@ -142,6 +182,27 @@ static pDrvList_t *get_drvNode(const char *named_root)
     return p;
 }
 
+static double calc_delay(uint32_t start, uint32_t end)
+{
+    if(end>start) return (double(end) - double(start))/double(ticks_in_sec) * 1.E+6;
+    else          return 0.;
+}
+
+static double calc_delay(uint32_t diff)
+{
+    if(diff == 0 || diff ==  0xffffffff) return 0.;
+    else return double(diff) / double(ticks_in_sec) * 1.E+6;
+}
+
+__inline__ static void calc_minmax(uint32_t &start, uint32_t &end, uint32_t &min, uint32_t &max)
+{
+    if(end>start) {
+        uint32_t diff = end - start;
+        if(diff > max) max = diff;
+        if(diff < min) min = diff;
+    }
+}
+
 static void listener(pDrvList_t *p)
 {
     Path p_root = (p->named_root && strlen(p->named_root))? cpswGetNamedRoot(p->named_root): cpswGetRoot();
@@ -158,22 +219,31 @@ static void listener(pDrvList_t *p)
 
         if(listener_ready) {
         if(pu32[IDX_SERVICE_MASK] & BSAS_IDTF_MASK) {   /* bsas */
+            MFTB(p->time_bsas.start);
             p->bsas_count++;
             p->p_last_bsas = (void *) np;
             np->type = bsas_packet;
             if(p->bsas_callback) (p->bsas_callback)(p->pUsrBsas, (void *) np->buff, np->size);
+            MFTB(p->time_bsas.end);
+            calc_minmax(p->time_bsas.start, p->time_bsas.end, p->time_bsas.min, p->time_bsas.max);
         }
         else if(pu32[IDX_SERVICE_MASK] & BSSS_SERVICE_MASK) { /* bsss */
+            MFTB(p->time_bsss.start);
             p->bsss_count++;
             p->p_last_bsss = (void *) np;
             np->type = bsss_packet;
             if(p->bsss_callback) (p->bsss_callback)(p->pUsrBsss, (void *) np->buff, np->size);
+            MFTB(p->time_bsss.end);
+            calc_minmax(p->time_bsss.start, p->time_bsss.end, p->time_bsss.min, p->time_bsss.max);
         }
         else {  /* bld */
+            MFTB(p->time_bld.start);
             p->bld_count++;
             p->p_last_bld = (void *) np;
             np->type = bld_packet;
             if(p->bld_callback) (p->bld_callback)(p->pUsrBld, (void *) np->buff, np->size);
+            MFTB(p->time_bld.end);
+            calc_minmax(p->time_bld.start, p->time_bld.end, p->time_bld.min, p->time_bld.max);
         }
         }  // if(listener_ready)
         p->read_count++;
@@ -356,6 +426,15 @@ static int bldStreamDriverReport(int interest)
         printf("\t  bsas_callback: %p\n", p->bsas_callback);
         printf("\t  bsas_usr     : %p\n", p->pUsrBsas);
         printf("\t  free list    : %p\n", p->free_list);
+        printf("\t  bld  callback processing (usec): snapshot %8.3f, min %8.3f, max %8.3f\n",  calc_delay(p->time_bld.start,  p->time_bld.end), calc_delay(p->time_bld.min), calc_delay(p->time_bld.max));
+        printf("\t  bsss callback processing (usec): snapshot %8.3f, min %8.3f, max %8.3f\n",  calc_delay(p->time_bsss.start, p->time_bsss.end), calc_delay(p->time_bsss.min), calc_delay(p->time_bsss.max));
+        printf("\t  bsas callback processing (usec): snapshot %8.3f, min %8.3f, max %8.3f\n",  calc_delay(p->time_bsas.start, p->time_bsas.end), calc_delay(p->time_bsas.min), calc_delay(p->time_bsas.max));
+
+        if(interest > 1) {  // reset min and max for the processing time mesasurement
+            p->time_bld = {};  p->time_bld.min = 0xffffffff;
+            p->time_bsss = {}; p->time_bsss.min = 0xffffffff;
+            p->time_bsas = {}; p->time_bsas.min = 0xffffffff;
+        }
 
         if(interest && p->p_last_buff) {
             pBuff_t *np;
@@ -388,6 +467,14 @@ static int bldStreamDriverInitialize(void)
     }
 
     printf("BLD Stream driver: %d of driver instance(s) has (have) been configured\n", ellCount(pDrvEllList));
+
+    uint32_t tick_start, tick_stop;
+    do {
+        MFTB(tick_start); epicsThreadSleep(1.); MFTB(tick_stop);
+    } while(tick_start >= tick_stop);
+
+    ticks_in_sec = tick_stop - tick_start;
+
 
     listener_ready = true;     // postpone to activate listener until the driver instialization is done
 
