@@ -1,3 +1,15 @@
+R2.1.0-1.0         May 19, 2022   Kukhee Kim
+            - build against timing/bsa R2.0.0-1.0
+            - initial release to support BSAS
+            - support incremental timestamp update for BSA
+            - remove IDX macro (data channel number) in BSSS database template
+            - implement software serverity filter for BSSS
+
+            remark) temporally prevent host build to avoid c++ compiler issue
+                    thus, build just for linuxRT cross target only
+            
+
+
 R2.1.0-prep-bsas   May 11, 2022    Kukhee Kim
             - rebase/merge to pick up Ernest's changes in the linuxRT_build_only branch
             - build only for linuxRT target
