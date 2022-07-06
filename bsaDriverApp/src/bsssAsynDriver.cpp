@@ -486,6 +486,14 @@ static int  bsssMonitorPoll(void)
     return 0;
 }
 
+
+int bsssAssociateBsaChannels(const char *port_name)
+{
+    return associateBsaChannels(port_name);
+}
+
+
+
 int bsssAsynDriverConfigure(const char *portName, const char *reg_path, const char *named_root)
 {
     pDrvList_t *pl = find_drvByPort(portName);
