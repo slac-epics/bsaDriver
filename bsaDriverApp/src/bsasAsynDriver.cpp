@@ -877,6 +877,16 @@ void bsasAsynDriver::bsasCallback(void *p, unsigned size)
 extern "C" {
 
 
+int bsasAssociateBsaChannels(const char *port_name)
+{
+    return associateBsaChannels(port_name);
+}
+
+int bsasBaseName(const char *bsasKey, const char *pv_name)
+{
+    return bsasPVName(bsasKey, pv_name);
+}
+
 int bsasAsynDriverConfigure(const char *portName, const char *reg_path,
                             const char *ntTable_name1,
                             const char *ntTable_name2,
