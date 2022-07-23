@@ -10,7 +10,7 @@
 
 record(ai, "$(DEVICE):$(SECN)$(MDID)")
 {
-    field(DESC, "BSSS Scalar $(SECN) for $(MDID)")
+    field(DESC, "BSSS Scalar $(DESC)for $(MDID)")
     field(DTYP, "asynFloat64")
     field(INP,  "@asyn($(PORT), 0) $(BSAKEY)_bsss_$(IDX)")
     field(SCAN, "I/O Intr")
