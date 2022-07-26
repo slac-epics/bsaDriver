@@ -7,7 +7,7 @@
 #  $(DEV):$(SECN)_OFFSET   $(BSAKEY)_offset   DOUBLE        linear conversion, offset
 
 
-record(ao, "$(DEV):$(SECN)_BSA_SLOPE")
+record(ao, "$(DEV):$(SECN)_SLOPE_BSA")
 {
   field(DESC, "Slope for linear conv")
   field(DTYP, "asynFloat64")
@@ -17,7 +17,7 @@ record(ao, "$(DEV):$(SECN)_BSA_SLOPE")
   info(autosaveFields, "VAL")
 }
 
-record(ao, "$(DEV):$(SECN)_BSA_OFFSET")
+record(ao, "$(DEV):$(SECN)_OFFSET_BSA")
 {
   field(DESC, "Offset for linear conv")
   field(DTYP, "asynFloat64")
