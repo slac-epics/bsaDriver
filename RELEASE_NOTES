@@ -4,7 +4,7 @@ R2.1.0-3.0         July 23, 2022  Kukhee Kim
 
             (Cherry Picking from master branch - R2.2.0)
             - PV name change for BSA liniear conversion PVs
-              (_OFFSET, _SLOPE) to (_BSA_OFFSET, _BSA_SLOPE) to avoid name conflict with the history module
+              (_OFFSET, _SLOPE) to (_OFFSET_BSA, _SLOPE_BSA) to avoid name conflict with the history module
             - introduce new macro $(DESC) for the DESC filed of BSSS scalar PV.
               if $(DESC) is defined, the macro substituion will generate the DESC field with $(DESC) macro,
               if $(DESC) is not defined, the macro subsitition will generate the DESC field with $(SECN) macro - backward compatible
