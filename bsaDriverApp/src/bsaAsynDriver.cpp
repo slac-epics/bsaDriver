@@ -593,7 +593,11 @@ int bsaAsynDriver::BsaRetreivePoll(void)
 //    while(1) {
 
         if(bsa_enable) // {
-            pending = pProcessor->pending();
+            try {
+              pending = pProcessor->pending();
+            } catch(...) {
+                printf("Bsa POll: error detecting pProcessor->pending()\n");
+            }
         else  return 0;
 //        } else {
 //            epicsThreadSleep(1.);
@@ -601,6 +605,7 @@ int bsaAsynDriver::BsaRetreivePoll(void)
 //        }
 
         for(int i=0; i< MAX_BSA_ARRAY; i++) {
+            try { 
             if(!(pending & (1ULL << pBsaPvArray[i]->array()))) continue; /* nothing to flush */
 
             if(pProcessor->update(*pBsaPvArray[i])) {
@@ -614,6 +619,9 @@ int bsaAsynDriver::BsaRetreivePoll(void)
                 for(unsigned int j = 0; j< pvs[i].size(); j++) {
                     pvs[i][j]->flush();
                 }
+            }
+            } catch(...) {
+                printf("Bsa Poll: error detecting pProcessor->update()\n");
             }
 
         }
