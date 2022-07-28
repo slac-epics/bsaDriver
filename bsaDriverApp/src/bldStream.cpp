@@ -1,3 +1,14 @@
+/** @file bldStream.cpp
+ *  @brief Resources to deal with BLD/BSA/BSSS packets.
+ *
+ *  Initializes structures and register callback functions that are called when
+ *  a BLD/BSA/BSSS packet is received. The functions here don't process the
+ *  packets. They are transferred as-is to the called back functions.
+ *
+ *  @todo Finish documentation.
+ *  @bug No know bugs.
+ */
+
 #include <math.h>
 
 #include <cantProceed.h>
@@ -65,6 +76,9 @@ __inline__ static uint64_t rdtsc(void)
 #define MFTB(var)  ((var)=(uint32_t) rdtsc())
 #endif
 
+/**
+ *  Linked list of pDrvList_t drivers.
+ */
 static ELLLIST *pDrvEllList = NULL;
 static bool listener_ready  = false;
 static uint32_t  ticks_in_sec = 0;
@@ -76,9 +90,15 @@ typedef enum {
     bsas_packet
 } packet_type_t;
 
+/**
+ * Structure to hold data related with a specific named root. When and IOC is
+ * accessing more than one ATCA crate, then adittional named roots are needed.
+ * The linked list pDrvEllList holds nodes of pDrvList_t per named root.
+ */
 typedef struct {
-    ELLNODE         node;
-    char            *named_root;
+    ELLNODE         node; /**< Contain pointers to next and previous elements
+                               of the linked list. (EPICS ellLib.h) */
+    char            *named_root; /**< String representing the named root. */
     char            *listener_name;
     unsigned        read_size;
     unsigned        read_count;
@@ -93,12 +113,31 @@ typedef struct {
         uint32_t max;
     } time_bld, time_bsss, time_bsas;
 
-    void (*bsss_callback)(void *, void *, unsigned);
-    void *pUsrBsss;
-    void (*bld_callback)(void *, void *, unsigned);
-    void *pUsrBld;
     void (*bsas_callback)(void *, void *, unsigned);
     void *pUsrBsas;
+
+    /**
+     * @name Calback functions
+     *
+     * @{
+     */
+    void (*bsss_callback)(void *, 
+                          void *, 
+                          unsigned); /**< Pointer to function that will be called
+                                         when a BSSS packet arrives from the
+                                         firmware. */
+    void *pUsrBsss; /**< General data that will be available to the function
+                        called back when a BSSS packet arrives. Data can be
+                        of any type. */
+    void (*bld_callback)(void *, 
+                         void *, 
+                         unsigned); /**< Pointer to function that will be called
+                                         when a BLD packet arrives from the
+                                         firmware. */
+    void *pUsrBld; /**< General data that will be available to the function
+                        called back when a BLD packet arrives. Data can be
+                        of any type. */
+    /**@}*/
 
     ELLLIST         *free_list;
 
@@ -116,6 +155,11 @@ typedef struct {
     char            buff[MAX_BUFF_SIZE];
 } pBuff_t;
 
+/** @brief Initializes pDrvEllList if needed.
+ *
+ *  Only one instance of pDrvEllList should exist. This function initializes it
+ *  only if necessary.
+ */
 static void init_drvList(void)
 {
     if(!pDrvEllList) {
@@ -126,7 +170,11 @@ static void init_drvList(void)
     return;
 }
 
-
+/** @brief Search among all elements of pDrvEllList for a match in named_root.
+ *
+ *  @param[in] named_root Named root used when loading the YAML files.
+ *  @return A pointer to the driver node associated with named_root.
+ */
 static pDrvList_t *find_drvByNamedRoot(const char *named_root)
 {
     init_drvList();
@@ -140,6 +188,19 @@ static pDrvList_t *find_drvByNamedRoot(const char *named_root)
     return p;
 }
 
+/** @brief Retrieve element of a linked list of drivers, searching for
+ *         named_root
+ *
+ *  If find_dvrByNamedRoot can't find a correspondence with named_root, create
+ *  a new pDrvList_t element, initialize it, add to the list of drivers and
+ *  return it.
+ *
+ *  This function will always return a node with a driver, either a new created
+ *  one or one that already exists.
+ *
+ *  @param[in] named_root Named root used when loading the YAML files.
+ *  @return A pointer to the driver node associated with named_root.
+ */
 static pDrvList_t *get_drvNode(const char *named_root)
 {
     pDrvList_t *p = find_drvByNamedRoot(named_root);
