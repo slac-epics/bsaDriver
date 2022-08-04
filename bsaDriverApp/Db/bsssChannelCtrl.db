@@ -6,7 +6,7 @@
 
 record(bo, "$(DEVICE):$(SECN)BSSSCHNMASK")
 {
-    field(DESC, "BSSS Channel Mask for  $(SECN)")
+    field(DESC, "BSSS Channel Mask for $(DESC)")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
     field(OUT, "@asyn($(PORT),0) channelMask_$(IDX)")
