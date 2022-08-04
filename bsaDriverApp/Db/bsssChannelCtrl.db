@@ -20,7 +20,7 @@ record(bo, "$(DEVICE):$(SECN)BSSSCHNMASK")
 
 record(mbbo, "$(DEVICE):$(SECN)BSSSCHNSEVR")
 {
-    field(DESC, "BSSS Channel Seveirty for $(SECN)")
+    field(DESC, "BSSS Channel Seveirty for $(DESC)")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
     field(OUT, "@asyn($(PORT),0) channelSevr_$(IDX)")
