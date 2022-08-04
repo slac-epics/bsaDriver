@@ -7,6 +7,8 @@ R2.2.0      July 23, 2022
               remark) some of sytem has long $(SECN0 name, it makes trouble to set up the DESC field, we can use a separate macro $(DESC)
                       to avoid generating long DESC with $(SECN)
             - add bsss driver commands to the symbol table for Cexp shell
+            (force tagging, Aug 4, 2022)
+            - introduce the $(DESC) for bsssChannel control also
 
 R2.1.0      Feb 22, 2022
             - enable type conversion to support float32/uint32/int32
