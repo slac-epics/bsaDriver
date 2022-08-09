@@ -17,3 +17,9 @@ driver(bldStreamDriver)
 #
 registrar(bsssAsynDriverRegister)
 driver(bsssAsynDriver)
+
+#
+#   bsasAsynDriver
+#
+registrar(bsasAsynDriverRegister)
+driver(bsasAsynDriver)

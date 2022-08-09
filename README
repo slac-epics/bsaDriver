@@ -408,11 +408,11 @@ remarks) use bsssCtrl_localTest.db for BSSS test without global PVs
 3. load up BSSS Scalar PVs (for each channel data)
 example)
 # BSSS Scalar PVs
-dbLoadRecords("db/bsss.db", "DEV=${SYS_PV},PORT=bsssPort,IDX=0,BSAKEY=PIDL,SECN=PIDL")
-dbLoadRecords("db/bsss.db", "DEV=${SYS_PV},PORT=bsssPort,IDX=1,BSAKEY=PIDU,SECN=PIDU")
-dbLoadRecords("db/bsss.db", "DEV=${SYS_PV},PORT=bsssPort,IDX=2,BSAKEY=TSL,SECN=TSL")
-dbLoadRecords("db/bsss.db", "DEV=${SYS_PV},PORT=bsssPort,IDX=3,BSAKEY=TSU,SECN=TSU")
-dbLoadRecords("db/bsss.db", "DEV=${SYS_PV},PORT=bsssPort,IDX=4,BSAKEY=RATES,SECN=RATES")
+dbLoadRecords("db/bsss.db", "DEV=${SYS_PV},PORT=bsssPort,BSAKEY=PIDL,SECN=PIDL")
+dbLoadRecords("db/bsss.db", "DEV=${SYS_PV},PORT=bsssPort,BSAKEY=PIDU,SECN=PIDU")
+dbLoadRecords("db/bsss.db", "DEV=${SYS_PV},PORT=bsssPort,BSAKEY=TSL,SECN=TSL")
+dbLoadRecords("db/bsss.db", "DEV=${SYS_PV},PORT=bsssPort,BSAKEY=TSU,SECN=TSU")
+dbLoadRecords("db/bsss.db", "DEV=${SYS_PV},PORT=bsssPort,BSAKEY=RATES,SECN=RATES")
 ......
 remark) use the same macros what we have used for BSA template. new macro, IDX macro should have a sequencial number from 0
 
@@ -502,6 +502,285 @@ PID interval should be 91000 at 10Hz rate
 
 remark) BSSS PV names and descriptions in the following link:
 https://confluence.slac.stanford.edu/display/~khkim/BSSS+PV+Name+List
+
+
+
+
+-------------------------------------------
+Beam Synchronous Acquisition Service (BSAS)
+-------------------------------------------
+
+BSAS (Beam Synchronous Acquisition Service) provides timestamp and pulse id aligned waveform data to the high-level application.
+The BSAS uses NTTable PV to make a structured data format:
+
+- There are multiple rows in the NTTable, all of data in a row aligned with a specific timestamp and pulse id
+- There are multiple columns in the NTTable PV: timestamp-seconds, timestamp-nonoseconds, pulse id and data column.
+  the number of data columns can be configurable and varies for different iocs.
+- Each data channel have 5 columns
+    .CNT: number of accumulated samples in the row
+          for statstical data      .CNT >= 2
+          for non-statistical data .CNT = 1
+    .VAL: delegate sample (very first sample in the row for the statistical data)
+    .AVG: arithmetic mean of the samples
+    .RMS: standard deviation of the samples
+    .MIN: minimum of the samples
+    .MAX: maximum of the samples
+- There are 4 of NTTable PVs which can be configured independently for different destinations and different rates
+- The acquisition rate, number of samples for statistical data in a row, number rows and update rate for NTTable can be configured by BSAS rate control PVs
+
+Remarks) please, check up the following slide deck for the BSAS design amd impelmentation details
+
+https://1drv.ms/p/s!AsH0Qpew48nUh7xfkO4-X_lMj48VmA?e=6Ea8FP
+
+Please, check up the following confluence page
+
+https://confluence.slac.stanford.edu/display/~khkim/BSAS+Driver+Configuration+and+Control+PVs
+
+
+0. Build application with PVXS and QSRV
+----------------------------------------
+
+BSAS uses NTTable to expose the strcutred data, it requires to build with PVXS and QSRV
+
+- configure/RELEASE.local
+PVXS_MODULE_VERSION  = pvxs-git
+PVXS                 =$(EPICS_MODULES)/pvxs/$(PVXS_MODULE_VERSION)
+
+- src/Makefile
+# ===========================================
+# EPICS 7 PVXS support
+# Order of the two libraries is important:
+# ===========================================
+<your application>_LIBS += pvxsIoc
+<your application>_LIBS += pvxs
+<your application>_DBD  += pvxsIoc.dbd
+# ===========================================
+
+# ===================================================
+# Include Support for EPICS version 7
+# Link QSRV (pvAccess Server) if available
+# ===================================================
+<your application>_LIBS += qsrv
+<your application>_LIBS += $(EPICS_BASE_PVA_CORE_LIBS)
+<your applicaiton>_DBD  += PVAServerRegister.dbd
+<your application>_DBD  += qsrv.dbd
+
+
+
+1. How to install BSAS database templates
+-----------------------------------------
+
+Put the followings into the Db/Makefile
+
+DB_INSTALLS += $(BSADRIVER)/db/bsas.db         # channel control tempalte (enable/disable channel, severity filtering for channel), need to load up for each data channels
+DB_INSTALLS += $(BSADRIVER)/db/bsasCtrl.db     # rate control template, work with global PVs
+DB_INSTALLS += $(BSADRIVER)/db/bsasCtrl_localTest.db 
+                                               # rate control template, work without global PVs, just for a standalone test
+
+
+2. load BSAS rate control template in st.cmd
+---------------------------------------------
+
+# BSAS Destination/Rates Control PVs
+dbLoadRecords("db/bsasCtrl.db", "DEV=${SYS_PV},PORT=bsasPort")
+
+remarks) for the standalone test without global PV, we can use "bsasCtrl_localTest.db" instead of "bsasCtrl.db"
+
+
+3. load BSAS channel control (enable/disable, channel filtering) template in st.cmd
+-----------------------------------------------------------------------------------
+
+# BSAS Severity Filtering for Each channel
+dbLoadRecords("db/bsas.db", "DEV=${SYS_PV},PORT=bsasPort,BSAKEY=PIDL,SECN=PIDL")
+dbLoadRecords("db/bsas.db", "DEV=${SYS_PV},PORT=bsasPort,BSAKEY=PIDU,SECN=PIDU")
+dbLoadRecords("db/bsas.db", "DEV=${SYS_PV},PORT=bsasPort,BSAKEY=TSL,SECN=TSL")
+dbLoadRecords("db/bsas.db", "DEV=${SYS_PV},PORT=bsasPort,BSAKEY=TSU,SECN=TSU")
+dbLoadRecords("db/bsas.db", "DEV=${SYS_PV},PORT=bsasPort,BSAKEY=RATES,SECN=RATES")
+
+
+4. make association with BSA to inherit the BSA data channels
+-------------------------------------------------------------
+
+#
+#  Initialize BSSS driver
+#  make assoication with BSA channels: bsssAssociateBsaChannels(<BSA port name>)
+bsssAssociateBsaChannels("bsaPort")
+
+
+5. make mapping between data channel and base name
+--------------------------------------------------
+
+The base name will be used for the column lable in the NTTable
+ex) column lable will be <base_name>.CNT, <base_name>.VAL, <base_name>.AVG, <base_name>.RMS, <base_name>.MIN, <base_name>.MAX
+
+
+#  base name assign for the BSAS channels
+#  bsasBaseName(<BSAS data channel, BsaKey>, <base PV name>)
+bsasBaseName("PIDL",    "${SYS_PV}:PIDL")
+bsasBaseName("PIDU",    "${SYS_PV}:PIDLU")
+bsasBaseName("TSL",     "${SYS_PV}:TSL")
+bsasBaseName("TSU",     "${SYS_PV}:TSU")
+bsasBaseName("RATES",   "${SYS_PV}:RATES")
+
+
+6. configure BSAS driver
+------------------------
+
+# configure BSAS driver: bsasAsynDriverConfigure(<bsas port>, <register path>, <NTTable PV1>, <NTTable PV2>, <NTTable PV3>, <NTTable PV4>, [named_root (optional)])
+# remarks) ioc shell does NOT allow multiple-line input for a command, thus, we need to list up all of the arguments in a sngle line
+bsasAsynDriverConfigure("bsasPort", "mmio/AmcCarrierCore/AmcCarrierBsa/Bsas", "${SYS_PV}:NTTBL1", "${SYS_PV}:NTTBL2", "${SYS_PV}:NTTBL3","${SYS_PV}:NTTBL4" )
+
+
+
+7. Programming NTTable rate
+---------------------------
+Please, check up the slide deck above to understand the rate control operation
+
+8. checking up BSAS driver status
+---------------------------------
+
+ex) use dbior() command on the ioc shell
+
+sioc-b084-ts02>dbior bldStreamDriver 1
+Driver: bldStreamDriver
+        BLD Stream for MyRoot0
+          read size  : 768
+          read count : 11785893
+          bld count  : 0
+          bsss count : 118033
+          bsas count : 11667845
+          bld callback : (nil)
+          bld_usr      : (nil)
+          bsss_callback: 0x8136a0
+          bsss_usr     : 0x13d9dd0
+          bsas_callback: 0x8165a0
+          bsas_usr     : 0x152bf60
+          free list    : 0x14b8660
+          bld  callback processing (usec): snapshot    0.000, min    0.000, max    0.000
+          bsss callback processing (usec): snapshot  553.818, min  444.024, max 1122.685
+          bsas callback processing (usec): snapshot    3.097, min    0.694, max 1461.080
+                 --------------------------------
+                 BSSSS Packet: size(156)
+                 --------------------------------
+                 timestamp, nsec  :  dff5c81
+                 timestamp, sec   : 3ce80602
+                 pulse id, lower  : 2f2da330
+                 pulse id, upper  :     f499
+                 channel mask     : 7fffffff
+                 service mask     :        1
+                 severity mask    : 3faa5500ffaa5500
+                 --------------------------------
+                 BSAS Packet: size(768)
+                 --------------------------------
+                 timestamp (64bit): 3ce806020f396321
+                 pulse id  (64bit):     f4992f2dedd6
+                 channel mask     : 7fffffff
+                 row number       : 821
+                 table_count      : 0
+                 edef_index       : 0
+                 byte pad (0x80)  : 80
+                 PL CH    CNT EVL ESQ FIX     VAL       SUM       SQUARE      MIN      MAX
+                 -------------------------------------------------------------------------
+                  0  0      1   N   E   N 2f2dedd6  f2dedd6    3b8a1eee4 2f2dedd6 2f2df163
+                  1  1      1   E   E   N 809359f4   9359f4     6bb39090 809359f4 80935d81
+                  2  2      1   N   E   N  11359f4  11359f4     6bb39090  11359f4  1135d81
+                  3  3      1   E   E   N 819359f4  19359f4     6bb39090 819359f4 81935d81
+                  4  4      1   N   E   N  21359f4  21359f4     6bb39090  21359f4  2135d81
+                  5  5      1   E   E   N 829359f4  29359f4     6bb39090 829359f4 82935d81
+                  6  6      1   N   E   N  31359f4  31359f4     6bb39090  31359f4  3135d81
+                  7  7      1   E   E   N 839359f4  39359f4     6bb39090 839359f4 83935d81
+                  8  8      1   N   E   N  41359f4  41359f4     6bb39090  41359f4  4135d81
+                  9  9      1   E   E   N 849359f4  49359f4     6bb39090 849359f4 84935d81
+                 10 10      1   N   E   N  51359f4  51359f4     6bb39090  51359f4  5135d81
+                 11 11      1   E   E   N 859359f4  59359f4     6bb39090 859359f4 85935d81
+                 12 12      1   N   E   N  61359f4  61359f4     6bb39090  61359f4  6135d81
+                 13 13      1   E   E   N 869359f4  69359f4     6bb39090 869359f4 86935d81
+                 14 14      1   N   E   N  71359f4  71359f4     6bb39090  71359f4  7135d81
+                 15 15      1   E   E   N 879359f4  79359f4     6bb39090 879359f4 87935d81
+                 16 16      0   N   E   F  81359f4        0            0  81359f4  8135d81
+                 17 17      0   E   E   F 889359f4        0            0 889359f4 88935d81
+                 18 18      0   N   E   F  91359f4        0            0  91359f4  9135d81
+                 19 19      0   E   E   F 899359f4        0            0 899359f4 89935d81
+                 20 20      0   N   E   F  a1359f4        0            0  a1359f4  a135d81
+                 21 21      0   E   E   F 8a9359f4        0            0 8a9359f4 8a935d81
+                 22 22      0   N   E   F  b1359f4        0            0  b1359f4  b135d81
+                 23 23      0   E   E   F 8b9359f4        0            0 8b9359f4 8b935d81
+                 24 24      0   N   E   F  c1359f4        0            0  c1359f4  c135d81
+                 25 25      0   E   E   F 8c9359f4        0            0 8c9359f4 8c935d81
+                 26 26      0   N   E   F  d1359f4        0            0  d1359f4  d135d81
+                 27 27      0   E   E   F 8d9359f4        0            0 8d9359f4 8d935d81
+                 28 28      0   N   E   F  e1359f4        0            0  e1359f4  e135d81
+                 29 29      0   E   E   F 8e9359f4        0            0 8e9359f4 8e935d81
+                 30 30      0   N   E   F  f1359f4        0            0  f1359f4  f135d81
+sioc-b084-ts02>
+
+
+9. read out NTTtable
+--------------------
+
+- get pv list in a host
+  pvlist <host>
+
+ex)
+khkim@lcls-dev3 ~ $ pvlist cpu-b084-sp18
+TST:SYS2:4:NTTBL1
+TST:SYS2:4:NTTBL2
+TST:SYS2:4:NTTBL3
+TST:SYS2:4:NTTBL4
+
+
+- check up pv structure
+  pvinfo <pv name, NTTable PV name>
+ex)
+khkim@lcls-dev3 ~ $ pvinfo TST:SYS2:4:NTTBL1
+TST:SYS2:4:NTTBL1
+Server: 134.79.217.42:5075
+Type:
+    epics:nt/NTTable:1.0
+        string[] labels
+        structure value
+            uint[] secondsPastEpoch
+            uint[] nanoseconds
+            ulong[] pulseId
+            uint[] pv0_cnt
+            double[] pv0_val
+            double[] pv0_avg
+            double[] pv0_rms
+            double[] pv0_min
+            double[] pv0_max
+            uint[] pv1_cnt
+            double[] pv1_val
+            double[] pv1_avg
+            double[] pv1_rms
+            double[] pv1_min
+            double[] pv1_max
+            uint[] pv2_cnt
+            double[] pv2_val
+            double[] pv2_avg
+            double[] pv2_rms
+            double[] pv2_min
+            double[] pv2_max
+
+
+            uint[] pv30_cnt
+            double[] pv30_val
+            double[] pv30_avg
+            double[] pv30_rms
+            double[] pv30_min
+            double[] pv30_max
+
+
+- get data from the NTTable PV
+  pvget <pv name, NTTable PV name>
+
+ex)
+  pvget TST:SYS2:4:NTTBL1
+
+
+
+
+
+
 
 
 # End of file

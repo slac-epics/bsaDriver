@@ -1,6 +1,28 @@
+R2.2.1-mege  Aug 9, 2022     Kukhee Kim
+            - merge R2.1.0-prep-bsas branch in to the master
+
+
+R2.2.1      Aug 9, 2022  Dawood Alnajjar <dnajjar@slac.stanford.edu>
+            - Fixed typos in DESC (Severity and added space)
+
 R2.2.0      July 23, 2022
             - PV name change for BSA liniear conversion PVs
               (_OFFSET, _SLOPE) to (__OFFSET_BSA, _SLOPE_BSA) to avoid name conflict with the history module
+
+R2.1.0-5.0         Aug 4, 2022 Kukhee Kim
+            - long DESC field issue in another BSSS template
+              cherry-pick additional fix from the master branch
+
+R2.1.0-4.0         Aug 2, 2022 Kukhee Kim
+            - build against PVXS R0.3.1-0.0.1
+
+R2.1.0-3.0         July 23, 2022  Kukhee Kim
+            - expose BSAS command to the symbol table for Cexp shell
+            - expose BSSS command to the symbol table for Cexp shell
+
+            (Cherry Picking from master branch - R2.2.0)
+            - PV name change for BSA liniear conversion PVs
+              (_OFFSET, _SLOPE) to (_OFFSET_BSA, _SLOPE_BSA) to avoid name conflict with the history module
             - introduce new macro $(DESC) for the DESC filed of BSSS scalar PV.
               if $(DESC) is defined, the macro substituion will generate the DESC field with $(DESC) macro,
               if $(DESC) is not defined, the macro subsitition will generate the DESC field with $(SECN) macro - backward compatible
@@ -9,6 +31,41 @@ R2.2.0      July 23, 2022
             - add bsss driver commands to the symbol table for Cexp shell
             (force tagging, Aug 4, 2022)
             - introduce the $(DESC) for bsssChannel control also
+
+
+R2.1.0-2.0         June 25, 2022  Kukhee Kim
+            - build against timing/bsa R2.0.0-2.0
+
+R2.1.0-1.0         May 19, 2022   Kukhee Kim
+            - build against timing/bsa R2.0.0-1.0
+            - initial release to support BSAS
+            - support incremental timestamp update for BSA
+            - remove IDX macro (data channel number) in BSSS database template
+            - implement software serverity filter for BSSS
+
+            remark) temporally prevent host build to avoid c++ compiler issue
+                    thus, build just for linuxRT cross target only
+            
+
+
+R2.1.0-prep-bsas   May 11, 2022    Kukhee Kim
+            - rebase/merge to pick up Ernest's changes in the linuxRT_build_only branch
+            - build only for linuxRT target
+            - build against timing/bsa R2.0.0-1.0
+            - add performance meausrement (processing time for BLD/BSSS/BSAS callback)
+
+linuxRT_build_only    May 9, Kukhee Kim
+            - branch out from R2.1.0-prep-bsas to try to build linuxRT only
+
+R2.1.0-prep-bsas   March 30, 2022      Kukhee Kim (khkim)
+            - branch out from R2.1.0 for developing/testing BSAS
+            - build against timing/bsa R2.0.0-prep-bsas for developing
+            - support incremental timestamp update for the BSA history buffer
+              cooperate with the timing/bsa API layer changes from the last_timestamp branch
+            - allow skipping data channels in BSSS 
+              if the database template is not loaded for the particular data channel
+              or, the channel is diabled by control PV
+
 
 R2.1.0      Feb 22, 2022
             - enable type conversion to support float32/uint32/int32

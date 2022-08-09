@@ -36,7 +36,7 @@
 
 #include <yamlLoader.h>
 
-static const char *drverName = "bsssAsynDriver";
+static const char *driverName = "bsssAsynDriver";
 
 static ELLLIST *pDrvEllList = NULL;
 
@@ -118,6 +118,9 @@ static int bsssAdd(const char *bsssKey, bsssDataType_t type, double *slope, doub
 
     bsssList_t *p = (bsssList_t *) mallocMustSucceed(sizeof(bsssList_t), "bsssAsynDriver (bsssAdd)");
     strcpy(p->bsss_name, bsssKey);
+    p->index = 0;
+    p->p_channelMask = -1;
+    p->p_channelSevr = -1;
     for(int i = 0; i < NUM_BSSS_CHN; i++) {
         p->p_bsss[i] = -1;              /* initialize paramters with invalid */
         p->pname_bsss[i][0] = '\0';     /* initialize with a null string */
@@ -186,6 +189,14 @@ bsssAsynDriver::bsssAsynDriver(const char *portName, const char *reg_path, const
         return;
     }
     this->pBsss = new Bsss::BsssYaml(reg_);  /* create API interface */
+    channelSevr = 0;
+
+    int i = 0;
+    bsssList_t *p = (bsssList_t *) ellFirst(pBsssEllList);
+    while(p) {
+        p->index = i++;
+        p = (bsssList_t *) ellNext(&p->node);
+    }
 
     SetupAsynParams();
 
@@ -198,7 +209,7 @@ bsssAsynDriver::~bsssAsynDriver()
 
 void bsssAsynDriver::SetupAsynParams(void)
 {
-    char param_name[64];
+    char param_name[80];
 
     // BSSS Status Monitoring
     sprintf(param_name, CURRPACKETSIZE_STR);   createParam(param_name, asynParamInt32, &p_currPacketSize);
@@ -216,9 +227,11 @@ void bsssAsynDriver::SetupAsynParams(void)
     sprintf(param_name, PACKETSIZE_STR);       createParam(param_name, asynParamInt32, &p_packetSize);
     sprintf(param_name, ENABLE_STR);           createParam(param_name, asynParamInt32, &p_enable);
 
-    for(int i = 0; i < NUM_BSSS_DATA_MAX; i++) {
-        sprintf(param_name, CHANNELMASK_STR, i); createParam(param_name, asynParamInt32, &p_channelMask[i]);
-        sprintf(param_name, CHANNELSEVR_STR, i); createParam(param_name, asynParamInt32, &p_channelSevr[i]);
+    bsssList_t *p = (bsssList_t *) ellFirst(pBsssEllList);
+    while(p) {
+        sprintf(param_name, CHANNELMASK_STR, p->bsss_name); createParam(param_name, asynParamInt32, &(p->p_channelMask)); 
+        sprintf(param_name, CHANNELSEVR_STR, p->bsss_name); createParam(param_name, asynParamInt32, &(p->p_channelSevr));
+        p = (bsssList_t *) ellNext(&p->node);
     }
 
     // BSSS Rate Controls
@@ -295,6 +308,20 @@ void bsssAsynDriver::SetDest(int chn)
     }
 }
 
+void bsssAsynDriver::SetChannelSevr(int chn, int sevr)
+{
+    uint64_t mask = 0x3 << (chn*2);
+
+    channelSevr &= ~mask;
+    channelSevr |= (uint64_t(sevr) << (chn*2)) & mask;
+
+}
+
+int bsssAsynDriver::GetChannelSevr(int chn)
+{
+   return int((channelSevr >> (chn *2)) & 0x3);
+}
+
 void bsssAsynDriver::MonitorStatus(void)
 {
     uint32_t v;
@@ -322,6 +349,20 @@ asynStatus bsssAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
     /* set the parameter in the parameter library */
     status = (asynStatus) setIntegerParam(function, value);
 
+    bsssList_t *p = (bsssList_t *) ellFirst(pBsssEllList);
+    while(p) {
+       if(function == p->p_channelMask) {
+           pBsss->setChannelMask(p->index, uint32_t(value));
+           goto done;
+       }
+       if(function == p->p_channelSevr) {
+           SetChannelSevr(p->index, value);
+           goto done;
+       }
+        p = (bsssList_t *) ellNext(&p->node);
+    }
+
+
     if(function == p_packetSize) {
         pBsss->setPacketSize((uint32_t) value);
         goto done;
@@ -331,16 +372,6 @@ asynStatus bsssAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
         goto done;
     }
 
-    for(int i = 0; i < NUM_BSSS_DATA_MAX; i++) {
-        if(function == p_channelMask[i]) {
-            pBsss->setChannelMask(i, (uint32_t) value);
-            goto done;
-        }
-        else if(function == p_channelSevr[i]) {
-            pBsss->setChannelSevr(i, (uint64_t) (value?value-1:value));
-            goto done;
-        }
-    }
 
     for(int i = 0; i < NUM_BSSS_CHN; i++) {
         if(function == p_rateMode[i]  ||
@@ -381,8 +412,9 @@ void bsssAsynDriver::bsssCallback(void *p, unsigned size)
      int32_t  *p_int32     = (int32_t *) (buf + IDX_DATA);
      float    *p_float32   = (float*)(buf + IDX_DATA);
      double   val;
+     uint32_t channel_mask = buf[IDX_CHN_MASK];
      uint32_t service_mask = buf[IDX_SVC_MASK];
-     uint32_t valid_mask   = buf[IDX_VALID_MASK(size)];
+     uint64_t sevr_mask    = *(uint64_t*) (buf+IDX_SEVR_MASK(size));
      uint64_t pulse_id     = ((uint64_t)(buf[IDX_PIDU])) << 32 | buf[IDX_PIDL];
 
      epicsTimeStamp _ts;
@@ -392,25 +424,27 @@ void bsssAsynDriver::bsssCallback(void *p, unsigned size)
 
 
      bsssList_t *plist = (bsssList_t *) ellFirst(pBsssEllList);
-     int chn_mask = 0x1;
      int data_chn = 0;
+     int index = 0;
      while(plist) {
+         if(!(channel_mask & (uint32_t(0x1) << data_chn))) goto skip;   // skipping the channel, if the channel is not in the mask
+
          for(int i = 0, svc_mask = 0x1; i < NUM_BSSS_CHN; i++, svc_mask <<= 1) {
              if(service_mask & svc_mask) {
                  setInteger64Param(plist->p_bsssPID[i], pulse_id);  // pulse id update if service mask is set
 
                  setDoubleParam(plist->p_bsss[i], INFINITY);   // make asyn PV update even posting the same value with previous
 
-                 if(valid_mask & chn_mask) {  // data update for valid mask
+                 if(int((sevr_mask >> (data_chn*2)) & 0x3) <= GetChannelSevr(data_chn) ) {  // data update for valid mask
                      switch(plist->type){
                          case int32_bsss:
-                             val = (double) (p_int32[data_chn]);
+                             val = (double) (p_int32[index]);
                              break;
                          case uint32_bsss:
-                             val = (double) (p_uint32[data_chn]);
+                             val = (double) (p_uint32[index]);
                              break;
                          case float32_bsss:
-                             val = (double) (p_float32[data_chn]);
+                             val = (double) (p_float32[index]);
                              break;
                          case uint64_bsss:
                          default:
@@ -423,9 +457,11 @@ void bsssAsynDriver::bsssCallback(void *p, unsigned size)
                  setDoubleParam(plist->p_bsss[i], val);
              }
          }
+         index++;
+
+         skip:
 
          plist = (bsssList_t *) ellNext(&plist->node);  // evolve to next data channel
-         chn_mask <<= 1;  // evolve mask bit to next data channel
          data_chn++;      // evolve data channel number to next channel
      }
      

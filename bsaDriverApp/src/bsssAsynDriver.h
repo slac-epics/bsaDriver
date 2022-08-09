@@ -24,9 +24,10 @@
 #define IDX_SEC  1
 #define IDX_PIDL 2
 #define IDX_PIDU 3
+#define IDX_CHN_MASK 4
 #define IDX_SVC_MASK 5
 #define IDX_DATA 6
-#define IDX_VALID_MASK(size)  (size/4 -1)
+#define IDX_SEVR_MASK(size)  (size/4 -2)
 
 typedef enum {
     int32_bsss,
@@ -40,7 +41,11 @@ typedef struct {
     ELLNODE node;
     char    bsss_name[64];
 
+    int     index;
+
     int     p_firstParam;
+    int     p_channelMask;
+    int     p_channelSevr;
     int     p_bsss[NUM_BSSS_CHN];
     int     p_bsssPID[NUM_BSSS_CHN];
     int     p_lastParam;
@@ -65,13 +70,17 @@ class bsssAsynDriver: asynPortDriver {
         void bsssCallback(void *p, unsigned size);
 
     private:
+
+        uint64_t channelSevr;        
+
         ELLLIST *pBsssEllList;
         Bsss::BsssYaml *pBsss;
-        
 
         void SetupAsynParams(void);
         void SetRate(int chn);
         void SetDest(int chn);
+        void SetChannelSevr(int chn, int sevr);
+        int  GetChannelSevr(int chn);
 
 
     protected:
@@ -95,8 +104,7 @@ class bsssAsynDriver: asynPortDriver {
         // BSSS Status Control
         int p_packetSize;
         int p_enable;
-        int p_channelMask[NUM_BSSS_DATA_MAX];
-        int p_channelSevr[NUM_BSSS_DATA_MAX];
+
 
         // BSSS Rate Controls
         int p_edefEnable[NUM_BSSS_CHN];
@@ -136,8 +144,8 @@ class bsssAsynDriver: asynPortDriver {
 
 #define PACKETSIZE_STR          "packetSize"
 #define ENABLE_STR              "enable"
-#define CHANNELMASK_STR         "channelMask_%d"
-#define CHANNELSEVR_STR         "channelSevr_%d"
+#define CHANNELMASK_STR         "channelMask_%s"
+#define CHANNELSEVR_STR         "channelSevr_%s"
 
 
 #define EDEFENABLE_STR        "edefEnable_%d"

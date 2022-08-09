@@ -18,15 +18,17 @@ INCLUDES += $(addprefix -I,$(BSA_INCLUDE))
 
 INC += bsaAsynDriver.h
 INC += bsssAsynDriver.h
+INC += bsasAsynDriver.h
 DBD += bsaAsynDriver.dbd
 
-
+ifeq ($(T_A),linuxRT-x86_64)
 LIBRARY_IOC = bsaDriver
 
 bsaDriver_DBD += bsaAsynDriver.dbd
 bsaDriver_SRCS += bldStream.cpp
 bsaDriver_SRCS += bsaAsynDriver.cpp
 bsaDriver_SRCS += bsssAsynDriver.cpp
+bsaDriver_SRCS += bsasAsynDriver.cpp
 
 cpsw_DIR = $(CPSW_FRAMEWORK_LIB)
 bsaDriver_LIBS += cpsw
@@ -36,8 +38,10 @@ bsaDriver_LIBS += bsa
 
 bsaDriver_LIBS += asyn
 bsaDriver_LIBS += yamlLoader
+bsaDriver_LIBS += pvxs
+bsaDriver_LIbS += pvxsIoc
 bsaDriver_LIBS += $(EPICS_BASE_IOC_LIBS)
-
+endif
 
 
 

@@ -131,6 +131,7 @@ class BsaPvArray : public Bsa::PvArray {
         BsaPvArray(unsigned array, const std::vector <Bsa::Pv*>& pvs, int p_pid_UL, bsaAsynDriver *pBsaDrv);
         unsigned array() const { return _array; }
         void reset(unsigned sec, unsigned nsec);
+        void set(unsigned sec, unsigned nsec);
         void append(uint64_t pulseId);
         std::vector <Bsa::Pv*> pvs();
         void flush();
