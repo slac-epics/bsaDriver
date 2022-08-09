@@ -1,3 +1,11 @@
+R2.3.0      Aug 9, 2022     Kukhee Kim
+            - Support BSA/BSSS/BSAS
+            - build against:
+                 timing/bsa  R2.0.0-2.0
+                 pvxs        R0.3.1-0.0.1
+
+
+
 R2.2.1-1.0   Aug 9, 2022     Kukhee Kim
              - tested for B84 TPG and AmcCarrierTprTst application
 
