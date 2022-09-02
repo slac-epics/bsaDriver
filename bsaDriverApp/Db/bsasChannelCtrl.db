@@ -6,7 +6,7 @@
 
 record(bo, "$(DEVICE):$(SECN)BSASCHNMASK")
 {
-    field(DESC, "BSAS Channel Mask for  $(SECN)")
+    field(DESC, "BSAS Chn Mask for $(DESC)")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
     field(OUT, "@asyn($(PORT),0) channelMask_$(BSAKEY)")
@@ -20,7 +20,7 @@ record(bo, "$(DEVICE):$(SECN)BSASCHNMASK")
 
 record(mbbo, "$(DEVICE):$(SECN)BSASCHNSEVR")
 {
-    field(DESC, "BSAS Channel Seveirty for $(SECN)")
+    field(DESC, "BSAS Chn Sevr for $(DESC)")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
     field(OUT, "@asyn($(PORT),0) channelSevr_$(BSAKEY)")

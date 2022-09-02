@@ -1,6 +1,6 @@
 
 file bsasChannelCtrl.db {
-    pattern {   DEVICE    }
-            {   "$(DEV)"  }
+    pattern {   DEVICE,                    DESC   }
+            {   "$(DEV)",   "$(DESC\=\$\(SECN\))" }
 }
 
