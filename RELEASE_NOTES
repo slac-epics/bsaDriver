@@ -1,3 +1,8 @@
+R2.4.0      Sep 2, 2022     Kukhee Kim
+            -introduce $(DESC) macro for bsas.db template 
+             to avoid a long DESC field issue (overriding $(SECN) in the DESC field)
+               
+
 R2.3.0      Aug 9, 2022     Kukhee Kim
             - Support BSA/BSSS/BSAS
             - build against:
