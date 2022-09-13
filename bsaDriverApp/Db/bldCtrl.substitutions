@@ -1,0 +1,20 @@
+file serviceControl.db {
+    pattern {   DEVICE,   SERVICE }
+            { "$(DEV)",   "BLD" }
+}
+
+file serviceStatus.db {
+    pattern {   DEVICE,  SERVICE }
+            { "$(DEV)",  "BLD" }
+}
+
+
+file serviceRateControl.db {
+    pattern {  IDX,  BSSS_INST,  DEVICE,  GLOBAL,       SERVICE       }
+            {  "0",  "EDEF1",   "$(DEV)", "TPG:SYS0:1", "BLD"        }
+            {  "1",  "EDEF2",   "$(DEV)", "TPG:SYS0:1", "BLD"        } 
+            {  "2",  "EDEF3",   "$(DEV)", "TPG:SYS0:1", "BLD"        }
+            {  "3",  "EDEF4",   "$(DEV)", "TPG:SYS0:1", "BLD"        }
+}
+
+
