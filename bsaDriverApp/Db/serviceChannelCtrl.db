@@ -1,12 +1,12 @@
 #
-#   BSSS data source (channel) control PVs
+#   service data source (channel) control PVs
 #   per data source / per channel
 #
 
 
-record(bo, "$(DEVICE):$(SECN)BSSSCHNMASK")
+record(bo, "$(DEVICE):$(SECN)$(SERVICE)CHNMASK")
 {
-    field(DESC, "BSSS Channel Mask for $(DESC)")
+    field(DESC, "$(SERVICE) Channel Mask for $(DESC)")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
     field(OUT, "@asyn($(PORT),0) channelMask_$(BSAKEY)")
@@ -18,9 +18,9 @@ record(bo, "$(DEVICE):$(SECN)BSSSCHNMASK")
     info(autosaveFields, "VAL")
 }
 
-record(mbbo, "$(DEVICE):$(SECN)BSSSCHNSEVR")
+record(mbbo, "$(DEVICE):$(SECN)$(SERVICE)CHNSEVR")
 {
-    field(DESC, "BSSS Channel Severity for $(DESC)")
+    field(DESC, "$(SERVICE) Channel Severity for $(DESC)")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
     field(OUT, "@asyn($(PORT),0) channelSevr_$(BSAKEY)")

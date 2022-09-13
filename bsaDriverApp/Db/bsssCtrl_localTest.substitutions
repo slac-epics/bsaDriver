@@ -1,23 +1,23 @@
-file bsssControl.db {
-    pattern {   DEVICE }
-            { "$(DEV)" }
+file serviceControl.db {
+    pattern {   DEVICE,   SERVICE }
+            { "$(DEV)" ,  "BSSS"}
 }
 
-file bsssStatus.db {
-    pattern {   DEVICE }
-            { "$(DEV)" }
+file serviceStatus.db {
+    pattern {   DEVICE,    SERVICE }
+            { "$(DEV)" ,  "BSSS"}
 }
 
 
-file bsssRateControl_localTest.db {
-    pattern {  IDX,  BSSS_INST,  DEVICE  }
-            {  "0",  "SCUD1",   "$(DEV)" }
-            {  "1",  "SCUD2",   "$(DEV)" } 
-            {  "2",  "SCUD3",   "$(DEV)" }
-            {  "3",  "SCS1H",   "$(DEV)" }
-            {  "4",  "SCSTH",   "$(DEV)" }
-            {  "5",  "SCSHH",   "$(DEV)" }
-            {  "6",  "SCH1H",   "$(DEV)" }
-            {  "7",  "SCHTH",   "$(DEV)" }
-            {  "8",  "SCHHH",   "$(DEV)" }
+file serviceRateControl_localTest.db {
+    pattern {  IDX,  SERVICE_INST,  DEVICE,   SERVICE  }
+            {  "0",  "SCUD1",      "$(DEV)",  "BSSS" }
+            {  "1",  "SCUD2",      "$(DEV)",  "BSSS" } 
+            {  "2",  "SCUD3",      "$(DEV)",  "BSSS" }
+            {  "3",  "SCS1H",      "$(DEV)",  "BSSS" }
+            {  "4",  "SCSTH",      "$(DEV)",  "BSSS" }
+            {  "5",  "SCSHH",      "$(DEV)",  "BSSS" }
+            {  "6",  "SCH1H",      "$(DEV)",  "BSSS" }
+            {  "7",  "SCHTH",      "$(DEV)",  "BSSS" }
+            {  "8",  "SCHHH",      "$(DEV)",  "BSSS" }
 }  

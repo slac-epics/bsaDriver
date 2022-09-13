@@ -1,6 +1,6 @@
-record(bo, "$(DEVICE):$(BSSS_INST):ENB")
+record(bo, "$(DEVICE):$(SERVICE_INST):ENB")
 {
-    field(DESC, "enable/disable for BSSS EDEF $(IDX)")
+    field(DESC, "enable/disable for $(SERVICE) EDEF $(IDX)")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
     field(OUT, "@asyn($(PORT),0) edefEnable_$(IDX)")
@@ -9,9 +9,9 @@ record(bo, "$(DEVICE):$(BSSS_INST):ENB")
     info(autosaveFields, "VAL")
 }
 
-record(mbbo, "$(DEVICE):$(BSSS_INST):RATEMODE")
+record(mbbo, "$(DEVICE):$(SERVICE_INST):RATEMODE")
 {
-    field(DESC, "BSSS Rate Mode")
+    field(DESC, "$(SERVICE) Rate Mode")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
     field(OUT, "@asyn($(PORT),0) rateMode_$(IDX)")
@@ -26,9 +26,9 @@ record(mbbo, "$(DEVICE):$(BSSS_INST):RATEMODE")
     info(autosaveFields, "VAL")
 }
 
-record(longout, "$(DEVICE):$(BSSS_INST):EXPSEQ")
+record(longout, "$(DEVICE):$(SERVICE_INST):EXPSEQ")
 {
-    field(DESC, "BSSS Exp Sequence Mode")
+    field(DESC, "$(SERVICE) Exp Sequence Mode")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT),0) expSeqNum_$(IDX)")
@@ -36,9 +36,9 @@ record(longout, "$(DEVICE):$(BSSS_INST):EXPSEQ")
     info(autosaveFields, "VAL")
 }
 
-record(mbbo, "$(DEVICE):$(BSSS_INST):FIXEDRATE")
+record(mbbo, "$(DEVICE):$(SERVICE_INST):FIXEDRATE")
 {
-    field(DESC, "BSSS Fixed Rate Controls")
+    field(DESC, "$(SERVICE) Fixed Rate Controls")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
     field(OUT, "@asyn($(PORT),0) fixedRate_$(IDX)")
@@ -61,9 +61,9 @@ record(mbbo, "$(DEVICE):$(BSSS_INST):FIXEDRATE")
     info(autosaveFields, "VAL")
 }
 
-record(mbbo, "$(DEVICE):$(BSSS_INST):ACRATE")
+record(mbbo, "$(DEVICE):$(SERVICE_INST):ACRATE")
 {
-    field(DESC, "BSSS AC Rate Controls")
+    field(DESC, "$(SERVICE) AC Rate Controls")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
     field(OUT, "@asyn($(PORT),0) acRate_$(IDX)")
@@ -84,9 +84,9 @@ record(mbbo, "$(DEVICE):$(BSSS_INST):ACRATE")
     info(autosaveFields, "VAL")
 }
 
-record(longout, "$(DEVICE):$(BSSS_INST):TSLOTMASK")
+record(longout, "$(DEVICE):$(SERVICE_INST):TSLOTMASK")
 {
-    field(DESC, "BSSS Timeslot Mask")
+    field(DESC, "$(SERVICE) Timeslot Mask")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT),0) tSlotMask_$(IDX)")
@@ -94,9 +94,9 @@ record(longout, "$(DEVICE):$(BSSS_INST):TSLOTMASK")
     info(autosaveFields, "VAL")
 }
 
-record(longout, "$(DEVICE):$(BSSS_INST):EXPSEQBIT")
+record(longout, "$(DEVICE):$(SERVICE_INST):EXPSEQBIT")
 {
-    field(DESC, "BSSS Exp Sequence Bit")
+    field(DESC, "$(SERVICE) Exp Sequence Bit")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
     field(OUT, "@asyn($(PORT),0) expSeqBit_$(IDX)")
@@ -104,9 +104,9 @@ record(longout, "$(DEVICE):$(BSSS_INST):EXPSEQBIT")
     info(autosaveFields, "VAL")
 }
 
-record(mbbo, "$(DEVICE):$(BSSS_INST):DESTMODE")
+record(mbbo, "$(DEVICE):$(SERVICE_INST):DESTMODE")
 {
-    field(DESC, "BSSS Destination Mode")
+    field(DESC, "$(SERVICE) Destination Mode")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
     field(OUT, "@asyn($(PORT),0) destMode_$(IDX)")
@@ -121,9 +121,9 @@ record(mbbo, "$(DEVICE):$(BSSS_INST):DESTMODE")
     info(autosaveFields, "VAL")
 }
 
-record(longout, "$(DEVICE):$(BSSS_INST):DESTMASK")
+record(longout, "$(DEVICE):$(SERVICE_INST):DESTMASK")
 {
-    field(DESC, "BSSS Destinatin Mask")
+    field(DESC, "$(SERVICE) Destinatin Mask")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
     field(OUT, "@asyn($(PORT),0) destMask_$(IDX)")
@@ -132,9 +132,9 @@ record(longout, "$(DEVICE):$(BSSS_INST):DESTMASK")
 }
 
 
-record(mbbo, "$(DEVICE):$(BSSS_INST):RATELIMIT")
+record(mbbo, "$(DEVICE):$(SERVICE_INST):RATELIMIT")
 {
-    field(DESC, "BSSS Rate Limit")
+    field(DESC, "$(SERVICE) Rate Limit")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
     field(OUT, "@asyn($(PORT), 0) rateLimit_$(IDX)")

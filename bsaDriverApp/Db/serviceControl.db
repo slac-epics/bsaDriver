@@ -1,12 +1,12 @@
 
-#   BSSS control PVs
-#   affect entiere BSSS
+#   Service control PVs
+#   affect entire service
 #
 
 
-record(longout, "$(DEVICE):BSSS_CTRL:PKSZ")
+record(longout, "$(DEVICE):$(SERVICE)_CTRL:PKSZ")
 {
-    field(DESC, "BSSS Packet Size")
+    field(DESC, "$(SERVICE) Packet Size")
 #    field(PINI, "YES")
     field(DTYP, "asynInt32")
     field(OUT, "@asyn($(PORT), 0) packetSize")
@@ -15,9 +15,9 @@ record(longout, "$(DEVICE):BSSS_CTRL:PKSZ")
     info(autosaveFields, "VAL")
 }
 
-record(bo, "$(DEVICE):BSSS_CTRL:ENB")
+record(bo, "$(DEVICE):$(SERVICE)_CTRL:ENB")
 {
-    field(DESC, "Enable BSSS")
+    field(DESC, "Enable $(SERVICE)")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
     field(OUT, "@asyn($(PORT),0) enable")
