@@ -162,6 +162,8 @@ class bsssAsynDriver: asynPortDriver {
 #define BSSSPV_STR            "%s_bsss_%d"
 #define BSSSPID_STR           "%s_bsssPID_%d"
 
+#define BLD(STR) "BLD_" STR
+#define BSSS(STR) "BSSS_" STR
 
 #endif /* BSSS_ASYN_DRIVER_H */
 

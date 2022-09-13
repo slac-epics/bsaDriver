@@ -212,40 +212,40 @@ void bsssAsynDriver::SetupAsynParams(void)
     char param_name[80];
 
     // BSSS Status Monitoring
-    sprintf(param_name, CURRPACKETSIZE_STR);   createParam(param_name, asynParamInt32, &p_currPacketSize);
-    sprintf(param_name, CURRPACKETSTATUS_STR); createParam(param_name, asynParamInt32, &p_currPacketStatus);
-    sprintf(param_name, CURRPULSEIDL_STR);     createParam(param_name, asynParamInt32, &p_currPulseIdL);
-    sprintf(param_name, CURRTIMESTAMPL_STR);   createParam(param_name, asynParamInt32, &p_currTimeStampL);
-    sprintf(param_name, CURRDELTA_STR);        createParam(param_name, asynParamInt32, &p_currDelta);
-    sprintf(param_name, PACKETCOUNT_STR);      createParam(param_name, asynParamInt32, &p_packetCount);
-    sprintf(param_name, PAUSED_STR);           createParam(param_name, asynParamInt32, &p_paused);
-    sprintf(param_name, DIAGNCLOCKRATE_STR);   createParam(param_name, asynParamInt32, &p_diagnClockRate);
-    sprintf(param_name, DIAGNSTROBERATE_STR);  createParam(param_name, asynParamInt32, &p_diagnStrobeRate);
-    sprintf(param_name, EVENTSEL0RATE_STR);    createParam(param_name, asynParamInt32, &p_eventSel0Rate);
+    sprintf(param_name, BSSS(CURRPACKETSIZE_STR));   createParam(param_name, asynParamInt32, &p_currPacketSize);
+    sprintf(param_name, BSSS(CURRPACKETSTATUS_STR)); createParam(param_name, asynParamInt32, &p_currPacketStatus);
+    sprintf(param_name, BSSS(CURRPULSEIDL_STR));     createParam(param_name, asynParamInt32, &p_currPulseIdL);
+    sprintf(param_name, BSSS(CURRTIMESTAMPL_STR));   createParam(param_name, asynParamInt32, &p_currTimeStampL);
+    sprintf(param_name, BSSS(CURRDELTA_STR));        createParam(param_name, asynParamInt32, &p_currDelta);
+    sprintf(param_name, BSSS(PACKETCOUNT_STR));      createParam(param_name, asynParamInt32, &p_packetCount);
+    sprintf(param_name, BSSS(PAUSED_STR));           createParam(param_name, asynParamInt32, &p_paused);
+    sprintf(param_name, BSSS(DIAGNCLOCKRATE_STR));   createParam(param_name, asynParamInt32, &p_diagnClockRate);
+    sprintf(param_name, BSSS(DIAGNSTROBERATE_STR));  createParam(param_name, asynParamInt32, &p_diagnStrobeRate);
+    sprintf(param_name, BSSS(EVENTSEL0RATE_STR));    createParam(param_name, asynParamInt32, &p_eventSel0Rate);
 
     // BSSS Status Control
-    sprintf(param_name, PACKETSIZE_STR);       createParam(param_name, asynParamInt32, &p_packetSize);
-    sprintf(param_name, ENABLE_STR);           createParam(param_name, asynParamInt32, &p_enable);
+    sprintf(param_name, BSSS(PACKETSIZE_STR));       createParam(param_name, asynParamInt32, &p_packetSize);
+    sprintf(param_name, BSSS(ENABLE_STR));           createParam(param_name, asynParamInt32, &p_enable);
 
     bsssList_t *p = (bsssList_t *) ellFirst(pBsssEllList);
     while(p) {
-        sprintf(param_name, CHANNELMASK_STR, p->bsss_name); createParam(param_name, asynParamInt32, &(p->p_channelMask)); 
-        sprintf(param_name, CHANNELSEVR_STR, p->bsss_name); createParam(param_name, asynParamInt32, &(p->p_channelSevr));
+        sprintf(param_name, BSSS(CHANNELMASK_STR), p->bsss_name); createParam(param_name, asynParamInt32, &(p->p_channelMask)); 
+        sprintf(param_name, BSSS(CHANNELSEVR_STR), p->bsss_name); createParam(param_name, asynParamInt32, &(p->p_channelSevr));
         p = (bsssList_t *) ellNext(&p->node);
     }
 
     // BSSS Rate Controls
     for(int i = 0; i < NUM_BSSS_CHN; i++) {
-        sprintf(param_name, EDEFENABLE_STR, i);createParam(param_name, asynParamInt32, &p_edefEnable[i]);
-        sprintf(param_name, RATEMODE_STR, i);  createParam(param_name, asynParamInt32, &p_rateMode[i]);
-        sprintf(param_name, FIXEDRATE_STR, i); createParam(param_name, asynParamInt32, &p_fixedRate[i]);
-        sprintf(param_name, ACRATE_STR, i);    createParam(param_name, asynParamInt32, &p_acRate[i]);
-        sprintf(param_name, TSLOTMASK_STR, i); createParam(param_name, asynParamInt32, &p_tSlotMask[i]);
-        sprintf(param_name, EXPSEQNUM_STR, i); createParam(param_name, asynParamInt32, &p_expSeqNum[i]);
-        sprintf(param_name, EXPSEQBIT_STR, i); createParam(param_name, asynParamInt32, &p_expSeqBit[i]);
-        sprintf(param_name, DESTMODE_STR, i);  createParam(param_name, asynParamInt32, &p_destMode[i]);
-        sprintf(param_name, DESTMASK_STR, i);  createParam(param_name, asynParamInt32, &p_destMask[i]);
-        sprintf(param_name, RATELIMIT_STR, i); createParam(param_name, asynParamInt32, &p_rateLimit[i]);
+        sprintf(param_name, BSSS(EDEFENABLE_STR), i);createParam(param_name, asynParamInt32, &p_edefEnable[i]);
+        sprintf(param_name, BSSS(RATEMODE_STR), i);  createParam(param_name, asynParamInt32, &p_rateMode[i]);
+        sprintf(param_name, BSSS(FIXEDRATE_STR), i); createParam(param_name, asynParamInt32, &p_fixedRate[i]);
+        sprintf(param_name, BSSS(ACRATE_STR), i);    createParam(param_name, asynParamInt32, &p_acRate[i]);
+        sprintf(param_name, BSSS(TSLOTMASK_STR), i); createParam(param_name, asynParamInt32, &p_tSlotMask[i]);
+        sprintf(param_name, BSSS(EXPSEQNUM_STR), i); createParam(param_name, asynParamInt32, &p_expSeqNum[i]);
+        sprintf(param_name, BSSS(EXPSEQBIT_STR), i); createParam(param_name, asynParamInt32, &p_expSeqBit[i]);
+        sprintf(param_name, BSSS(DESTMODE_STR), i);  createParam(param_name, asynParamInt32, &p_destMode[i]);
+        sprintf(param_name, BSSS(DESTMASK_STR), i);  createParam(param_name, asynParamInt32, &p_destMask[i]);
+        sprintf(param_name, BSSS(RATELIMIT_STR), i); createParam(param_name, asynParamInt32, &p_rateLimit[i]);
     }
 
     // set up dyanamic paramters
