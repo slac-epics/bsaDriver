@@ -16,139 +16,17 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QGridLayout" name="gridLayout">
-     <item row="1" column="1">
-      <widget class="PyDMLabel" name="PyDMLabel_2">
-       <property name="toolTip">
-        <string/>
-       </property>
-       <property name="text">
-        <string>######</string>
-       </property>
-       <property name="channel" stdset="0">
-        <string>ca://${DEVICE}:BSSS_ST:CURPKTST</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="0">
-      <widget class="QLabel" name="label_4">
-       <property name="text">
-        <string>Current pulse ID (lower 32 bits)</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="0">
-      <widget class="QLabel" name="label_7">
-       <property name="text">
-        <string>Current delta</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="7" column="1">
-      <widget class="PyDMLabel" name="PyDMLabel_6">
-       <property name="toolTip">
-        <string/>
-       </property>
-       <property name="text">
-        <string>######</string>
-       </property>
-       <property name="channel" stdset="0">
-        <string>ca://${DEVICE}:BSSS_ST:DGCLKRATE</string>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="1">
-      <widget class="PyDMLabel" name="PyDMLabel_8">
-       <property name="toolTip">
-        <string/>
-       </property>
-       <property name="channel" stdset="0">
-        <string>ca://${DEVICE}:BSSS_ST:CURDLT</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="1">
-      <widget class="PyDMLabel" name="PyDMLabel_4">
-       <property name="toolTip">
-        <string/>
-       </property>
-       <property name="channel" stdset="0">
-        <string>ca://${DEVICE}:BSSS_ST:CURPIDL</string>
-       </property>
-      </widget>
-     </item>
-     <item row="10" column="0">
-      <widget class="QLabel" name="label_9">
-       <property name="text">
-        <string>BSSS packet size</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
      <item row="6" column="0">
-      <widget class="QLabel" name="label_5">
+      <widget class="QLabel" name="label_6">
        <property name="text">
-        <string>Paused?</string>
+        <string>Packet count</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
      </item>
-     <item row="8" column="1">
-      <widget class="PyDMLabel" name="PyDMLabel_10">
-       <property name="toolTip">
-        <string/>
-       </property>
-       <property name="text">
-        <string>######</string>
-       </property>
-       <property name="channel" stdset="0">
-        <string>ca://${DEVICE}:BSSS_ST:DGSTBRATE</string>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="1">
-      <widget class="PyDMLabel" name="PyDMLabel_7">
-       <property name="toolTip">
-        <string/>
-       </property>
-       <property name="text">
-        <string>######</string>
-       </property>
-       <property name="channel" stdset="0">
-        <string>ca://${DEVICE}:BSSS_ST:PKTCNT</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="0">
-      <widget class="QLabel" name="label">
-       <property name="text">
-        <string>Current packet size</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="0">
-      <widget class="QLabel" name="label_3">
-       <property name="text">
-        <string>Current timestamp (lower 32 bits)</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="11" column="1">
+     <item row="12" column="1">
       <widget class="PyDMEnumButton" name="PyDMEnumButton">
        <property name="maximumSize">
         <size>
@@ -160,7 +38,7 @@
         <string/>
        </property>
        <property name="channel" stdset="0">
-        <string>ca://${DEVICE}:BSSS_CTRL:ENB</string>
+        <string>ca://${DEVICE}:${SERVICE}_CTRL:ENB</string>
        </property>
        <property name="orientation" stdset="0">
         <enum>Qt::Horizontal</enum>
@@ -185,96 +63,27 @@
        </property>
       </widget>
      </item>
-     <item row="10" column="1">
-      <widget class="PyDMLineEdit" name="PyDMLineEdit">
-       <property name="maximumSize">
-        <size>
-         <width>200</width>
-         <height>16777215</height>
-        </size>
-       </property>
+     <item row="5" column="1">
+      <widget class="PyDMLabel" name="PyDMLabel_8">
        <property name="toolTip">
         <string/>
        </property>
        <property name="channel" stdset="0">
-        <string>ca://${DEVICE}:BSSS_CTRL:PKSZ</string>
+        <string>ca://${DEVICE}:${SERVICE}_ST:CURDLT</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
-      <widget class="PyDMLabel" name="PyDMLabel_3">
-       <property name="toolTip">
-        <string/>
-       </property>
+     <item row="4" column="0">
+      <widget class="QLabel" name="label_3">
        <property name="text">
-        <string>######</string>
-       </property>
-       <property name="channel" stdset="0">
-        <string>ca://${DEVICE}:BSSS_ST:CURTSL</string>
-       </property>
-      </widget>
-     </item>
-     <item row="11" column="0">
-      <widget class="QLabel" name="label_10">
-       <property name="text">
-        <string>Enable/disable</string>
+        <string>Current timestamp (lower 32 bits)</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
      </item>
-     <item row="8" column="0">
-      <widget class="QLabel" name="label_11">
-       <property name="text">
-        <string>Diagnostic strobe rate</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="0">
-      <widget class="QLabel" name="label_6">
-       <property name="text">
-        <string>Packet count</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="7" column="0">
-      <widget class="QLabel" name="label_8">
-       <property name="text">
-        <string>Diagnostic clock rate</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="PyDMLabel" name="PyDMLabel">
-       <property name="toolTip">
-        <string/>
-       </property>
-       <property name="channel" stdset="0">
-        <string>ca://${DEVICE}:BSSS_ST:CURPKTSZ</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="label_2">
-       <property name="text">
-        <string>Current packet status</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="1">
+     <item row="7" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
         <widget class="PyDMByteIndicator" name="PyDMByteIndicator">
@@ -282,7 +91,7 @@
           <string/>
          </property>
          <property name="channel" stdset="0">
-          <string>ca://${DEVICE}:BSSS_ST:PAUSED</string>
+          <string>ca://${DEVICE}:${SERVICE}_ST:PAUSED</string>
          </property>
          <property name="showLabels" stdset="0">
           <bool>false</bool>
@@ -303,6 +112,220 @@
         </spacer>
        </item>
       </layout>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Current packet size</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="11" column="0">
+      <widget class="QLabel" name="label_9">
+       <property name="text">
+        <string>BSSS packet size</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="0">
+      <widget class="QLabel" name="label_11">
+       <property name="text">
+        <string>Diagnostic strobe rate</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="11" column="1">
+      <widget class="PyDMLineEdit" name="PyDMLineEdit">
+       <property name="maximumSize">
+        <size>
+         <width>200</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string/>
+       </property>
+       <property name="channel" stdset="0">
+        <string>ca://${DEVICE}:${SERVICE}_CTRL:PKSZ</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="0">
+      <widget class="QLabel" name="label_5">
+       <property name="text">
+        <string>Paused?</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="0">
+      <widget class="QLabel" name="label_8">
+       <property name="text">
+        <string>Diagnostic clock rate</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="PyDMLabel" name="PyDMLabel_4">
+       <property name="toolTip">
+        <string/>
+       </property>
+       <property name="channel" stdset="0">
+        <string>ca://${DEVICE}:${SERVICE}_ST:CURPIDL</string>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="1">
+      <widget class="PyDMLabel" name="PyDMLabel_6">
+       <property name="toolTip">
+        <string/>
+       </property>
+       <property name="text">
+        <string>######</string>
+       </property>
+       <property name="channel" stdset="0">
+        <string>ca://${DEVICE}:${SERVICE}_ST:DGCLKRATE</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="label_7">
+       <property name="text">
+        <string>Current delta</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="12" column="0">
+      <widget class="QLabel" name="label_10">
+       <property name="text">
+        <string>Enable/disable</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="1">
+      <widget class="PyDMLabel" name="PyDMLabel_7">
+       <property name="toolTip">
+        <string/>
+       </property>
+       <property name="text">
+        <string>######</string>
+       </property>
+       <property name="channel" stdset="0">
+        <string>ca://${DEVICE}:${SERVICE}_ST:PKTCNT</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="PyDMLabel" name="PyDMLabel">
+       <property name="toolTip">
+        <string/>
+       </property>
+       <property name="channel" stdset="0">
+        <string>ca://${DEVICE}:${SERVICE}_ST:CURPKTSZ</string>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="1">
+      <widget class="PyDMLabel" name="PyDMLabel_10">
+       <property name="toolTip">
+        <string/>
+       </property>
+       <property name="text">
+        <string>######</string>
+       </property>
+       <property name="channel" stdset="0">
+        <string>ca://${DEVICE}:${SERVICE}_ST:DGSTBRATE</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="label_4">
+       <property name="text">
+        <string>Current pulse ID (lower 32 bits)</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="PyDMLabel" name="PyDMLabel_3">
+       <property name="toolTip">
+        <string/>
+       </property>
+       <property name="text">
+        <string>######</string>
+       </property>
+       <property name="channel" stdset="0">
+        <string>ca://${DEVICE}:${SERVICE}_ST:CURTSL</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="PyDMLabel" name="PyDMLabel_2">
+       <property name="toolTip">
+        <string/>
+       </property>
+       <property name="text">
+        <string>######</string>
+       </property>
+       <property name="channel" stdset="0">
+        <string>ca://${DEVICE}:${SERVICE}_ST:CURPKTST</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>Current packet status</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="PyDMLabel" name="PyDMLabel_5">
+       <property name="toolTip">
+        <string/>
+       </property>
+       <property name="text">
+        <string>${SERVICE}</string>
+       </property>
+       <property name="channel" stdset="0">
+        <string>ca://${DEVICE}:${SERVICE}_ST:CURPKTSZ</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_12">
+       <property name="text">
+        <string>Service</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>
