@@ -171,8 +171,8 @@ class serviceAsynDriver: asynPortDriver {
 #define BSSSPV_STR            "%s_bsss_%d"
 #define BSSSPID_STR           "%s_bsssPID_%d"
 
-#define BLD_STR "BLD_"
-#define BSSS_STR "BSSS_"
+#define BLD_STR "BLD"
+#define BSSS_STR "BSSS"
 
 
 #endif /* BSSS_ASYN_DRIVER_H */
