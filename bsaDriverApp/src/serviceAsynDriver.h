@@ -76,6 +76,7 @@ class serviceAsynDriver: asynPortDriver {
         asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
         void MonitorStatus(void);
         void bsssCallback(void *p, unsigned size);
+        void bldCallback(void *p, unsigned size);
 
     private:
 

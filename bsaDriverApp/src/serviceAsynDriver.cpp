@@ -158,6 +158,11 @@ static void bsss_callback(void *pUsr, void *buf, unsigned size)
     ((serviceAsynDriver *)pUsr)->bsssCallback(buf, size);
 }
 
+static void bld_callback(void *pUsr, void *buf, unsigned size)
+{
+    ((serviceAsynDriver *)pUsr)->bldCallback(buf, size);
+}
+
 serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path, const int num_dyn_param, ELLLIST *pServiceEllList,  serviceType_t type, const char *named_root)
     : asynPortDriver(portName,
                                         1,  /* number of elements of this device */
@@ -174,6 +179,7 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
                                          0)    /* Default stack size */
 
 {
+
     if(!pServiceEllList || !ellCount(pServiceEllList)) return;   /* if there is no service data channels in the list, nothing to do */
     this->pServiceEllList = pServiceEllList;
 
@@ -189,8 +195,8 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
         return;
     }
     switch (type) {
-        case bld:  this->pService = new Bld::BldYaml(reg_);  break;
-        case bsss: this->pService = new Bsss::BsssYaml(reg_);  break;
+        case bld:  this->pService = new Bld::BldYaml(reg_); break;
+        case bsss: this->pService = new Bsss::BsssYaml(reg_); break;
     }
     serviceType = type;
     
@@ -205,9 +211,10 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
 
     SetupAsynParams(type);
 
-    /* BLD callback will be registered by an external driver */
-    if (type == bsss)
-        registerBsssCallback(named_root, bsss_callback, (void *) this);
+    switch (type) {
+        case bld:  registerBldCallback(named_root, bld_callback, (void *) this); break;
+        case bsss: registerBsssCallback(named_root, bsss_callback, (void *) this); break;
+    }        
 }
 
 serviceAsynDriver::~serviceAsynDriver()
@@ -485,6 +492,11 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
 
      callParamCallbacks();
 
+}
+
+void serviceAsynDriver::bldCallback(void *p, unsigned size)
+{
+     printf("Callback called with size = %ud\n", size);
 }
 
 extern "C" {
