@@ -13,10 +13,10 @@ variable(bsa_item_cnt, int)
 #
 driver(bldStreamDriver)
 #
-#    bsssAsynDriver
+#    serviceAsynDriver
 #
-registrar(bsssAsynDriverRegister)
-driver(bsssAsynDriver)
+registrar(serviceAsynDriverRegister)
+driver(serviceAsynDriver)
 
 #
 #   bsasAsynDriver
