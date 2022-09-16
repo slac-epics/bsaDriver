@@ -29,7 +29,7 @@
       <string>bsssBld_singleRateControl.ui</string>
      </property>
      <property name="dataSource" stdset="0">
-      <string>bsssBld_rateControl.json</string>
+      <string>${SERVICE}_rateControl.json</string>
      </property>
     </widget>
    </item>

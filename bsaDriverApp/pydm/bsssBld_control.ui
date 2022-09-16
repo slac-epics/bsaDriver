@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>416</width>
-    <height>327</height>
+    <height>342</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -359,7 +359,7 @@
        </property>
        <property name="filenames" stdset="0">
         <stringlist>
-         <string>bsssBld_rateControl.ui</string>
+         <string>${SERVICE}_rateControl.ui</string>
         </stringlist>
        </property>
       </widget>
@@ -370,7 +370,7 @@
         <string/>
        </property>
        <property name="text">
-        <string>BSSS Data</string>
+        <string>${SERVICE} Data</string>
        </property>
        <property name="filenames" stdset="0">
         <stringlist>

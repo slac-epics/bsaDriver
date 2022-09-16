@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>437</width>
-    <height>335</height>
+    <width>472</width>
+    <height>347</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -23,7 +23,7 @@
       </font>
      </property>
      <property name="text">
-      <string>Choose a channel to check data from all BSSS rate definitions</string>
+      <string>Choose a channel to check data from all ${SERVICE} rate definitions</string>
      </property>
     </widget>
    </item>
@@ -41,7 +41,7 @@
         <string>bsssBld_dataMainSingle.ui</string>
        </property>
        <property name="dataSource" stdset="0">
-        <string>bsssBld_dataMainColumn1.json</string>
+        <string>${SERVICE}_dataMainColumn1.json</string>
        </property>
       </widget>
      </item>
@@ -57,7 +57,7 @@
         <string>bsssBld_dataMainSingle.ui</string>
        </property>
        <property name="dataSource" stdset="0">
-        <string>bsssBld_dataMainColumn2.json</string>
+        <string>${SERVICE}_dataMainColumn2.json</string>
        </property>
       </widget>
      </item>
@@ -73,7 +73,7 @@
         <string>bsssBld_dataMainSingle.ui</string>
        </property>
        <property name="dataSource" stdset="0">
-        <string>bsssBld_dataMainColumn3.json</string>
+        <string>${SERVICE}_dataMainColumn3.json</string>
        </property>
       </widget>
      </item>

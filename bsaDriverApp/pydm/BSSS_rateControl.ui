@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>650</width>
+    <height>446</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>General Rate Control</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="PyDMTemplateRepeater" name="PyDMTemplateRepeater">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="layoutSpacing" stdset="0">
+      <number>4</number>
+     </property>
+     <property name="countShownInDesigner" stdset="0">
+      <number>9</number>
+     </property>
+     <property name="templateFilename" stdset="0">
+      <string>bsssBld_singleRateControl.ui</string>
+     </property>
+     <property name="dataSource" stdset="0">
+      <string>${SERVICE}_rateControl.json</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PyDMTemplateRepeater</class>
+   <extends>QFrame</extends>
+   <header>pydm.widgets.template_repeater</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
