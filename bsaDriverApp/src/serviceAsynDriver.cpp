@@ -496,7 +496,86 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
 
 void serviceAsynDriver::bldCallback(void *p, unsigned size)
 {
-     printf("Callback called with size = %ud\n", size);
+    
+    uint32_t *buf         = (uint32_t *) p;
+    uint32_t *p_uint32    = buf + IDX_DATA;
+    int32_t  *p_int32     = (int32_t *) (buf + IDX_DATA);
+    float    *p_float32   = (float*)(buf + IDX_DATA);
+    bldAxiStreamHeader_t *header = (bldAxiStreamHeader_t *) p;
+    bldAxiStreamComplementaryHeader_t * compHeader;
+    double   val;
+    int data_chn, index;
+    uint64_t sevr_mask;
+    serviceList_t *plist;
+
+    printf("\t\t --------------------------------\n");
+    printf("\t\t BLD Packet: size(%d)\n", size);
+    printf("\t\t --------------------------------\n");
+    printf("\t\t timestamp ( sec, nsec ) : %16lx\n", header->timeStamp);
+    printf("\t\t pulse ID  : %16lx\n", header->pulseID);
+    printf("\t\t channel mask     : %8x\n", header->channelMask);
+    printf("\t\t service mask     : %8x\n", header->serviceMask);  
+    
+    uint32_t consumedSize = sizeof(bldAxiStreamHeader_t);
+    do{
+    
+        for (plist = (serviceList_t *) ellFirst(pServiceEllList), index = 0, data_chn = 0;
+            plist!=NULL;
+            plist = (serviceList_t *) ellNext(&plist->node), data_chn++) 
+        {
+            if(!(header->channelMask & (uint32_t(0x1) << data_chn)))
+                continue;   // skipping the channel, if the channel is not in the mask
+
+            switch(plist->type){
+                case int32_service:
+                    val = (double) (p_int32[index]);
+                    break;
+                case uint32_service:
+                    val = (double) (p_uint32[index]);
+                    break;
+                case float32_service:
+                    val = (double) (p_float32[index]);
+                    break;
+                case uint64_service:
+                default:
+                    val = NAN;   // uint64 never defined
+                    break;
+            }
+
+            if(!isnan(val)) val = val * (*plist->pslope) + (*plist->poffset);
+                printf("\t\t D[%d]             : %f\n", index, val);
+
+            index++; /* Increment index only if not skipping */
+
+            consumedSize += 4;
+        }
+
+        sevr_mask    = *(uint64_t*) (buf + index + IDX_DATA);
+        printf("\t\t severity mask    : %16lx\n", sevr_mask);
+
+        consumedSize += sizeof(sevr_mask);
+
+        printf("\t\t consumedSize: %d, size: %d\n", consumedSize, size);
+        if (consumedSize >= size)
+            break;
+
+        /* If reach here is because there is more data */
+        compHeader = (bldAxiStreamComplementaryHeader_t *) (buf + (consumedSize/4));
+        printf("\t\t Size of bldAxiStreamComplementaryHeader_t is %d\n", sizeof(bldAxiStreamComplementaryHeader_t));
+
+        printf("\t\t Delta timestamp ( sec, nsec ) : %8x\n", compHeader->deltaTimeStamp);
+        printf("\t\t Delta Pulse ID  : %8x\n", compHeader->deltaPulseID);
+        printf("\t\t Service mask     : %8x\n", compHeader->serviceMask);
+
+        p_uint32    = (uint32_t *) (compHeader + sizeof(bldAxiStreamComplementaryHeader_t));
+        p_int32     = (int32_t *) (compHeader + sizeof(bldAxiStreamComplementaryHeader_t));
+        p_float32   = (float*) (compHeader + sizeof(bldAxiStreamComplementaryHeader_t));
+
+        consumedSize += sizeof(bldAxiStreamComplementaryHeader_t);
+
+        printf("\t\t consumedSize: %d, size: %d\n", consumedSize, size);
+    } while (consumedSize < size);
+    
 }
 
 extern "C" {

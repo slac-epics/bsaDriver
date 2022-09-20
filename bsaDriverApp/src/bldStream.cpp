@@ -370,7 +370,7 @@ static void show_bsss_buffer(void *p, unsigned size)
     uint64_t *psv  = (uint64_t *) (buff + (size/4) -2);
 
     printf("\t\t --------------------------------\n");
-    printf("\t\t BSSSS Packet: size(%d)\n", size);
+    printf("\t\t BSSS Packet: size(%d)\n", size);
     printf("\t\t --------------------------------\n");
     printf("\t\t timestamp, nsec  : %8x\n", *(buff++));
     printf("\t\t timestamp, sec   : %8x\n", *(buff++));
@@ -449,9 +449,75 @@ typedef struct __attribute__((packed)) {
 static void show_bld_buffer(void *p, unsigned size)
 {
 
+    typedef struct __attribute__((__packed__)) {
+        uint64_t timeStamp;
+        uint64_t pulseID;
+        uint32_t channelMask;
+        uint32_t serviceMask;
+    } bldAxiStreamHeader_t;
+
+    typedef struct __attribute__((__packed__)) {
+        uint32_t deltaTimeStamp:20;
+        uint32_t deltaPulseID:12;
+        uint32_t serviceMask;
+    } bldAxiStreamComplementaryHeader_t;
+
+    uint32_t *buff = (uint32_t *) p;
+    bldAxiStreamHeader_t *header = (bldAxiStreamHeader_t *) p;
+    bldAxiStreamComplementaryHeader_t * compHeader;
+    uint64_t severityMask;
+    uint32_t consumedWords = 0;
+    int channelsFound = 0;
+    const uint8_t wordSize = 4;
+
     printf("\t\t --------------------------------\n");
     printf("\t\t BLD Packet: size(%d)\n", size);
     printf("\t\t --------------------------------\n");
+    printf("\t\t timestamp        : %16lx\n", header->timeStamp);
+    printf("\t\t pulse ID         : %16lx\n", header->pulseID);
+    printf("\t\t channel mask     : %8x\n", header->channelMask);
+    printf("\t\t service mask     : %8x\n", header->serviceMask);    
+
+    consumedWords += sizeof(bldAxiStreamHeader_t)/4;
+    
+    for (uint32_t channel_mask_it=0x1 ; channel_mask_it != 0x0; channel_mask_it<<= 1)
+    {
+        if (header->channelMask & channel_mask_it)
+            channelsFound++;
+    }
+
+    printf("\t\t Chan. data found : %d\n", channelsFound); 
+    consumedWords += channelsFound;
+    
+    severityMask =  *((uint64_t *) (buff + consumedWords));
+    printf("\t\t Severity mask    : %16lx\n", severityMask);
+
+    consumedWords += sizeof(severityMask)/wordSize;
+    const uint32_t amendedEventSize = sizeof(bldAxiStreamComplementaryHeader_t) + channelsFound*wordSize + sizeof(severityMask);
+
+    while (consumedWords*wordSize < size)
+    {
+        if (consumedWords*wordSize + amendedEventSize > size){
+            printf("\t\t Anomaly detected: Last event data corrupt\n");
+            return;
+        }
+        else
+            printf("\t\t Amended event data\n");
+
+        compHeader = (bldAxiStreamComplementaryHeader_t *) (buff + consumedWords);
+        
+        printf("\t\t\t Delta timestamp  : %8x\n", compHeader->deltaTimeStamp);
+        printf("\t\t\t Delta Pulse ID   : %8x\n", compHeader->deltaPulseID);
+        printf("\t\t\t Service mask     : %8x\n", compHeader->serviceMask);
+
+        consumedWords += sizeof(bldAxiStreamComplementaryHeader_t)/wordSize + channelsFound;
+
+        severityMask =  *((uint64_t *) (buff + consumedWords));
+        printf("\t\t\t Severity mask    : %16lx\n", severityMask);
+
+        consumedWords += sizeof(severityMask)/wordSize;
+    } 
+        
 }
 
 extern "C" {

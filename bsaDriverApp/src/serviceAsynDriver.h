@@ -21,7 +21,8 @@
 #include <BldYaml.hh>
 
 #define NUM_BSSS_DATA_MAX    31
-#define NUM_EDEF_MAX         16
+#define NUM_CHANNELS_MAX     31
+#define NUM_EDEF_MAX         9
 
 #define IDX_NSEC 0
 #define IDX_SEC  1
@@ -66,6 +67,18 @@ typedef struct {
     char    pname_servicePID[NUM_EDEF_MAX][64];
 } serviceList_t;
 
+typedef struct __attribute__((__packed__)) {
+    uint64_t timeStamp;
+    uint64_t pulseID;
+    uint32_t channelMask;
+    uint32_t serviceMask;
+} bldAxiStreamHeader_t;
+
+typedef struct __attribute__((__packed__)) {
+    uint32_t deltaTimeStamp:20;
+    uint32_t deltaPulseID:12;
+    uint32_t serviceMask;
+} bldAxiStreamComplementaryHeader_t;
 
 class serviceAsynDriver: asynPortDriver {
 
