@@ -38,6 +38,14 @@
 #define IDX_DATA 6
 #define IDX_SEVR_MASK(size)  (size/4 -2)
 
+
+#define MULTICAST_IDX_SEVRL 5
+#define MULTICAST_IDX_SEVRH 6
+#define MULTICAST_IDX_DATA 7
+
+#define FIXED_SLOPE  1
+#define FIXED_OFFSET 0
+
 typedef enum {
     int32_service,
     uint32_service,
@@ -103,7 +111,7 @@ class serviceAsynDriver: asynPortDriver {
         uint64_t channelSevr;        
         
         void* pVoidBldNetworkClient[NUM_EDEF_MAX];
-
+        uint32_t *bldPacketPayload;
         ELLLIST *pServiceEllList;
         AcqService::AcqServiceYaml *pService;
 

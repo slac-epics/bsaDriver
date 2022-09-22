@@ -214,6 +214,8 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
     for(unsigned int i = 0; i < this->pService->getEdefNum(); i++)
         pVoidBldNetworkClient[i] = NULL;
 
+    bldPacketPayload = (uint32_t *) mallocMustSucceed(MAX_BUFF_SIZE, "bldPacketPayload");
+
     switch (type) {
         case bld:  registerBldCallback(named_root, bld_callback, (void *) this); break;
         case bsss: registerBsssCallback(named_root, bsss_callback, (void *) this); break;
@@ -388,7 +390,11 @@ asynStatus serviceAsynDriver::writeOctet (asynUser *pasynUser, const char *value
             if (pVoidBldNetworkClient[edef] != NULL)
                 BldNetworkClientRelease(pVoidBldNetworkClient[edef]);
             getIntegerParam(p_multicastPort[edef], &port);
-            BldNetworkClientInitByInterfaceName(ntohl( inet_addr( value ) ), port, MAX_BUFF_SIZE, UCTTL, NULL, 
+            BldNetworkClientInitByInterfaceName(ntohl( inet_addr( value ) ), 
+                                                port, 
+                                                MAX_BUFF_SIZE, 
+                                                UCTTL, 
+                                                NULL, 
                                                 &pVoidBldNetworkClient[edef]);
             if ( pVoidBldNetworkClient[edef] == NULL ) 
                 printf("Failed instantiating new BldNetworkClient\n");
@@ -472,7 +478,11 @@ asynStatus serviceAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
             getStringParam(p_multicastAddr[i], address);
             if (pVoidBldNetworkClient[i] != NULL)
                 BldNetworkClientRelease(pVoidBldNetworkClient[i]);
-            BldNetworkClientInitByInterfaceName(ntohl( inet_addr( address.c_str() ) ), value, MAX_BUFF_SIZE, UCTTL, NULL, 
+            BldNetworkClientInitByInterfaceName(ntohl( inet_addr( address.c_str() ) ), 
+                                                value, 
+                                                MAX_BUFF_SIZE, 
+                                                UCTTL, 
+                                                NULL, 
                                                 &pVoidBldNetworkClient[i]);
             if ( pVoidBldNetworkClient[i] == NULL ) 
                 printf("Failed instantiating new BldNetworkClient\n");
@@ -560,13 +570,20 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
     uint32_t *p_uint32    = buf + IDX_DATA;
     int32_t  *p_int32     = (int32_t *) (buf + IDX_DATA);
     float    *p_float32   = (float*)(buf + IDX_DATA);
+    float    *bldPacketPayloadfloat = (float    *) bldPacketPayload;
     bldAxiStreamHeader_t *header = (bldAxiStreamHeader_t *) p;
     bldAxiStreamComplementaryHeader_t * compHeader;
     double   val;
     int data_chn, index;
     uint64_t sevr_mask;
     serviceList_t *plist;
-
+    const uint32_t channelMaskImpossibleVal = 0xFFFFFFFF;
+    static uint32_t channelMask = channelMaskImpossibleVal; // Default impossible value
+    static uint32_t versionSize = 0;
+    uint32_t multicastIndex = MULTICAST_IDX_DATA;
+    uint32_t severityMaskAddrL = MULTICAST_IDX_SEVRL;
+    uint32_t severityMaskAddrH = MULTICAST_IDX_SEVRH;
+    bool potentialFixed = false;
 #ifdef BLD_DEBUG
     printf("\t\t --------------------------------\n");
     printf("\t\t BLD Packet: size(%d)\n", size);
@@ -576,6 +593,17 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
     printf("\t\t channel mask     : %8x\n", header->channelMask);
     printf("\t\t service mask     : %8x\n", header->serviceMask);  
 #endif
+
+    if (channelMask != header->channelMask && channelMask != channelMaskImpossibleVal)
+        versionSize++;
+
+    bldPacketPayload[IDX_NSEC] = buf[IDX_NSEC];
+    bldPacketPayload[IDX_SEC]  = buf[IDX_SEC];
+    bldPacketPayload[IDX_PIDL] = buf[IDX_PIDL];
+    bldPacketPayload[IDX_PIDU] = buf[IDX_PIDU];
+    bldPacketPayload[IDX_PIDU] = versionSize;
+    
+
 
     uint32_t consumedSize = sizeof(bldAxiStreamHeader_t);
     do{
@@ -603,14 +631,25 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
                     break;
             }
 
+            
             if(!isnan(val)) 
                 val = val * (*plist->pslope) + (*plist->poffset);
+
+            potentialFixed = ( ( (*plist->pslope) == FIXED_SLOPE) &&
+                               ( (*plist->poffset) == FIXED_OFFSET) );
+
+            if ((plist->type == int32_service || plist->type == uint32_service) && (potentialFixed == 1))
+                bldPacketPayload[multicastIndex++] = val; /* formatted to int32/uint32 */
+            else
+                bldPacketPayloadfloat[multicastIndex++] = val; /* formatted to IEEE 754 */
 
             index++; /* Increment index only if not skipping */
             consumedSize += 4;
         }
 
         sevr_mask    = *(uint64_t*) (buf + index + IDX_DATA);
+        bldPacketPayload[severityMaskAddrL] = *(buf + index + IDX_DATA);
+        bldPacketPayload[severityMaskAddrH] = *(buf + index + IDX_DATA + 1);
 
 #ifdef BLD_DEBUG        
         printf("\t\t severity mask    : %16lx\n", sevr_mask);
@@ -634,6 +673,9 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
         printf("\t\t\t Delta Pulse ID  : %8x\n", compHeader->deltaPulseID);
         printf("\t\t\t Service mask    : %8x\n", compHeader->serviceMask);
 #endif
+        bldPacketPayload[multicastIndex++] = *(buf + (consumedSize/4));
+        severityMaskAddrL = multicastIndex++;
+        severityMaskAddrH = multicastIndex++;
 
         p_uint32    = (uint32_t *) (compHeader + sizeof(bldAxiStreamComplementaryHeader_t));
         p_int32     = (int32_t *) (compHeader + sizeof(bldAxiStreamComplementaryHeader_t));
@@ -641,25 +683,26 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
 
         consumedSize += sizeof(bldAxiStreamComplementaryHeader_t);
     } while (consumedSize < size);
-    
-    /*
-#define GMD_BLD_TYPE 0x40040
-// From bldPacket.h BldPacketHeader::BldTypeId 
-#define GMD_BLD_ID 26  
 
-epicsEnvSet("BLD_IP", "239.255.25.2")
-epicsEnvSet( "BLD_ID",   "0" )
-epicsEnvSet( "BLD_PORT", "10148" )
-epicsEnvSet( "BLD_MAX_SIZE", "50" )
- 
-BldSetID ("$(BLD_ID)")
+#ifdef BLD_DEBUG
+    printf("\t\t consumedSize: %d, size: %d, multicastIndex=%d\n", consumedSize, size, multicastIndex*4);
+#endif
 
-BldConfigSend ("$(BLD_IP)", $(BLD_PORT), $(BLD_MAX_SIZE))
-gmdBldConfigure ("${GMD_STREAM_DRIVER}", "$(BLD_ID)")
-
-    BldSendPacket( bldClientId, GMD_BLD_ID, GMD_BLD_TYPE, 
-                   &bldData.time, buffer, bufferSize );
-    */
+    for (uint32_t mask = 0xF & (header->serviceMask >> 24), it = 0; mask != 0x0; mask >>= 1, it++)
+    {
+        if ( (mask & 0x1) != 0 )
+        {
+            if ((pVoidBldNetworkClient[it] != NULL))
+            {
+                if (0 != BldNetworkClientSendRawData(pVoidBldNetworkClient[it], 
+                                                    multicastIndex*sizeof(int), 
+                                                    (char*) bldPacketPayload) )
+                    printf( "BldNetworkClientSendRawData failed for service %u\n", it+1 );
+            } else {
+                printf("Service %u enabled, but pVoidBldNetworkClient not initialized\n", it+1);
+            }
+        }
+    }
 }
 
 extern "C" {
