@@ -571,17 +571,8 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
     uint32_t multicastIndex = MULTICAST_IDX_DATA;
     uint32_t severityMaskAddrL = MULTICAST_IDX_SEVRL;
     uint32_t severityMaskAddrH = MULTICAST_IDX_SEVRH;
-    bool potentialFixed = false;
-#ifdef BLD_DEBUG
-    printf("\t\t --------------------------------\n");
-    printf("\t\t BLD Packet: size(%d)\n", size);
-    printf("\t\t --------------------------------\n");
-    printf("\t\t timestamp ( sec, nsec ) : %16lx\n", header->timeStamp);
-    printf("\t\t pulse ID  : %16lx\n", header->pulseID);
-    printf("\t\t channel mask     : %8x\n", header->channelMask);
-    printf("\t\t service mask     : %8x\n", header->serviceMask);  
-#endif
-
+    bool potentialFixed;
+    /* Matt: versionSize increments whenever channel mask changes */
     if (channelMask != header->channelMask && channelMask != channelMaskImpossibleVal)
         versionSize++;
 
@@ -591,8 +582,6 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
     bldPacketPayload[IDX_PIDU] = buf[IDX_PIDU];
     bldPacketPayload[IDX_PIDU] = versionSize;
     
-
-
     uint32_t consumedSize = sizeof(bldAxiStreamHeader_t);
     do{
     
@@ -618,14 +607,15 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
                     val = NAN;   // uint64 never defined
                     break;
             }
-
             
             if(!isnan(val)) 
                 val = val * (*plist->pslope) + (*plist->poffset);
 
+            /* No "fixed" information coming from firmware. Is this channel likely a "fixed"? */
             potentialFixed = ( ( (*plist->pslope) == FIXED_SLOPE) &&
                                ( (*plist->poffset) == FIXED_OFFSET) );
 
+            /* If fixed, apply correct format */
             if ((plist->type == int32_service || plist->type == uint32_service) && (potentialFixed == 1))
                 bldPacketPayload[multicastIndex++] = val; /* formatted to int32/uint32 */
             else
@@ -639,15 +629,7 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
         bldPacketPayload[severityMaskAddrL] = *(buf + index + IDX_DATA);
         bldPacketPayload[severityMaskAddrH] = *(buf + index + IDX_DATA + 1);
 
-#ifdef BLD_DEBUG        
-        printf("\t\t severity mask    : %16lx\n", sevr_mask);
-#endif
-
         consumedSize += sizeof(sevr_mask);
-
-#ifdef BLD_DEBUG
-        printf("\t\t consumedSize: %d, size: %d\n", consumedSize, size);
-#endif        
 
         if (consumedSize >= size)
             break;
@@ -655,12 +637,6 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
         /* If reaches here is because there is more event data */
         compHeader = (bldAxiStreamComplementaryHeader_t *) (buf + (consumedSize/4));
 
-#ifdef BLD_DEBUG        
-        printf("\t\t Amended event\n");
-        printf("\t\t\t Delta timestamp : %8x\n", compHeader->deltaTimeStamp);
-        printf("\t\t\t Delta Pulse ID  : %8x\n", compHeader->deltaPulseID);
-        printf("\t\t\t Service mask    : %8x\n", compHeader->serviceMask);
-#endif
         bldPacketPayload[multicastIndex++] = *(buf + (consumedSize/4));
         severityMaskAddrL = multicastIndex++;
         severityMaskAddrH = multicastIndex++;
@@ -672,25 +648,13 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
         consumedSize += sizeof(bldAxiStreamComplementaryHeader_t);
     } while (consumedSize < size);
 
-#ifdef BLD_DEBUG
-    printf("\t\t consumedSize: %d, size: %d, multicastIndex=%d\n", consumedSize, size, multicastIndex*4);
-#endif
-
     for (uint32_t mask = 0xF & (header->serviceMask >> 24), it = 0; mask != 0x0; mask >>= 1, it++)
     {
         if ( (mask & 0x1) != 0 )
         {
-            if ((pVoidBldNetworkClient[it] != NULL))
-            {
-                if (0 != BldNetworkClientSendRawData(pVoidBldNetworkClient[it], 
+                BldNetworkClientSendRawData(pVoidBldNetworkClient[it], 
                                                     multicastIndex*sizeof(int), 
-                                                    (char*) bldPacketPayload) )
-                    printf( "BldNetworkClientSendRawData failed for service %u\n", it+1 );
-                else
-                    printf( "BldNetworkClientSendRawData success for service %u\n", it+1 );
-            } else {
-                printf("Service %u enabled, but pVoidBldNetworkClient not initialized\n", it+1);
-            }
+                                                    (char*) bldPacketPayload);
         }
     }
 }
