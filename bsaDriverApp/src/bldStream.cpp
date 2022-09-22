@@ -35,7 +35,7 @@
 #define  BSAS_PACKET 3
 
 #define  MAX_FREE_LIST 64
-#define  MAX_BUFF_SIZE 1024
+#define  MAX_BUFF_SIZE 9000
 
 #define  IDX_SERVICE_MASK     5
 #define  BSSS_SERVICE_MASK    0x1ff

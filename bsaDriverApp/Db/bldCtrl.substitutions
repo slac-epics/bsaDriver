@@ -10,7 +10,7 @@ file serviceStatus.db {
 
 
 file serviceRateControl.db {
-    pattern {  IDX,  BSSS_INST,  DEVICE,  GLOBAL,       SERVICE       }
+    pattern {  IDX,  SERVICE_INST,  DEVICE,  GLOBAL,       SERVICE       }
             {  "0",  "EDEF1",   "$(DEV)", "TPG:SYS0:1", "BLD"        }
             {  "1",  "EDEF2",   "$(DEV)", "TPG:SYS0:1", "BLD"        } 
             {  "2",  "EDEF3",   "$(DEV)", "TPG:SYS0:1", "BLD"        }
@@ -18,3 +18,10 @@ file serviceRateControl.db {
 }
 
 
+file bldSpecific.db {
+    pattern {   IDX,       DEVICE,       BLD_RATEID }
+            {   "0",      "$(DEV)",        "EDEF1"  }
+            {   "1",      "$(DEV)",        "EDEF2"  }
+            {   "2",      "$(DEV)",        "EDEF3"  }
+            {   "3",      "$(DEV)",        "EDEF4"  }
+}

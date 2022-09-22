@@ -1,7 +1,7 @@
 
 file serviceChannelCtrl.db {
     pattern {   DEVICE,                  DESC,    SERVICE}
-            {   "$(DEV)", "$(DESC\=\$\(SECN\))"  "BSSS" }
+            {   "$(DEV)", "$(DESC\=\$\(SECN\))",  "BSSS" }
 }
 
 

@@ -1,0 +1,20 @@
+#
+#    BLD specific PV template
+#    macros: $(DEVICE)
+
+
+record(stringout, "$(DEVICE):$(BLD_RATEID):MULT_ADDR")
+{
+    field(DESC, "BLD $(BLD_RATEID) multicast address")
+    field(DTYP, "asynOctetWrite")
+    field(OUT,  "@asyn($(PORT), 0) bldMulticastAddress_$(IDX)")
+    info(autosaveFields, "VAL")
+}
+
+record(longout, "$(DEVICE):$(BLD_RATEID):MULT_PORT")
+{
+    field(DESC, "BLD $(BLD_RATEID) multicast port")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),0) bldMulticastPort_$(IDX)")
+    info(autosaveFields, "VAL")
+}

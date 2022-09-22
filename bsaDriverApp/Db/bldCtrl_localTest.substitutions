@@ -16,3 +16,11 @@ file serviceRateControl_localTest.db {
             {  "2",  "EDEF3",      "$(DEV)",  "BLD" }
             {  "3",  "EDEF4",      "$(DEV)",  "BLD" }
 }  
+
+file bldSpecific.db {
+    pattern {   IDX,       DEVICE,       BLD_RATEID }
+            {   "0",      "$(DEV)",        "EDEF1"  }
+            {   "1",      "$(DEV)",        "EDEF2"  }
+            {   "2",      "$(DEV)",        "EDEF3"  }
+            {   "3",      "$(DEV)",        "EDEF4"  }
+}

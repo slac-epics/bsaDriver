@@ -211,6 +211,9 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
 
     SetupAsynParams(type);
 
+    for(unsigned int i = 0; i < this->pService->getEdefNum(); i++)
+        pVoidBldNetworkClient[i] = NULL;
+
     switch (type) {
         case bld:  registerBldCallback(named_root, bld_callback, (void *) this); break;
         case bsss: registerBsssCallback(named_root, bsss_callback, (void *) this); break;
@@ -266,6 +269,12 @@ void serviceAsynDriver::SetupAsynParams(serviceType_t type)
         sprintf(param_name, DESTMODE_STR, prefix, i);  createParam(param_name, asynParamInt32, &p_destMode[i]);
         sprintf(param_name, DESTMASK_STR, prefix, i);  createParam(param_name, asynParamInt32, &p_destMask[i]);
         sprintf(param_name, RATELIMIT_STR, prefix, i); createParam(param_name, asynParamInt32, &p_rateLimit[i]);
+
+        /* BLD multicast port and addresses */
+        if (type == bld) {
+            sprintf(param_name, BLDMULTICASTADDR_STR, i); createParam(param_name, asynParamOctet, &p_multicastAddr[i]);
+            sprintf(param_name, BLDMULTICASTPORT_STR, i); createParam(param_name, asynParamInt32, &p_multicastPort[i]);
+        }
     }
 
     /* PVs only existant in BSSS driver */
@@ -364,6 +373,44 @@ void serviceAsynDriver::MonitorStatus(void)
     callParamCallbacks();
 }
 
+
+asynStatus serviceAsynDriver::writeOctet (asynUser *pasynUser, const char *value,
+                                    size_t nChars, size_t *nActual)
+{
+    int function = pasynUser->reason;
+    asynStatus status = asynSuccess;
+    const char *functionName = "writeOctet";
+    epicsInt32 port;
+
+    for(unsigned int edef = 0; edef < this->pService->getEdefNum(); edef++) {
+        
+        if(function == p_multicastAddr[edef]) {
+            if (pVoidBldNetworkClient[edef] != NULL)
+                BldNetworkClientRelease(pVoidBldNetworkClient[edef]);
+            getIntegerParam(p_multicastPort[edef], &port);
+            BldNetworkClientInitByInterfaceName(ntohl( inet_addr( value ) ), port, MAX_BUFF_SIZE, UCTTL, NULL, 
+                                                &pVoidBldNetworkClient[edef]);
+            if ( pVoidBldNetworkClient[edef] == NULL ) 
+                printf("Failed instantiating new BldNetworkClient\n");
+            break;
+        }
+    }
+
+    if (status)
+        asynPrint(pasynUser, ASYN_TRACE_ERROR,
+                  "%s:%s: status=%d, function=%d, value=%s",
+                  driverName, functionName, status, function, value);
+    else
+    {
+        asynPrint(pasynUser, ASYN_TRACEIO_DRIVER,
+              "%s:%s: function=%d, value=%s\n",
+              driverName, functionName, function, value);
+        callParamCallbacks();
+    }
+    *nActual = nChars;
+    return status;
+}
+
 asynStatus serviceAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
 {
     int function = pasynUser->reason;
@@ -419,6 +466,18 @@ asynStatus serviceAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
         }
         else if(function == p_rateLimit[i]) {
             pService->setRateLimit(i, (uint32_t) value);
+            goto done;
+        } else if(function == p_multicastPort[i]) {
+            std::string address;
+            getStringParam(p_multicastAddr[i], address);
+            if (pVoidBldNetworkClient[i] != NULL)
+                BldNetworkClientRelease(pVoidBldNetworkClient[i]);
+            BldNetworkClientInitByInterfaceName(ntohl( inet_addr( address.c_str() ) ), value, MAX_BUFF_SIZE, UCTTL, NULL, 
+                                                &pVoidBldNetworkClient[i]);
+            if ( pVoidBldNetworkClient[i] == NULL ) 
+                printf("Failed instantiating new BldNetworkClient\n");
+            break;
+
             goto done;
         }
     }
@@ -508,6 +567,7 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
     uint64_t sevr_mask;
     serviceList_t *plist;
 
+#ifdef BLD_DEBUG
     printf("\t\t --------------------------------\n");
     printf("\t\t BLD Packet: size(%d)\n", size);
     printf("\t\t --------------------------------\n");
@@ -515,7 +575,8 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
     printf("\t\t pulse ID  : %16lx\n", header->pulseID);
     printf("\t\t channel mask     : %8x\n", header->channelMask);
     printf("\t\t service mask     : %8x\n", header->serviceMask);  
-    
+#endif
+
     uint32_t consumedSize = sizeof(bldAxiStreamHeader_t);
     do{
     
@@ -542,40 +603,63 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
                     break;
             }
 
-            if(!isnan(val)) val = val * (*plist->pslope) + (*plist->poffset);
-                printf("\t\t D[%d]             : %f\n", index, val);
+            if(!isnan(val)) 
+                val = val * (*plist->pslope) + (*plist->poffset);
 
             index++; /* Increment index only if not skipping */
-
             consumedSize += 4;
         }
 
         sevr_mask    = *(uint64_t*) (buf + index + IDX_DATA);
+
+#ifdef BLD_DEBUG        
         printf("\t\t severity mask    : %16lx\n", sevr_mask);
+#endif
 
         consumedSize += sizeof(sevr_mask);
 
+#ifdef BLD_DEBUG
         printf("\t\t consumedSize: %d, size: %d\n", consumedSize, size);
+#endif        
+
         if (consumedSize >= size)
             break;
 
-        /* If reach here is because there is more data */
+        /* If reaches here is because there is more event data */
         compHeader = (bldAxiStreamComplementaryHeader_t *) (buf + (consumedSize/4));
-        printf("\t\t Size of bldAxiStreamComplementaryHeader_t is %d\n", sizeof(bldAxiStreamComplementaryHeader_t));
 
-        printf("\t\t Delta timestamp ( sec, nsec ) : %8x\n", compHeader->deltaTimeStamp);
-        printf("\t\t Delta Pulse ID  : %8x\n", compHeader->deltaPulseID);
-        printf("\t\t Service mask     : %8x\n", compHeader->serviceMask);
+#ifdef BLD_DEBUG        
+        printf("\t\t Amended event\n");
+        printf("\t\t\t Delta timestamp : %8x\n", compHeader->deltaTimeStamp);
+        printf("\t\t\t Delta Pulse ID  : %8x\n", compHeader->deltaPulseID);
+        printf("\t\t\t Service mask    : %8x\n", compHeader->serviceMask);
+#endif
 
         p_uint32    = (uint32_t *) (compHeader + sizeof(bldAxiStreamComplementaryHeader_t));
         p_int32     = (int32_t *) (compHeader + sizeof(bldAxiStreamComplementaryHeader_t));
         p_float32   = (float*) (compHeader + sizeof(bldAxiStreamComplementaryHeader_t));
 
         consumedSize += sizeof(bldAxiStreamComplementaryHeader_t);
-
-        printf("\t\t consumedSize: %d, size: %d\n", consumedSize, size);
     } while (consumedSize < size);
     
+    /*
+#define GMD_BLD_TYPE 0x40040
+// From bldPacket.h BldPacketHeader::BldTypeId 
+#define GMD_BLD_ID 26  
+
+epicsEnvSet("BLD_IP", "239.255.25.2")
+epicsEnvSet( "BLD_ID",   "0" )
+epicsEnvSet( "BLD_PORT", "10148" )
+epicsEnvSet( "BLD_MAX_SIZE", "50" )
+ 
+BldSetID ("$(BLD_ID)")
+
+BldConfigSend ("$(BLD_IP)", $(BLD_PORT), $(BLD_MAX_SIZE))
+gmdBldConfigure ("${GMD_STREAM_DRIVER}", "$(BLD_ID)")
+
+    BldSendPacket( bldClientId, GMD_BLD_ID, GMD_BLD_TYPE, 
+                   &bldData.time, buffer, bufferSize );
+    */
 }
 
 extern "C" {

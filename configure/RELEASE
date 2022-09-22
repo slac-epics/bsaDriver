@@ -25,7 +25,7 @@
 YAMLLOADER_MODULE_VERSION=R2.2.0
 ASYN_MODULE_VERSION=R4.39-1.0.1
 PVXS_MODULE_VERSION=R0.3.1-0.0.1
-
+BLDCLIENT_MODULE_VERSION=R2.18.0
 
 # ==========================================================
 # Define module paths using pattern
@@ -38,6 +38,8 @@ PVXS_MODULE_VERSION=R0.3.1-0.0.1
 YAMLLOADER=$(EPICS_MODULES)/yamlLoader/$(YAMLLOADER_MODULE_VERSION)
 ASYN=$(EPICS_MODULES)/asyn/$(ASYN_MODULE_VERSION)
 PVXS=$(EPICS_MODULES)/pvxs/$(PVXS_MODULE_VERSION)
+#BLDCLIENT=$(EPICS_MODULES)/bldClient/$(BLDCLIENT_MODULE_VERSION)
+BLDCLIENT=/afs/slac/g/controls/development/users/dnajjar/sandBox/bldClient
 
 # =====================================================================
 # Set EPICS_BASE last so it appears last in the DB, DBD, INCLUDE, and LIB search paths

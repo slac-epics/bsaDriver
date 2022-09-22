@@ -10,7 +10,7 @@ file serviceStatus.db {
 
 
 file serviceRateControl.db {
-    pattern {  IDX,  BSSS_INST,  DEVICE,  GLOBAL,       SERVICE       }
+    pattern {  IDX,  SERVICE_INST,  DEVICE,  GLOBAL,       SERVICE       }
             {  "0",  "SCUD1",   "$(DEV)", "TPG:SYS0:1", "BSSS"        }
             {  "1",  "SCUD2",   "$(DEV)", "TPG:SYS0:1", "BSSS"        } 
             {  "2",  "SCUD3",   "$(DEV)", "TPG:SYS0:1", "BSSS"        }

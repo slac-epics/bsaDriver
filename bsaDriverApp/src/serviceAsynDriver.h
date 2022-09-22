@@ -20,9 +20,14 @@
 #include <BsssYaml.hh>
 #include <BldYaml.hh>
 
+#include <bldNetworkClient.h>
+#include <bldPvClient.h>
+
 #define NUM_BSSS_DATA_MAX    31
 #define NUM_CHANNELS_MAX     31
 #define NUM_EDEF_MAX         9
+#define MAX_BUFF_SIZE        9000
+#define UCTTL                32 /// minimum: 1 + (# of routers in the middle)
 
 #define IDX_NSEC 0
 #define IDX_SEC  1
@@ -65,6 +70,7 @@ typedef struct {
     
     char    pname_service[NUM_EDEF_MAX][64];
     char    pname_servicePID[NUM_EDEF_MAX][64];
+
 } serviceList_t;
 
 typedef struct __attribute__((__packed__)) {
@@ -87,6 +93,7 @@ class serviceAsynDriver: asynPortDriver {
         ~serviceAsynDriver();
 
         asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
+        asynStatus writeOctet(asynUser *pasynUser, const char *value, size_t nChars, size_t *nActual);
         void MonitorStatus(void);
         void bsssCallback(void *p, unsigned size);
         void bldCallback(void *p, unsigned size);
@@ -94,6 +101,8 @@ class serviceAsynDriver: asynPortDriver {
     private:
 
         uint64_t channelSevr;        
+        
+        void* pVoidBldNetworkClient[NUM_EDEF_MAX];
 
         ELLLIST *pServiceEllList;
         AcqService::AcqServiceYaml *pService;
@@ -141,6 +150,11 @@ class serviceAsynDriver: asynPortDriver {
         int p_destMask[NUM_EDEF_MAX];
         int p_rateLimit[NUM_EDEF_MAX];
 
+        // bld specific
+        int p_multicastAddr[NUM_EDEF_MAX];
+        int p_multicastPort[NUM_EDEF_MAX];
+
+
 
 #if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 | 32)
         int lastServiceParam;
@@ -184,6 +198,9 @@ class serviceAsynDriver: asynPortDriver {
 
 #define BSSSPV_STR            "%s_bsss_%d"
 #define BSSSPID_STR           "%s_bsssPID_%d"
+
+#define BLDMULTICASTADDR_STR  "bldMulticastAddress_%d"
+#define BLDMULTICASTPORT_STR  "bldMulticastPort_%d"
 
 #define BLD_STR "BLD"
 #define BSSS_STR "BSSS"
