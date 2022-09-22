@@ -27,7 +27,10 @@
 #define NUM_CHANNELS_MAX     31
 #define NUM_EDEF_MAX         9
 #define MAX_BUFF_SIZE        9000
+
 #define UCTTL                32 /// minimum: 1 + (# of routers in the middle)
+#define DEFAULT_MCAST_IP     "239.255.24.1"
+#define DEFAULT_MCAST_PORT   50000
 
 #define IDX_NSEC 0
 #define IDX_SEC  1
@@ -94,6 +97,11 @@ typedef struct __attribute__((__packed__)) {
     uint32_t serviceMask;
 } bldAxiStreamComplementaryHeader_t;
 
+
+typedef struct {
+
+} bldClientConf_t;
+
 class serviceAsynDriver: asynPortDriver {
 
     public:
@@ -109,9 +117,9 @@ class serviceAsynDriver: asynPortDriver {
     private:
 
         uint64_t channelSevr;        
-        
         void* pVoidBldNetworkClient[NUM_EDEF_MAX];
-        uint32_t *bldPacketPayload;
+        uint32_t *bldPacketPayload;       
+
         ELLLIST *pServiceEllList;
         AcqService::AcqServiceYaml *pService;
 

@@ -211,14 +211,27 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
 
     SetupAsynParams(type);
 
-    for(unsigned int i = 0; i < this->pService->getEdefNum(); i++)
-        pVoidBldNetworkClient[i] = NULL;
-
-    bldPacketPayload = (uint32_t *) mallocMustSucceed(MAX_BUFF_SIZE, "bldPacketPayload");
 
     switch (type) {
-        case bld:  registerBldCallback(named_root, bld_callback, (void *) this); break;
-        case bsss: registerBsssCallback(named_root, bsss_callback, (void *) this); break;
+        case bld:      
+            for(unsigned int i = 0; i < this->pService->getEdefNum(); i++)
+            {
+                BldNetworkClientInitByInterfaceName(ntohl( inet_addr( DEFAULT_MCAST_IP ) ), 
+                                    DEFAULT_MCAST_PORT, 
+                                    MAX_BUFF_SIZE, 
+                                    UCTTL, 
+                                    NULL, 
+                                    &pVoidBldNetworkClient[i]);
+                if ( pVoidBldNetworkClient[i] == NULL ) 
+                    printf("Failed instantiating new BldNetworkClient for service %u\n", i);
+            }
+            bldPacketPayload = (uint32_t *) mallocMustSucceed(MAX_BUFF_SIZE, "bldPacketPayload");
+
+            registerBldCallback(named_root, bld_callback, (void *) this); 
+            break;
+        case bsss: 
+            registerBsssCallback(named_root, bsss_callback, (void *) this); 
+            break;
     }        
 }
 
@@ -382,22 +395,10 @@ asynStatus serviceAsynDriver::writeOctet (asynUser *pasynUser, const char *value
     int function = pasynUser->reason;
     asynStatus status = asynSuccess;
     const char *functionName = "writeOctet";
-    epicsInt32 port;
 
     for(unsigned int edef = 0; edef < this->pService->getEdefNum(); edef++) {
-        
         if(function == p_multicastAddr[edef]) {
-            if (pVoidBldNetworkClient[edef] != NULL)
-                BldNetworkClientRelease(pVoidBldNetworkClient[edef]);
-            getIntegerParam(p_multicastPort[edef], &port);
-            BldNetworkClientInitByInterfaceName(ntohl( inet_addr( value ) ), 
-                                                port, 
-                                                MAX_BUFF_SIZE, 
-                                                UCTTL, 
-                                                NULL, 
-                                                &pVoidBldNetworkClient[edef]);
-            if ( pVoidBldNetworkClient[edef] == NULL ) 
-                printf("Failed instantiating new BldNetworkClient\n");
+            BldNetworkClientSetAddr(ntohl( inet_addr( value )), pVoidBldNetworkClient[edef]);
             break;
         }
     }
@@ -474,20 +475,7 @@ asynStatus serviceAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
             pService->setRateLimit(i, (uint32_t) value);
             goto done;
         } else if(function == p_multicastPort[i]) {
-            std::string address;
-            getStringParam(p_multicastAddr[i], address);
-            if (pVoidBldNetworkClient[i] != NULL)
-                BldNetworkClientRelease(pVoidBldNetworkClient[i]);
-            BldNetworkClientInitByInterfaceName(ntohl( inet_addr( address.c_str() ) ), 
-                                                value, 
-                                                MAX_BUFF_SIZE, 
-                                                UCTTL, 
-                                                NULL, 
-                                                &pVoidBldNetworkClient[i]);
-            if ( pVoidBldNetworkClient[i] == NULL ) 
-                printf("Failed instantiating new BldNetworkClient\n");
-            break;
-
+            BldNetworkClientSetPort( value, pVoidBldNetworkClient[i]);
             goto done;
         }
     }
@@ -698,6 +686,8 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
                                                     multicastIndex*sizeof(int), 
                                                     (char*) bldPacketPayload) )
                     printf( "BldNetworkClientSendRawData failed for service %u\n", it+1 );
+                else
+                    printf( "BldNetworkClientSendRawData success for service %u\n", it+1 );
             } else {
                 printf("Service %u enabled, but pVoidBldNetworkClient not initialized\n", it+1);
             }
