@@ -39,6 +39,7 @@
 
 #define  IDX_SERVICE_MASK     5
 #define  BSSS_SERVICE_MASK    0x1ff
+#define  BLD_SERVICE_MASK     0x0f000000
 
 #define  BSAS_IDTF_LOC        31
 #define  BSAS_IDTF_MASK       (0x1 << BSAS_IDTF_LOC)
@@ -297,7 +298,7 @@ static void listener(pDrvList_t *p)
             MFTB(p->time_bsss.end);
             calc_minmax(p->time_bsss.start, p->time_bsss.end, p->time_bsss.min, p->time_bsss.max);
         }
-        else {  /* bld */
+        else if(pu32[IDX_SERVICE_MASK] & BLD_SERVICE_MASK) { /* bld */
             MFTB(p->time_bld.start);
             p->bld_count++;
             p->p_last_bld = (void *) np;
@@ -368,6 +369,14 @@ static void show_bsss_buffer(void *p, unsigned size)
 {
     uint32_t *buff = (uint32_t *) p;
     uint64_t *psv  = (uint64_t *) (buff + (size/4) -2);
+
+    if ((buff[IDX_SERVICE_MASK] & BSSS_SERVICE_MASK )== 0 )
+    {
+        printf("\t\t --------------------------------\n");
+        printf("\t\t BSSS last packet flushed\n");
+        printf("\t\t --------------------------------\n");   
+        return;
+    }   
 
     printf("\t\t --------------------------------\n");
     printf("\t\t BSSS Packet: size(%d)\n", size);
@@ -470,13 +479,23 @@ static void show_bld_buffer(void *p, unsigned size)
     int channelsFound = 0;
     const uint8_t wordSize = 4;
 
+    if ((header->serviceMask & BLD_SERVICE_MASK) == 0 )
+    {
+        printf("\t\t --------------------------------\n");
+        printf("\t\t BLD last packet flushed\n");
+        printf("\t\t --------------------------------\n");   
+        return;
+    }   
+
     printf("\t\t --------------------------------\n");
     printf("\t\t BLD Packet: size(%d)\n", size);
     printf("\t\t --------------------------------\n");
     printf("\t\t timestamp        : %16lx\n", header->timeStamp);
     printf("\t\t pulse ID         : %16lx\n", header->pulseID);
-    printf("\t\t channel mask     : %8x\n", header->channelMask);
-    printf("\t\t service mask     : %8x\n", header->serviceMask);    
+    printf("\t\t channel mask     :         %8x\n", header->channelMask);
+    printf("\t\t service mask     :         %8x\n", header->serviceMask);    
+
+
 
     consumedWords += sizeof(bldAxiStreamHeader_t)/4;
     
@@ -486,7 +505,7 @@ static void show_bld_buffer(void *p, unsigned size)
             channelsFound++;
     }
 
-    printf("\t\t Chan. data found : %d\n", channelsFound); 
+    printf("\t\t Chan. data found :               %d\n", channelsFound); 
     consumedWords += channelsFound;
     
     severityMask =  *((uint64_t *) (buff + consumedWords));
