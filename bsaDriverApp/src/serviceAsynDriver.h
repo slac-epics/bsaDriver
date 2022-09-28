@@ -16,7 +16,6 @@
 #include <epicsTime.h>
 #include <ellLib.h>
 
-#include <AcqServiceYaml.hh>
 #include <BsssYaml.hh>
 #include <BldYaml.hh>
 
