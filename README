@@ -9,7 +9,7 @@
 #  Side: None
 #
 #  Auth: 17-Mar-2017, Kukhee Kim      (KHKIM)
-#  Rev:  dd-mmm-yyyy, Reviewer's Name (USERNAME)
+#  Rev:  27-Sep-2022, Dawood Alnajjar (DNAJJAR)
 #--------------------------------------------------------------
 #  Mod:
 #        dd-mmm-yyyy, Reviewer's Name (USERNAME)
@@ -32,7 +32,7 @@ Requirements:
   . cpsw/framework R4.4.1
   . yaml-cpp-0.5.3_boost-1.64.0
   . boost 1.64.0
-  . timing/bsa R2.0.0-2.0
+  . timing/bsa R2.2.0
 
   configure/CONFIG_SITE.Common.<platform> in application should have the followings:
 
@@ -57,7 +57,7 @@ Requirements:
   BOOST_INCLUDE = $(BOOST)/include
 
   BSA_PACKAGE_NAME=timing/bsa
-  BSA_VERSION=R2.0.0-2.0
+  BSA_VERSION=R2.2.0
   BSA_ARCH=$(LINUXRT_BUILDROOT_VERSION)-x86_64
   BSA=$(PACKAGE_AREA)/$(BSA_PACKAGE_NAME)/$(BSA_VERSION)/$(BSA_ARCH)
   BSA_LIB     = $(BSA)/lib
@@ -75,7 +75,7 @@ Requirements:
 
   ASYN_MODULE_VERSION=R4.39-1.0.1
   YAMLLOADER_MODULE_VERSION=R2.2.0
-  BSADRIVER_MODULE_VERSION=R2.1.0
+  BSADRIVER_MODULE_VERSION=R2.5.0
   PVXS_MODULE_VERSION=R0.3.1-0.0.1
 
   ASYN=$(EPICS_MODULES)/asyn/$(ASYN_MODULE_VERSION)
@@ -105,7 +105,7 @@ Requirements:
 DB_INSTALLS += $(BSADRIVER)/db/bsa.db
 DB_INSTALLS += $(BSADRIVER)/db/bsss.db
 DB_INSTALLS += $(BSADRIVER)/db/bsssCtrl.db
-(oprtional)
+(optional)
 DB_INSTALLS += $(BSADRIVER)/db/bsssCtrl_localTest.db
 
 - bsa.db  ;  BSA database template for each BSA data channel
@@ -461,10 +461,11 @@ Driver: bldStreamDriver
                  channel mask     : 7fffffff
                  service mask     :        3
 
-- bsssAsynDriver
-epics> dbior bsssAsynDriver 1
-Driver: bsssAsynDriver
-named_root: root_0, port: bsssPort, driver instace: 0x275ef50, number of BSSS varibles: 31
+- serviceAsynDriver
+epics> dbior serviceAsynDriver 1
+Driver: serviceAsynDriver
+named_root: MyRoot0, port: bsssPort, driver instace: 0x14e4b80, number of channels: 31
+named_root: MyRoot0, port: bldPort, driver instace: 0x187f310, number of channels: 31
 
 7. Simple Test
 
@@ -509,6 +510,208 @@ https://confluence.slac.stanford.edu/display/~khkim/BSSS+PV+Name+List
 
 
 
+-------------------------------------
+Beamline data acquisition (BLD)
+--------------------------------------
+
+BLD is implemented as a part of BSA driver in R2.5.0 or later.
+Thus ioc engineer does not need to add up ".dbd" file and library file if the ioc already had BSA.
+
+0. need to define BLD stream in 000TopLevel.yaml
+--------------------------------------------------
+
+# BLD Stream
+bldstream: &bldstream
+  SRP:
+    protocolVersion: SRP_UDP_NONE
+  UDP:
+    port: 8198
+    numRxThreads: *udpThreads
+    threadPriority:  *udpPri
+    pollSecs: 1
+
+#  Inside NetIoDev session
+     bldstream:
+       class: Field
+       at:
+         <<: *bldstream
+
+
+1. need to install database template (add folowings in Db/Makefile)
+--------------------------------------------------
+
+DB_INSTALLS += $(BSADRIVER)/db/bld.db
+DB_INSTALLS += $(BSADRIVER)/db/bldCtrl.db
+(optional)
+DB_INSTALLS += $(BSADRIVER)/db/bldCtrl_localTest.db
+
+- bld.db ;  BLD database template for each BLD data channel
+- bldCtrl.db  ; BLD controls database template 
+- bldCtrl_localTest.db ;  BLD controls databse template for local test (it doesn't have CA_LINK to the global PVs)
+
+
+2. load up BLD control data base template in st.cmd
+--------------------------------------------------
+
+example)
+# BLD Control/Monintoring PVs
+dbLoadRecords("db/bldCtrl.db", "DEV=${SYS_PV},PORT=bldPort")
+
+remarks) use bldCtrl_localTest.db for BLD test without global PVs
+
+
+
+3. load up BLD Scalar PVs (for each channel data)
+--------------------------------------------------
+
+example)
+# BLD Scalar PVs
+dbLoadRecords("db/bld.db", "DEV=${SYS_PV},PORT=bsssPort,BSAKEY=PIDL,SECN=PIDL")
+dbLoadRecords("db/bld.db", "DEV=${SYS_PV},PORT=bsssPort,BSAKEY=PIDU,SECN=PIDU")
+dbLoadRecords("db/bld.db", "DEV=${SYS_PV},PORT=bsssPort,BSAKEY=TSL,SECN=TSL")
+dbLoadRecords("db/bld.db", "DEV=${SYS_PV},PORT=bsssPort,BSAKEY=TSU,SECN=TSU")
+dbLoadRecords("db/bld.db", "DEV=${SYS_PV},PORT=bsssPort,BSAKEY=RATES,SECN=RATES")
+......
+remark) use the same macros what we have used for BSA template. 
+
+4. make association with BSA channel 
+--------------------------------------------------
+
+BLD can use BSA channel definitions. Use the following command to make association with BSA channels after bsaAsynDriverConfigure() command
+
+#
+#  Initialize BLD driver
+#  make assoication with BSA channels: bldAssociateBsaChannels(<BSA port name>)
+bldAssociateBsaChannels("bsaPort")
+
+remark) the <BSA port name> should be the smae string id which has been used for bsaASynDriverConfigure()
+
+
+5. configure BLD driver with the following command
+--------------------------------------------------
+
+# confiugre BLD driver: bldAsynDriverConfigure(<bsss port>, <register path>)
+bldAsynDriverConfigure("bldPort", "mmio/AmcCarrierCore/AmcCarrierBsa/Bld")
+
+remark) the register path should be different depending on the application
+
+6. Report function
+--------------------------------------------------
+
+- bldStream
+epics>dbior bldStreamDriver 5
+Driver: bldStreamDriver
+        BLD Stream for MyRoot0
+          read size  : 768
+          read count : 7960928
+          bld count  : 7695234
+          bsss count : 1131
+          bsas count : 193179
+          bld callback : 0x62e5c0
+          bld_usr      : 0x187f310
+          bsss_callback: 0x62e370
+          bsss_usr     : 0x14e4b80
+          bsas_callback: 0x631710
+          bsas_usr     : 0x18a3930
+          free list    : 0x16a8780
+          bld  callback processing (usec): snapshot   15.496, min   14.167, max   39.318
+          bsss callback processing (usec): snapshot 1074.218, min  968.287, max 4042.424
+          bsas callback processing (usec): snapshot    5.948, min    4.807, max 1241.223
+                 --------------------------------
+                 BSSS Packet: size(768)
+                 --------------------------------
+                 timestamp, nsec  : 13f39b57
+                 timestamp, sec   : 3d9550d1
+                 pulse id, lower  : 4e45bad3
+                 pulse id, upper  :     fded
+                 channel mask     : 7fffffff
+                 service mask     : 801e033d
+                 severity mask    :   b9098100b90981
+                 --------------------------------
+                 BSAS Packet: size(768)
+                 --------------------------------
+                 timestamp (64bit): 3d9550d114892497
+                 pulse id  (64bit):     fded4e45de5f
+                 channel mask     : 7fffffff
+                 row number       : 839
+                 table_count      : 14
+                 edef_index       : 0
+                 byte pad (0x80)  : 80
+                 PL CH    CNT EVL ESQ FIX     VAL       SUM       SQUARE      MIN      MAX
+                 -------------------------------------------------------------------------
+                  0  0      1   N   N   N    1de5f    1de5f    37de6e741    1de5f    1de5f
+                  1  1      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
+                  2  2      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
+                  3  3      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
+                  4  4      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
+                  5  5      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
+                  6  6      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
+                  7  7      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
+                  8  8      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
+                  9  9      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
+                 10 10      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
+                 11 11      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
+                 12 12      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
+                 13 13      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
+                 14 14      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
+                 15 15      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
+                 16 16      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
+                 17 17      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
+                 18 18      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
+                 19 19      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
+                 20 20      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
+                 21 21      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
+                 22 22      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
+                 23 23      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
+                 24 24      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
+                 25 25      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
+                 26 26      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
+                 27 27      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
+                 28 28      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
+                 29 29      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
+                 30 30      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
+                 --------------------------------
+                 BLD Packet: size(156)
+                 --------------------------------
+                 timestamp        : 3d9550d1149818b7
+                 pulse ID         :     fded4e45e1ed
+                 channel mask     :         7fffffff
+                 service mask     :          8000000
+                 Chan. data found :               31
+                 Severity mask    : 3faa5500ffaa5500
+
+
+- serviceAsynDriver
+epics> dbior serviceAsynDriver 1
+Driver: serviceAsynDriver
+named_root: MyRoot0, port: bsssPort, driver instace: 0x14e4b80, number of channels: 31
+named_root: MyRoot0, port: bldPort, driver instace: 0x187f310, number of channels: 31
+
+
+7. Slope and offset
+--------------------------------------------------
+
+The slope and offset for BLD are those of the BSA as mentioned earlier.
+
+  $(DEV):$(SECN)_SLOPE
+  $(DEV):$(SECN)_OFFSET
+
+8. Simple Test
+--------------------------------------------------
+
+All BLD EDEFs are system EDEFs. They should automatically get their configuration from the global PVs.
+
+Nonetheless, the user still need to perform the following settings
+
+caput TST:SYS2:04:SCHBR:MULT_PORT 50000
+caput TST:SYS2:04:SCHBR:MULT_ADDR 239.255.4.3
+caput TST:SYS2:04:BLD_CTRL:ENB "Enable"            # Enabling BLD functionality in IOC
+
+Now you should be able to capture the BLD packets using tcpdump
+>>  /usr/sbin/tcpdump -i <interface> port 50000
+
+remark) BLD PV names and descriptions in the following link:
+https://confluence.slac.stanford.edu/pages/viewpage.action?spaceKey=~carolina&title=BLD+PVs
 
 -------------------------------------------
 Beam Synchronous Acquisition Service (BSAS)
@@ -547,7 +750,7 @@ https://confluence.slac.stanford.edu/display/~khkim/BSAS+Driver+Configuration+an
 BSAS uses NTTable to expose the strcutred data, it requires to build with PVXS and QSRV
 
 - configure/RELEASE.local
-PVXS_MODULE_VERSION  = pvxs-git
+PVXS_MODULE_VERSION  = R0.3.1-0.0.1
 PVXS                 =$(EPICS_MODULES)/pvxs/$(PVXS_MODULE_VERSION)
 
 - src/Makefile
