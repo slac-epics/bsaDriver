@@ -20,8 +20,8 @@
 #include <BsssYaml.hh>
 #include <BldYaml.hh>
 
-#include <bldNetworkClient.h>
-#include <bldPvClient.h>
+#include <socketAPI.h>
+
 
 #define NUM_BSSS_DATA_MAX    31
 #define NUM_CHANNELS_MAX     31
@@ -117,7 +117,7 @@ class serviceAsynDriver: asynPortDriver {
     private:
 
         uint64_t channelSevr;        
-        void* pVoidBldNetworkClient[NUM_EDEF_MAX];
+        void* pVoidsocketAPI[NUM_EDEF_MAX];
         uint32_t *bldPacketPayload;       
 
         ELLLIST *pServiceEllList;

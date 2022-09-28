@@ -216,14 +216,14 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
         case bld:      
             for(unsigned int i = 0; i < this->pService->getEdefNum(); i++)
             {
-                BldNetworkClientInitByInterfaceName(ntohl( inet_addr( DEFAULT_MCAST_IP ) ), 
+                socketAPIInitByInterfaceName(ntohl( inet_addr( DEFAULT_MCAST_IP ) ), 
                                     DEFAULT_MCAST_PORT, 
                                     MAX_BUFF_SIZE, 
                                     UCTTL, 
                                     NULL, 
-                                    &pVoidBldNetworkClient[i]);
-                if ( pVoidBldNetworkClient[i] == NULL ) 
-                    printf("Failed instantiating new BldNetworkClient for service %u\n", i);
+                                    &pVoidsocketAPI[i]);
+                if ( pVoidsocketAPI[i] == NULL ) 
+                    printf("Failed instantiating new socketAPI for service %u\n", i);
             }
             bldPacketPayload = (uint32_t *) mallocMustSucceed(MAX_BUFF_SIZE, "bldPacketPayload");
 
@@ -398,7 +398,7 @@ asynStatus serviceAsynDriver::writeOctet (asynUser *pasynUser, const char *value
 
     for(unsigned int edef = 0; edef < this->pService->getEdefNum(); edef++) {
         if(function == p_multicastAddr[edef]) {
-            BldNetworkClientSetAddr(ntohl( inet_addr( value )), pVoidBldNetworkClient[edef]);
+            socketAPISetAddr(ntohl( inet_addr( value )), pVoidsocketAPI[edef]);
             break;
         }
     }
@@ -475,7 +475,7 @@ asynStatus serviceAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
             pService->setRateLimit(i, (uint32_t) value);
             goto done;
         } else if(function == p_multicastPort[i]) {
-            BldNetworkClientSetPort( value, pVoidBldNetworkClient[i]);
+            socketAPISetPort( value, pVoidsocketAPI[i]);
             goto done;
         }
     }
@@ -652,7 +652,7 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
     {
         if ( (mask & 0x1) != 0 )
         {
-                BldNetworkClientSendRawData(pVoidBldNetworkClient[it], 
+                socketAPISendRawData(pVoidsocketAPI[it], 
                                                     multicastIndex*sizeof(int), 
                                                     (char*) bldPacketPayload);
         }
