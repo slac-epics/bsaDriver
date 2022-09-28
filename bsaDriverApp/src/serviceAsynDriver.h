@@ -21,7 +21,19 @@
 
 #include <socketAPI.h>
 
+#include <pvxs/server.h>
+#include <pvxs/sharedpv.h>
+#include <pvxs/log.h>
+#include <pvxs/iochooks.h>
+#include <pvxs/nt.h>
 
+#define TIMESTAMP_COL           "timeStamp"
+#define PID_COL                 "pulseId"
+#define CHMASK_COL              "channelMask"
+#define SRVCMASK_COL            "serviceMask"
+#define SEVMASK_COL             "severityMask"
+
+#define DELTAS_COL              "dTimeStamp20bdeltaPulseID12b"
 #define NUM_BSSS_DATA_MAX    31
 #define NUM_CHANNELS_MAX     31
 #define NUM_EDEF_MAX         9
@@ -109,11 +121,18 @@ class serviceAsynDriver: asynPortDriver {
 
         asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
         asynStatus writeOctet(asynUser *pasynUser, const char *value, size_t nChars, size_t *nActual);
+        pvxs::server::SharedPV pvaTest();
+        void initPVA();
         void MonitorStatus(void);
         void bsssCallback(void *p, unsigned size);
         void bldCallback(void *p, unsigned size);
-
+        serviceType_t getServiceType();
     private:
+
+        pvxs::shared_array<const std::string> _labels;  
+        pvxs::TypeDef                         _def;
+        pvxs::Value                           _initial;
+        pvxs::server::SharedPV                pv;
 
         uint64_t channelSevr;        
         void* pVoidsocketAPI[NUM_EDEF_MAX];
@@ -128,9 +147,10 @@ class serviceAsynDriver: asynPortDriver {
         void SetChannelSevr(int chn, int sevr);
         int  GetChannelSevr(int chn);
 
+        serviceType_t serviceType;
 
     protected:
-    serviceType_t serviceType;
+    
 #if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 | 32)
         int firstServiceParam;
         #define FIRST_SERVICE_PARAM    firstServiceParam

@@ -36,6 +36,13 @@
 
 #include <yamlLoader.h>
 
+#include <pvxs/server.h>
+#include <pvxs/sharedpv.h>
+#include <pvxs/log.h>
+#include <pvxs/iochooks.h>
+#include <pvxs/nt.h>
+
+
 static const char *driverName = "serviceAsynDriver";
 
 static ELLLIST *pDrvEllList = NULL;
@@ -163,6 +170,7 @@ static void bld_callback(void *pUsr, void *buf, unsigned size)
     ((serviceAsynDriver *)pUsr)->bldCallback(buf, size);
 }
 
+
 serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path, const int num_dyn_param, ELLLIST *pServiceEllList,  serviceType_t type, const char *named_root)
     : asynPortDriver(portName,
                                         1,  /* number of elements of this device */
@@ -179,6 +187,7 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
                                          0)    /* Default stack size */
 
 {
+    
 
     if(!pServiceEllList || !ellCount(pServiceEllList)) return;   /* if there is no service data channels in the list, nothing to do */
     this->pServiceEllList = pServiceEllList;
@@ -226,6 +235,10 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
                     printf("Failed instantiating new socketAPI for service %u\n", i);
             }
             bldPacketPayload = (uint32_t *) mallocMustSucceed(MAX_BUFF_SIZE, "bldPacketPayload");
+    
+
+            
+
 
             registerBldCallback(named_root, bld_callback, (void *) this); 
             break;
@@ -233,6 +246,74 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
             registerBsssCallback(named_root, bsss_callback, (void *) this); 
             break;
     }        
+}
+
+void serviceAsynDriver::initPVA()
+{
+
+    serviceList_t *plist;
+    static auto server = pvxs::ioc::server();
+
+    auto labels = std::vector<std::string>();
+    auto value  = pvxs::TypeDef(pvxs::TypeCode::Struct, {});
+
+    pv = pvxs::server::SharedPV::buildReadonly();
+
+    /* First event */
+    value += {pvxs::Member(pvxs::TypeCode::UInt64A, TIMESTAMP_COL)};    labels.push_back(TIMESTAMP_COL);
+    value += {pvxs::Member(pvxs::TypeCode::UInt64A, PID_COL)};   labels.push_back(PID_COL);
+    value += {pvxs::Member(pvxs::TypeCode::UInt32A, CHMASK_COL)};    labels.push_back(CHMASK_COL);
+    value += {pvxs::Member(pvxs::TypeCode::UInt32A, SRVCMASK_COL)};    labels.push_back(SRVCMASK_COL);        
+
+    for (plist = (serviceList_t *) ellFirst(pServiceEllList);
+        plist!=NULL;
+        plist = (serviceList_t *) ellNext(&plist->node))
+    {
+        if (plist->type != float32_service)
+        {
+            value += {pvxs::Member(pvxs::TypeCode::UInt32A, plist->service_name)};    labels.push_back(plist->service_name);        
+        }
+        else
+        {
+            value += {pvxs::Member(pvxs::TypeCode::Float32, plist->service_name)};    labels.push_back(plist->service_name);        
+        }
+    }
+    value += {pvxs::Member(pvxs::TypeCode::UInt64A, SEVMASK_COL)};    labels.push_back(SEVMASK_COL); 
+
+
+    /* Following events */
+    value += {pvxs::Member(pvxs::TypeCode::UInt32A, DELTAS_COL)};    labels.push_back(DELTAS_COL);
+    value += {pvxs::Member(pvxs::TypeCode::UInt32A, SRVCMASK_COL)};    labels.push_back(SRVCMASK_COL); 
+      
+
+    for (plist = (serviceList_t *) ellFirst(pServiceEllList);
+        plist!=NULL;
+        plist = (serviceList_t *) ellNext(&plist->node))
+    {
+        if (plist->type != float32_service)
+        {
+            value += {pvxs::Member(pvxs::TypeCode::UInt32A, plist->service_name)};    labels.push_back(plist->service_name);        
+        }
+        else
+        {
+            value += {pvxs::Member(pvxs::TypeCode::Float32, plist->service_name)};    labels.push_back(plist->service_name);        
+        }
+    }
+    value += {pvxs::Member(pvxs::TypeCode::UInt64A, SEVMASK_COL)};    labels.push_back(SEVMASK_COL); 
+
+
+    _labels = pvxs::shared_array<const std::string>(labels.begin(), labels.end());
+    _def = pvxs::TypeDef(pvxs::TypeCode::Struct, "epics:nt/NTScalar:1.0", {
+                         pvxs::members::StringA("labels"),
+                         value.as("BldPayload")
+                         });
+    
+    _initial              = _def.create();
+    _initial["labels"] = _labels;
+
+    pv.open(_initial);
+
+    server.addPV("Test", pv);
 }
 
 serviceAsynDriver::~serviceAsynDriver()
@@ -551,6 +632,10 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
 
 }
 
+serviceType_t serviceAsynDriver::getServiceType()
+{
+    return serviceType;
+}
 void serviceAsynDriver::bldCallback(void *p, unsigned size)
 {
     
@@ -804,9 +889,20 @@ static int serviceAsynDriverInitialize(void)
 
     printf("BSSS/BLD driver: %d of service driver instance(s) has (have) been configured\n", ellCount(pDrvEllList));
 
+    pDrvList_t *p = (pDrvList_t *) ellFirst(pDrvEllList);
+
     epicsThreadCreate("serviceDrvPoll", epicsThreadPriorityMedium,
                       epicsThreadGetStackSize(epicsThreadStackMedium),
                       (EPICSTHREADFUNC) serviceMonitorPoll, 0);
+
+    while(p) {
+        if(p->pServiceDrv->getServiceType() == bld) break;
+        p = (pDrvList_t *) ellNext(&p->node);
+    }    
+
+    /* Found BLD driver. Create PVA */
+    if (p != NULL)
+        p->pServiceDrv->initPVA();
 
     return 0;
 }
