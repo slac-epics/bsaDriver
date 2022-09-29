@@ -104,7 +104,7 @@ static int prep_drvAnonimous(void)
 }
 
 
-static int serviceAdd(const char *serviceKey, serviceDataType_t type, double *slope, double *offset, bool doNotTouch)
+static int serviceAdd(const char *channelKey, serviceDataType_t type, double *slope, double *offset, bool doNotTouch)
 {
     pDrvList_t * pl = find_drvLast();
 
@@ -123,15 +123,15 @@ static int serviceAdd(const char *serviceKey, serviceDataType_t type, double *sl
         ellInit(pl->pServiceEllList);
     }
 
-    serviceList_t *p = (serviceList_t *) mallocMustSucceed(sizeof(serviceList_t), "serviceAsynDriver (serviceAdd)");
-    strcpy(p->service_name, serviceKey);
+    channelList_t *p = (channelList_t *) mallocMustSucceed(sizeof(channelList_t), "serviceAsynDriver (serviceAdd)");
+    strcpy(p->channel_key, channelKey);
     p->index = 0;
     p->p_channelMask = -1;
     p->p_channelSevr = -1;
     for(unsigned int i = 0; i < NUM_EDEF_MAX; i++) {
-        p->p_service[i] = -1;              /* initialize paramters with invalid */
-        p->pname_service[i][0] = '\0';     /* initialize with a null string */
-        p->pname_servicePID[i][0] = '\0';  /* initialize with a null string */ 
+        p->p_channel[i] = -1;              /* initialize paramters with invalid */
+        p->pkey_channel[i][0] = '\0';     /* initialize with a null string */
+        p->pkey_channelPID[i][0] = '\0';  /* initialize with a null string */ 
     }
 
     p->type    = type;
@@ -155,6 +155,35 @@ static int associateBsaChannels(const char *port_name)
         p = (bsaList_t *) ellNext(&p->node);
     }
     printf("Associate %d of channels from bsa port(%s) \n", ellCount(find_drvLast()->pServiceEllList), port_name);
+
+    return 0;
+}
+
+static int bldChannelName(const char *channel_key, const char *channel_name)
+{
+
+  /* Implement EPICS driver initialization here */
+    init_drvList();
+
+    if(!pDrvEllList) {
+        printf("BSSS/BLD Driver never been configured\n");
+        return 0;
+    }
+
+    pDrvList_t *p = (pDrvList_t *) ellFirst(pDrvEllList);
+
+    while(p) {
+        if(p->pServiceDrv->getServiceType() == bld) break;
+        p = (pDrvList_t *) ellNext(&p->node);
+    }    
+
+    /* Found BLD driver. Create PVA */
+    if (p != NULL)
+        p->pServiceDrv->addBldChannelName(channel_key, channel_name);
+    else {
+        printf("Error: No BLD driver found. Must instantiate driver first.\n");
+        return -1;
+    }
 
     return 0;
 }
@@ -185,7 +214,7 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
                                          1,    /* Auto connect */
                                          0,    /* Default priority */
                                          0),    /* Default stack size */
-                                         channelMask(CHNMASK_INVALID)
+                                         channelMask(0)
 
 {
     
@@ -213,10 +242,10 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
     channelSevr = 0;
 
     int i = 0;
-    serviceList_t *p = (serviceList_t *) ellFirst(pServiceEllList);
+    channelList_t *p = (channelList_t *) ellFirst(pServiceEllList);
     while(p) {
         p->index = i++;
-        p = (serviceList_t *) ellNext(&p->node);
+        p = (channelList_t *) ellNext(&p->node);
     }
 
 
@@ -250,6 +279,24 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
 }
 
 
+void serviceAsynDriver::addBldChannelName(const char * key, const char * name)
+{
+    bool found = false;
+    for (channelList_t *plist = (channelList_t *) ellFirst(pServiceEllList);
+        plist!=NULL;
+        plist = (channelList_t *) ellNext(&plist->node))
+    {
+        if (strcmp(plist->channel_key, key))
+        {
+            strcpy(plist->channel_name, name);
+            found = true;
+        }
+    }    
+    if (found == false)
+        printf("Error: BsaKey not found.\n");
+}
+
+
 void serviceAsynDriver::updatePVA()
 {
     std::string pvaName(pvaBaseName);
@@ -264,13 +311,13 @@ void serviceAsynDriver::updatePVA()
 void serviceAsynDriver::initPVA()
 {
 
-    serviceList_t *plist;
+    channelList_t *plist;
     uint32_t mask;
 
     pvxs::shared_array<const std::string> _labels;  
     pvxs::TypeDef                         _def;
     pvxs::Value                           _initial;
-
+    char * name;
 
     std::string pvaName(pvaBaseName);
     pvaName = pvaName + ":BLD:PAYLOAD";
@@ -282,18 +329,23 @@ void serviceAsynDriver::initPVA()
 
     pv = pvxs::server::SharedPV::buildReadonly();
 
-    for (plist = (serviceList_t *) ellFirst(pServiceEllList), mask = 0x1;
+    for (plist = (channelList_t *) ellFirst(pServiceEllList), mask = 0x1;
         plist!=NULL;
-        plist = (serviceList_t *) ellNext(&plist->node), mask <<= 1)
+        plist = (channelList_t *) ellNext(&plist->node), mask <<= 1)
     {
         if ((mask & channelMask) == 0)
             continue;
 
-        if (plist->type != float32_service)
-            value += {pvxs::Member(pvxs::TypeCode::UInt32A, plist->service_name)};    
+        if (plist->channel_name == NULL)
+            name = plist->channel_key;
         else
-            value += {pvxs::Member(pvxs::TypeCode::Float32, plist->service_name)};    
-        labels.push_back(plist->service_name);        
+            name = plist->channel_name;
+
+        if (plist->type != float32_service)
+            value += {pvxs::Member(pvxs::TypeCode::UInt32A, name)};    
+        else
+            value += {pvxs::Member(pvxs::TypeCode::Float32, name)};    
+        labels.push_back(name);        
     }
 
     _labels = pvxs::shared_array<const std::string>(labels.begin(), labels.end());
@@ -339,11 +391,11 @@ void serviceAsynDriver::SetupAsynParams(serviceType_t type)
     sprintf(param_name, PACKETSIZE_STR, prefix);       createParam(param_name, asynParamInt32, &p_packetSize);
     sprintf(param_name, ENABLE_STR, prefix);           createParam(param_name, asynParamInt32, &p_enable);
 
-    serviceList_t *p = (serviceList_t *) ellFirst(pServiceEllList);
+    channelList_t *p = (channelList_t *) ellFirst(pServiceEllList);
     while(p) {
-        sprintf(param_name, CHANNELMASK_STR, prefix, p->service_name); createParam(param_name, asynParamInt32, &(p->p_channelMask)); 
-        sprintf(param_name, CHANNELSEVR_STR, prefix, p->service_name); createParam(param_name, asynParamInt32, &(p->p_channelSevr));
-        p = (serviceList_t *) ellNext(&p->node);
+        sprintf(param_name, CHANNELMASK_STR, prefix, p->channel_key); createParam(param_name, asynParamInt32, &(p->p_channelMask)); 
+        sprintf(param_name, CHANNELSEVR_STR, prefix, p->channel_key); createParam(param_name, asynParamInt32, &(p->p_channelSevr));
+        p = (channelList_t *) ellNext(&p->node);
     }
 
     // Service Rate Controls
@@ -371,11 +423,11 @@ void serviceAsynDriver::SetupAsynParams(serviceType_t type)
     {
         // set up dyanamic paramters
         for(unsigned int i = 0; i < this->pService->getEdefNum(); i++) {
-            serviceList_t *p  = (serviceList_t *) ellFirst(this->pServiceEllList);
+            channelList_t *p  = (channelList_t *) ellFirst(this->pServiceEllList);
             while(p) {
-                sprintf(param_name, BSSSPV_STR,  p->service_name, i); createParam(param_name, asynParamFloat64, &p->p_service[i]);    strcpy(p->pname_service[i],    param_name);
-                sprintf(param_name, BSSSPID_STR, p->service_name, i); createParam(param_name, asynParamInt64,   &p->p_servicePID[i]); strcpy(p->pname_servicePID[i], param_name);
-                p = (serviceList_t *) ellNext(&p->node);
+                sprintf(param_name, BSSSPV_STR,  p->channel_key, i); createParam(param_name, asynParamFloat64, &p->p_channel[i]);    strcpy(p->pkey_channel[i],    param_name);
+                sprintf(param_name, BSSSPID_STR, p->channel_key, i); createParam(param_name, asynParamInt64,   &p->p_channelPID[i]); strcpy(p->pkey_channelPID[i], param_name);
+                p = (channelList_t *) ellNext(&p->node);
             }
         }
     }
@@ -501,7 +553,7 @@ asynStatus serviceAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
     /* set the parameter in the parameter library */
     status = (asynStatus) setIntegerParam(function, value);
 
-    serviceList_t *p = (serviceList_t *) ellFirst(pServiceEllList);
+    channelList_t *p = (channelList_t *) ellFirst(pServiceEllList);
     while(p) {
        if(function == p->p_channelMask) {
            pService->setChannelMask(p->index, uint32_t(value));
@@ -519,7 +571,7 @@ asynStatus serviceAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
            SetChannelSevr(p->index, value);
            goto done;
        }
-        p = (serviceList_t *) ellNext(&p->node);
+        p = (channelList_t *) ellNext(&p->node);
     }
 
 
@@ -586,7 +638,7 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
      setTimeStamp(&_ts);    // timestamp update for asyn port and related PVs
 
 
-     serviceList_t *plist = (serviceList_t *) ellFirst(pServiceEllList);
+     channelList_t *plist = (channelList_t *) ellFirst(pServiceEllList);
      int data_chn = 0;
      int index = 0;
      while(plist) {
@@ -594,9 +646,9 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
 
          for(unsigned int i = 0, svc_mask = 0x1; i < this->pService->getEdefNum(); i++, svc_mask <<= 1) {
              if(service_mask & svc_mask) {
-                 setInteger64Param(plist->p_servicePID[i], pulse_id);  // pulse id update if service mask is set
+                 setInteger64Param(plist->p_channelPID[i], pulse_id);  // pulse id update if service mask is set
 
-                 setDoubleParam(plist->p_service[i], INFINITY);   // make asyn PV update even posting the same value with previous
+                 setDoubleParam(plist->p_channel[i], INFINITY);   // make asyn PV update even posting the same value with previous
 
                  if(int((sevr_mask >> (data_chn*2)) & 0x3) <= GetChannelSevr(data_chn) ) {  // data update for valid mask
                      switch(plist->type){
@@ -617,14 +669,14 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
                  } else val = NAN;  // put NAN for invalid mask
 
                  if(!isnan(val)) val = val * (*plist->pslope) + (*plist->poffset);
-                 setDoubleParam(plist->p_service[i], val);
+                 setDoubleParam(plist->p_channel[i], val);
              }
          }
          index++;
 
          skip:
 
-         plist = (serviceList_t *) ellNext(&plist->node);  // evolve to next data channel
+         plist = (channelList_t *) ellNext(&plist->node);  // evolve to next data channel
          data_chn++;      // evolve data channel number to next channel
      }
      
@@ -650,14 +702,14 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
     double   val;
     int data_chn, index;
     uint64_t sevr_mask;
-    serviceList_t *plist;
+    channelList_t *plist;
     static uint32_t versionSize = 0;
     uint32_t multicastIndex = MULTICAST_IDX_DATA;
     uint32_t severityMaskAddrL = MULTICAST_IDX_SEVRL;
     uint32_t severityMaskAddrH = MULTICAST_IDX_SEVRH;
 
     /* Matt: versionSize increments whenever channel mask changes */
-    if (this->channelMask != header->channelMask && channelMask != CHNMASK_INVALID)
+    if (this->channelMask != header->channelMask)
         versionSize++;
 
     bldPacketPayload[IDX_NSEC] = buf[IDX_NSEC];
@@ -669,9 +721,9 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
     uint32_t consumedSize = sizeof(bldAxiStreamHeader_t);
     do{
     
-        for (plist = (serviceList_t *) ellFirst(pServiceEllList), index = 0, data_chn = 0;
+        for (plist = (channelList_t *) ellFirst(pServiceEllList), index = 0, data_chn = 0;
             plist!=NULL;
-            plist = (serviceList_t *) ellNext(&plist->node), data_chn++) 
+            plist = (channelList_t *) ellNext(&plist->node), data_chn++) 
         {
             if(!(header->channelMask & (uint32_t(0x1) << data_chn)))
                 continue;   // skipping the channel, if the channel is not in the mask
@@ -776,10 +828,10 @@ int serviceAsynDriverConfigure(const char *portName, const char *reg_path, const
     if(!pl->pServiceEllList) return -1;
 
     int i = 0;
-    serviceList_t *p = (serviceList_t *) ellFirst(pl->pServiceEllList);
+    channelList_t *p = (channelList_t *) ellFirst(pl->pServiceEllList);
     while(p) {
         i += (int) (&p->p_lastParam - &p->p_firstParam -1);
-        p = (serviceList_t *) ellNext(&p->node);
+        p = (channelList_t *) ellNext(&p->node);
 
     }    /* calculate number of dyanmic parameters */
     if (type == bld && pva_basename == NULL)
@@ -844,6 +896,15 @@ static void associateCallFunc(const iocshArgBuf *args)
     associateBsaChannels(args[0].sval);
 }
 
+static const iocshArg bldChannelNameArg0 = { "bsaKey",      iocshArgString };
+static const iocshArg bldChannelNameArg1 = { "channelName", iocshArgString };
+static const iocshArg * const bldChannelNameArgs [] = { &bldChannelNameArg0,
+                                                        &bldChannelNameArg1};
+static const iocshFuncDef bldChannelNameFuncDef = { "bldChannelName", 2, bldChannelNameArgs };
+static void bldChannelNameCallFunc(const iocshArgBuf *args)
+{
+    bldChannelName(args[0].sval, args[1].sval);
+}
 
 void serviceAsynDriverRegister(void)
 {
@@ -851,6 +912,7 @@ void serviceAsynDriverRegister(void)
     iocshRegister(&bldInitFuncDef,         bldInitCallFunc);
     iocshRegister(&bsssAssociateFuncDef,   associateCallFunc);
     iocshRegister(&bldAssociateFuncDef,    associateCallFunc);
+    iocshRegister(&bldChannelNameFuncDef,  bldChannelNameCallFunc);    
 }
 
 epicsExportRegistrar(serviceAsynDriverRegister);

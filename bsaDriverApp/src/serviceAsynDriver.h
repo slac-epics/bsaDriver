@@ -70,26 +70,29 @@ typedef enum {
 
 typedef struct {
     ELLNODE node;
-    char    service_name[64];
+    char    channel_key[64];
+    char    channel_name[64];
 
     int     index;
 
     int     p_firstParam;
     int     p_channelMask;
     int     p_channelSevr;
-    int     p_service[NUM_EDEF_MAX];
-    int     p_servicePID[NUM_EDEF_MAX];
+    int     p_channel[NUM_EDEF_MAX];
+    int     p_channelPID[NUM_EDEF_MAX];
     int     p_lastParam;
-    
+
+
     serviceDataType_t type;
     double  *pslope;
     double  *poffset;
-    
-    char    pname_service[NUM_EDEF_MAX][64];
-    char    pname_servicePID[NUM_EDEF_MAX][64];
+
+    /* BSSS */
+    char    pkey_channel[NUM_EDEF_MAX][64];
+    char    pkey_channelPID[NUM_EDEF_MAX][64];
 
     bool    doNotTouch;
-} serviceList_t;
+} channelList_t;
 
 typedef struct __attribute__((__packed__)) {
     uint64_t timeStamp;
@@ -120,6 +123,7 @@ class serviceAsynDriver: asynPortDriver {
         pvxs::server::SharedPV pvaTest();
         void updatePVA();
         void initPVA();
+        void addBldChannelName(const char * key, const char * name);
         void MonitorStatus(void);
         void bsssCallback(void *p, unsigned size);
         void bldCallback(void *p, unsigned size);
