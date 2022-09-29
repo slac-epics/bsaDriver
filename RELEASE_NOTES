@@ -1,5 +1,7 @@
 R2.5.0      Sep 29, 2022     Dawood Alnajjar
             -Added BLD service support
+            -Adapted BSSS asyn class for both BLD and BSSS
+            -Eliminated the alternate use of "service" and "channel"
 
 R2.4.0      Sep 2, 2022     Kukhee Kim
             -introduce $(DESC) macro for bsas.db template 
