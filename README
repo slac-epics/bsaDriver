@@ -591,7 +591,6 @@ bldAssociateBsaChannels("bsaPort")
 
 remark) the <BSA port name> should be the smae string id which has been used for bsaASynDriverConfigure()
 
-
 5. configure BLD driver with the following command
 --------------------------------------------------
 
@@ -599,6 +598,14 @@ remark) the <BSA port name> should be the smae string id which has been used for
 bldAsynDriverConfigure("bldPort", "mmio/AmcCarrierCore/AmcCarrierBsa/Bld", "TST:SYS2:04")
 
 remark) the register path should be different depending on the application
+
+In case the BSAKEY is not desired to be used in the name/type PVA, a name for the BLD channel can
+be created using the following function.
+
+bldChannelName(<BSAKEY>,   <NAME/ALIAS>)
+
+Example)
+bldChannelName("YFIXEDPAMC1",   "POSY")
 
 6. Report function
 --------------------------------------------------
