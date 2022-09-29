@@ -27,17 +27,12 @@
 #include <pvxs/iochooks.h>
 #include <pvxs/nt.h>
 
-#define TIMESTAMP_COL           "timeStamp"
-#define PID_COL                 "pulseId"
-#define CHMASK_COL              "channelMask"
-#define SRVCMASK_COL            "serviceMask"
-#define SEVMASK_COL             "severityMask"
 
-#define DELTAS_COL              "dTimeStamp20bdeltaPulseID12b"
 #define NUM_BSSS_DATA_MAX    31
 #define NUM_CHANNELS_MAX     31
 #define NUM_EDEF_MAX         9
 #define MAX_BUFF_SIZE        9000
+#define CHNMASK_INVALID      0xFFFFFFFF
 
 #define UCTTL                32 /// minimum: 1 + (# of routers in the middle)
 #define DEFAULT_MCAST_IP     "239.255.24.1"
@@ -123,6 +118,7 @@ class serviceAsynDriver: asynPortDriver {
         asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
         asynStatus writeOctet(asynUser *pasynUser, const char *value, size_t nChars, size_t *nActual);
         pvxs::server::SharedPV pvaTest();
+        void updatePVA();
         void initPVA();
         void MonitorStatus(void);
         void bsssCallback(void *p, unsigned size);
@@ -130,15 +126,14 @@ class serviceAsynDriver: asynPortDriver {
         serviceType_t getServiceType();
     private:
 
-        pvxs::shared_array<const std::string> _labels;  
-        pvxs::TypeDef                         _def;
-        pvxs::Value                           _initial;
-        pvxs::server::SharedPV                pv;
-
         char * pvaBaseName;
         uint64_t channelSevr;        
         void* pVoidsocketAPI[NUM_EDEF_MAX];
         uint32_t *bldPacketPayload;       
+        uint32_t channelMask;
+        
+        pvxs::server::SharedPV                pv;
+        pvxs::server::Server server;
 
         ELLLIST *pServiceEllList;
         AcqService::AcqServiceYaml *pService;

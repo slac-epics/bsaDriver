@@ -184,7 +184,8 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
                                          1,    /* asynFlags. This driver does block and it is non multi-device, so flag is 1. */
                                          1,    /* Auto connect */
                                          0,    /* Default priority */
-                                         0)    /* Default stack size */
+                                         0),    /* Default stack size */
+                                         channelMask(CHNMASK_INVALID)
 
 {
     
@@ -248,25 +249,46 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
     }        
 }
 
+
+void serviceAsynDriver::updatePVA()
+{
+    std::string pvaName(pvaBaseName);
+    pvaName = pvaName + ":BLD:PAYLOAD";
+
+    server.removePV(pvaName);
+    pv.close();
+
+    this->initPVA();
+}
+
 void serviceAsynDriver::initPVA()
 {
 
     serviceList_t *plist;
+    uint32_t mask;
+
+    pvxs::shared_array<const std::string> _labels;  
+    pvxs::TypeDef                         _def;
+    pvxs::Value                           _initial;
+
 
     std::string pvaName(pvaBaseName);
     pvaName = pvaName + ":BLD:PAYLOAD";
 
-    static auto server = pvxs::ioc::server();
+    server = pvxs::ioc::server();
 
     auto labels = std::vector<std::string>();
     auto value  = pvxs::TypeDef(pvxs::TypeCode::Struct, {});
 
     pv = pvxs::server::SharedPV::buildReadonly();
 
-    for (plist = (serviceList_t *) ellFirst(pServiceEllList);
+    for (plist = (serviceList_t *) ellFirst(pServiceEllList), mask = 0x1;
         plist!=NULL;
-        plist = (serviceList_t *) ellNext(&plist->node))
+        plist = (serviceList_t *) ellNext(&plist->node), mask <<= 1)
     {
+        if ((mask & channelMask) == 0)
+            continue;
+
         if (plist->type != float32_service)
             value += {pvxs::Member(pvxs::TypeCode::UInt32A, plist->service_name)};    
         else
@@ -284,7 +306,6 @@ void serviceAsynDriver::initPVA()
     _initial["labels"] = _labels;
 
     pv.open(_initial);
-
     server.addPV(pvaName, pv);
 }
 
@@ -484,6 +505,14 @@ asynStatus serviceAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
     while(p) {
        if(function == p->p_channelMask) {
            pService->setChannelMask(p->index, uint32_t(value));
+           if (serviceType == bld)
+           {
+                if (value == 0)
+                    channelMask = channelMask & ~(0x1U << p->index);
+                else
+                    channelMask = channelMask | (0x1U << p->index);
+                updatePVA();
+           }
            goto done;
        }
        if(function == p->p_channelSevr) {
@@ -622,15 +651,13 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
     int data_chn, index;
     uint64_t sevr_mask;
     serviceList_t *plist;
-    const uint32_t channelMaskImpossibleVal = 0xFFFFFFFF;
-    static uint32_t channelMask = channelMaskImpossibleVal; // Default impossible value
     static uint32_t versionSize = 0;
     uint32_t multicastIndex = MULTICAST_IDX_DATA;
     uint32_t severityMaskAddrL = MULTICAST_IDX_SEVRL;
     uint32_t severityMaskAddrH = MULTICAST_IDX_SEVRH;
 
     /* Matt: versionSize increments whenever channel mask changes */
-    if (channelMask != header->channelMask && channelMask != channelMaskImpossibleVal)
+    if (this->channelMask != header->channelMask && channelMask != CHNMASK_INVALID)
         versionSize++;
 
     bldPacketPayload[IDX_NSEC] = buf[IDX_NSEC];
@@ -670,7 +697,7 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
 
             /* If fixed, apply correct format */
             if (plist->doNotTouch == 1)
-                bldPacketPayload[multicastIndex++] = p_uint32[index]; /* formatted to int32/uint32 */
+                bldPacketPayload[multicastIndex++] = p_uint32[index]; /* formatted to int32/uint32 (untouched) */
             else
                 bldPacketPayloadfloat[multicastIndex++] = val; /* formatted to IEEE 754 */
 
