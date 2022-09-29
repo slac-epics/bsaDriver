@@ -187,7 +187,7 @@ typedef struct {
 
     char     pname_slope[64];
     char     pname_offset[64];
-
+    bool     doNotTouch;
 
 } bsaList_t;
 

@@ -104,7 +104,7 @@ static int prep_drvAnonimous(void)
 }
 
 
-static int serviceAdd(const char *serviceKey, serviceDataType_t type, double *slope, double *offset)
+static int serviceAdd(const char *serviceKey, serviceDataType_t type, double *slope, double *offset, bool doNotTouch)
 {
     pDrvList_t * pl = find_drvLast();
 
@@ -137,7 +137,7 @@ static int serviceAdd(const char *serviceKey, serviceDataType_t type, double *sl
     p->type    = type;
     p->pslope  = slope;
     p->poffset = offset;
-
+    p->doNotTouch = doNotTouch;
     ellAdd(pl->pServiceEllList, &p->node);
     return 0;
 }
@@ -151,7 +151,7 @@ static int associateBsaChannels(const char *port_name)
     bsaList_t * p = (bsaList_t *) ellFirst(pBsaEllList);
 
     while(p) {
-        serviceAdd(p->bsa_name, serviceDataType_t(p->type), &p->slope, &p->offset);
+        serviceAdd(p->bsa_name, serviceDataType_t(p->type), &p->slope, &p->offset, &p->doNotTouch);
         p = (bsaList_t *) ellNext(&p->node);
     }
     printf("Associate %d of channels from bsa port(%s) \n", ellCount(find_drvLast()->pServiceEllList), port_name);
@@ -171,7 +171,7 @@ static void bld_callback(void *pUsr, void *buf, unsigned size)
 }
 
 
-serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path, const int num_dyn_param, ELLLIST *pServiceEllList,  serviceType_t type, const char *named_root)
+serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path, const int num_dyn_param, ELLLIST *pServiceEllList,  serviceType_t type, const char *named_root, const char* pva_basename)
     : asynPortDriver(portName,
                                         1,  /* number of elements of this device */
 #if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 | 32)
@@ -218,6 +218,8 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
         p = (serviceList_t *) ellNext(&p->node);
     }
 
+
+
     SetupAsynParams(type);
 
 
@@ -235,10 +237,8 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
                     printf("Failed instantiating new socketAPI for service %u\n", i);
             }
             bldPacketPayload = (uint32_t *) mallocMustSucceed(MAX_BUFF_SIZE, "bldPacketPayload");
-    
-
-            
-
+        
+            pvaBaseName = epicsStrDup(pva_basename);    
 
             registerBldCallback(named_root, bld_callback, (void *) this); 
             break;
@@ -252,6 +252,10 @@ void serviceAsynDriver::initPVA()
 {
 
     serviceList_t *plist;
+
+    std::string pvaName(pvaBaseName);
+    pvaName = pvaName + ":BLD:PAYLOAD";
+
     static auto server = pvxs::ioc::server();
 
     auto labels = std::vector<std::string>();
@@ -259,48 +263,16 @@ void serviceAsynDriver::initPVA()
 
     pv = pvxs::server::SharedPV::buildReadonly();
 
-    /* First event */
-    value += {pvxs::Member(pvxs::TypeCode::UInt64A, TIMESTAMP_COL)};    labels.push_back(TIMESTAMP_COL);
-    value += {pvxs::Member(pvxs::TypeCode::UInt64A, PID_COL)};   labels.push_back(PID_COL);
-    value += {pvxs::Member(pvxs::TypeCode::UInt32A, CHMASK_COL)};    labels.push_back(CHMASK_COL);
-    value += {pvxs::Member(pvxs::TypeCode::UInt32A, SRVCMASK_COL)};    labels.push_back(SRVCMASK_COL);        
-
     for (plist = (serviceList_t *) ellFirst(pServiceEllList);
         plist!=NULL;
         plist = (serviceList_t *) ellNext(&plist->node))
     {
         if (plist->type != float32_service)
-        {
-            value += {pvxs::Member(pvxs::TypeCode::UInt32A, plist->service_name)};    labels.push_back(plist->service_name);        
-        }
+            value += {pvxs::Member(pvxs::TypeCode::UInt32A, plist->service_name)};    
         else
-        {
-            value += {pvxs::Member(pvxs::TypeCode::Float32, plist->service_name)};    labels.push_back(plist->service_name);        
-        }
+            value += {pvxs::Member(pvxs::TypeCode::Float32, plist->service_name)};    
+        labels.push_back(plist->service_name);        
     }
-    value += {pvxs::Member(pvxs::TypeCode::UInt64A, SEVMASK_COL)};    labels.push_back(SEVMASK_COL); 
-
-
-    /* Following events */
-    value += {pvxs::Member(pvxs::TypeCode::UInt32A, DELTAS_COL)};    labels.push_back(DELTAS_COL);
-    value += {pvxs::Member(pvxs::TypeCode::UInt32A, SRVCMASK_COL)};    labels.push_back(SRVCMASK_COL); 
-      
-
-    for (plist = (serviceList_t *) ellFirst(pServiceEllList);
-        plist!=NULL;
-        plist = (serviceList_t *) ellNext(&plist->node))
-    {
-        if (plist->type != float32_service)
-        {
-            value += {pvxs::Member(pvxs::TypeCode::UInt32A, plist->service_name)};    labels.push_back(plist->service_name);        
-        }
-        else
-        {
-            value += {pvxs::Member(pvxs::TypeCode::Float32, plist->service_name)};    labels.push_back(plist->service_name);        
-        }
-    }
-    value += {pvxs::Member(pvxs::TypeCode::UInt64A, SEVMASK_COL)};    labels.push_back(SEVMASK_COL); 
-
 
     _labels = pvxs::shared_array<const std::string>(labels.begin(), labels.end());
     _def = pvxs::TypeDef(pvxs::TypeCode::Struct, "epics:nt/NTScalar:1.0", {
@@ -313,7 +285,7 @@ void serviceAsynDriver::initPVA()
 
     pv.open(_initial);
 
-    server.addPV("Test", pv);
+    server.addPV(pvaName, pv);
 }
 
 serviceAsynDriver::~serviceAsynDriver()
@@ -656,7 +628,7 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
     uint32_t multicastIndex = MULTICAST_IDX_DATA;
     uint32_t severityMaskAddrL = MULTICAST_IDX_SEVRL;
     uint32_t severityMaskAddrH = MULTICAST_IDX_SEVRH;
-    bool potentialFixed;
+
     /* Matt: versionSize increments whenever channel mask changes */
     if (channelMask != header->channelMask && channelMask != channelMaskImpossibleVal)
         versionSize++;
@@ -696,13 +668,9 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
             if(!isnan(val)) 
                 val = val * (*plist->pslope) + (*plist->poffset);
 
-            /* No "fixed" information coming from firmware. Is this channel likely a "fixed"? */
-            potentialFixed = ( ( (*plist->pslope) == FIXED_SLOPE) &&
-                               ( (*plist->poffset) == FIXED_OFFSET) );
-
             /* If fixed, apply correct format */
-            if ((plist->type == int32_service || plist->type == uint32_service) && (potentialFixed == 1))
-                bldPacketPayload[multicastIndex++] = val; /* formatted to int32/uint32 */
+            if (plist->doNotTouch == 1)
+                bldPacketPayload[multicastIndex++] = p_uint32[index]; /* formatted to int32/uint32 */
             else
                 bldPacketPayloadfloat[multicastIndex++] = val; /* formatted to IEEE 754 */
 
@@ -761,7 +729,7 @@ static int  serviceMonitorPoll(void)
 }
 
 
-int serviceAsynDriverConfigure(const char *portName, const char *reg_path, const char *named_root, serviceType_t type)
+int serviceAsynDriverConfigure(const char *portName, const char *reg_path, const char *named_root, serviceType_t type, const char* pva_basename)
 {
     pDrvList_t *pl = find_drvByPort(portName);
     if(!pl) {
@@ -787,10 +755,15 @@ int serviceAsynDriverConfigure(const char *portName, const char *reg_path, const
         p = (serviceList_t *) ellNext(&p->node);
 
     }    /* calculate number of dyanmic parameters */
+    if (type == bld && pva_basename == NULL)
+    {
+        printf("BLD driver pva_basename is NULL. Please add basename.\n");
+        return -1;
+    }
 
     pl->port_name = epicsStrDup(portName);
     pl->reg_path  = epicsStrDup(reg_path);
-    pl->pServiceDrv  = new serviceAsynDriver(portName, reg_path, i, pl->pServiceEllList, type, pl->named_root);
+    pl->pServiceDrv  = new serviceAsynDriver(portName, reg_path, i, pl->pServiceEllList, type, pl->named_root, pva_basename);
 
     return 0;
 }
@@ -809,17 +782,28 @@ static void bsssInitCallFunc(const iocshArgBuf *args)
     serviceAsynDriverConfigure(args[0].sval,  /* port name */
                                args[1].sval,  /* register path */
                               (args[2].sval && strlen(args[2].sval))? args[2].sval: NULL, /* named_root */
-                               bsss);  /* BSSS call */
+                               bsss,
+                               NULL );  /* BSSS call */
 }
 
-static const iocshFuncDef bldInitFuncDef = { "bldAsynDriverConfigure", 3, initArgs };
+static const iocshArg initBldArg0 = { "portName",                                           iocshArgString };
+static const iocshArg initBldArg1 = { "register path (which should be described in yaml)",  iocshArgString };
+static const iocshArg initBldArg2 = { "Payload PVA basename",                               iocshArgString };
+static const iocshArg initBldArg3 = { "named_root (optional)",                              iocshArgString };
+static const iocshArg * const initBldArgs[] = { &initBldArg0,
+                                                &initBldArg1,
+                                                &initBldArg2,
+                                                &initBldArg3 };
+static const iocshFuncDef bldInitFuncDef = { "bldAsynDriverConfigure", 4, initBldArgs };
 static void bldInitCallFunc(const iocshArgBuf *args)
 {
  
     serviceAsynDriverConfigure(args[0].sval,  /* port name */
                                args[1].sval,  /* register path */
-                               (args[2].sval && strlen(args[2].sval))? args[2].sval: NULL, /* named_root */
-                               bld);  /* BLD call */ 
+                               (args[3].sval && strlen(args[3].sval))? args[3].sval: NULL, /* named_root */
+                               bld,
+                               args[2].sval  /* bld PVA basename */
+                               );  /* BLD call */ 
 }
 
 

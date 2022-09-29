@@ -93,6 +93,7 @@ typedef struct {
     char    pname_service[NUM_EDEF_MAX][64];
     char    pname_servicePID[NUM_EDEF_MAX][64];
 
+    bool    doNotTouch;
 } serviceList_t;
 
 typedef struct __attribute__((__packed__)) {
@@ -116,7 +117,7 @@ typedef struct {
 class serviceAsynDriver: asynPortDriver {
 
     public:
-        serviceAsynDriver(const char *protName, const char *reg_path, const int num_dyn_param, ELLLIST *pServiceList, serviceType_t type, const char *named_root = NULL);
+        serviceAsynDriver(const char *portName, const char *reg_path, const int num_dyn_param, ELLLIST *pServiceEllList,  serviceType_t type, const char *named_root, const char* pva_basename);
         ~serviceAsynDriver();
 
         asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
@@ -134,6 +135,7 @@ class serviceAsynDriver: asynPortDriver {
         pvxs::Value                           _initial;
         pvxs::server::SharedPV                pv;
 
+        char * pvaBaseName;
         uint64_t channelSevr;        
         void* pVoidsocketAPI[NUM_EDEF_MAX];
         uint32_t *bldPacketPayload;       
