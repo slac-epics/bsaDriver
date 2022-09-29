@@ -286,7 +286,7 @@ void serviceAsynDriver::addBldChannelName(const char * key, const char * name)
         plist!=NULL;
         plist = (channelList_t *) ellNext(&plist->node))
     {
-        if (strcmp(plist->channel_key, key))
+        if (strcmp(plist->channel_key, key) == 0)
         {
             strcpy(plist->channel_name, name);
             found = true;
@@ -350,12 +350,11 @@ void serviceAsynDriver::initPVA()
 
     _labels = pvxs::shared_array<const std::string>(labels.begin(), labels.end());
     _def = pvxs::TypeDef(pvxs::TypeCode::Struct, "epics:nt/NTScalar:1.0", {
-                         pvxs::members::StringA("labels"),
                          value.as("BldPayload")
                          });
     
     _initial              = _def.create();
-    _initial["labels"] = _labels;
+
 
     pv.open(_initial);
     server.addPV(pvaName, pv);

@@ -47,6 +47,7 @@
 #define IDX_DATA 6
 #define IDX_SEVR_MASK(size)  (size/4 -2)
 
+#define STR_SIZE 64
 
 #define MULTICAST_IDX_SEVRL 5
 #define MULTICAST_IDX_SEVRH 6
@@ -70,8 +71,8 @@ typedef enum {
 
 typedef struct {
     ELLNODE node;
-    char    channel_key[64];
-    char    channel_name[64];
+    char    channel_key[STR_SIZE];
+    char    channel_name[STR_SIZE];
 
     int     index;
 
@@ -88,8 +89,8 @@ typedef struct {
     double  *poffset;
 
     /* BSSS */
-    char    pkey_channel[NUM_EDEF_MAX][64];
-    char    pkey_channelPID[NUM_EDEF_MAX][64];
+    char    pkey_channel[NUM_EDEF_MAX][STR_SIZE];
+    char    pkey_channelPID[NUM_EDEF_MAX][STR_SIZE];
 
     bool    doNotTouch;
 } channelList_t;

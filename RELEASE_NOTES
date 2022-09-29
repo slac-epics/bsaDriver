@@ -1,3 +1,6 @@
+R2.5.0      Sep 29, 2022     Dawood Alnajjar
+            -Added BLD service support
+
 R2.4.0      Sep 2, 2022     Kukhee Kim
             -introduce $(DESC) macro for bsas.db template 
              to avoid a long DESC field issue (overriding $(SECN) in the DESC field)
@@ -8,7 +11,6 @@ R2.3.0      Aug 9, 2022     Kukhee Kim
             - build against:
                  timing/bsa  R2.0.0-2.0
                  pvxs        R0.3.1-0.0.1
-
 
 
 R2.2.1-1.0   Aug 9, 2022     Kukhee Kim
