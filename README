@@ -135,6 +135,11 @@ Adding BSA names for the driver:
    ioc engineer can use the command to add up bsa name into the list
 - the driver proides ioc shell command "listBsa()" to print out the BSA name list,
    ioc engineer could verify the bsa name list with the command
+- Should the data channel stay untouched (not scaled using slope/offset or casted to another type),
+  a third optional parameter is passed to the addBsa function. This parameter is only taken into
+  consideration for BLD (not BSA/BSAS/BSSS).
+    - 0 (or empty) -> Operable
+    - 1 -> Do not touch
 
 ex)
 # ====================================
@@ -144,10 +149,10 @@ ex)
 addBsa("PIDL",       "uint32")
 addBsa("PIDU",       "uint32")
 addBsa("TSL",        "uint32")
-addBsa("TSU",        "uint32")
+addBsa("TSU",        "uint32", 1)
 addBsa("RATES",      "uint32")
 addBsa("BEAMREQ",    "uint32")
-addBsa("BEAMNRG01",  "uint32")
+addBsa("BEAMNRG01",  "uint32", 1)
 addBsa("BEAMNRG23",  "uint32")
 addBsa("MPSSTAT",    "uint32")
 addBsa("MPSCLASS01", "uint32")
@@ -590,8 +595,8 @@ remark) the <BSA port name> should be the smae string id which has been used for
 5. configure BLD driver with the following command
 --------------------------------------------------
 
-# confiugre BLD driver: bldAsynDriverConfigure(<bsss port>, <register path>)
-bldAsynDriverConfigure("bldPort", "mmio/AmcCarrierCore/AmcCarrierBsa/Bld")
+# configure BLD driver: bldAsynDriverConfigure(<bld port>, <register path>, <payload pva basename>)
+bldAsynDriverConfigure("bldPort", "mmio/AmcCarrierCore/AmcCarrierBsa/Bld", "TST:SYS2:04")
 
 remark) the register path should be different depending on the application
 
