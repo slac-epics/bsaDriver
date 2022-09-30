@@ -42,6 +42,7 @@
 #define IDX_SEC  1
 #define IDX_PIDL 2
 #define IDX_PIDU 3
+#define IDX_VERSION 4
 #define IDX_CHN_MASK 4
 #define IDX_SVC_MASK 5
 #define IDX_DATA 6

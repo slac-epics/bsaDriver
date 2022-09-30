@@ -706,16 +706,20 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
     uint32_t multicastIndex = MULTICAST_IDX_DATA;
     uint32_t severityMaskAddrL = MULTICAST_IDX_SEVRL;
     uint32_t severityMaskAddrH = MULTICAST_IDX_SEVRH;
+    static uint32_t channelMask = 0;
 
     /* Matt: versionSize increments whenever channel mask changes */
-    if (this->channelMask != header->channelMask)
+    if (channelMask != header->channelMask)
+    {
+        channelMask = header->channelMask;
         versionSize++;
-
+    }
+    
     bldPacketPayload[IDX_NSEC] = buf[IDX_NSEC];
     bldPacketPayload[IDX_SEC]  = buf[IDX_SEC];
     bldPacketPayload[IDX_PIDL] = buf[IDX_PIDL];
     bldPacketPayload[IDX_PIDU] = buf[IDX_PIDU];
-    bldPacketPayload[IDX_PIDU] = versionSize;
+    bldPacketPayload[IDX_VERSION] = versionSize;
     
     uint32_t consumedSize = sizeof(bldAxiStreamHeader_t);
     do{
