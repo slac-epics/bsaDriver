@@ -151,7 +151,7 @@ static int associateBsaChannels(const char *port_name)
     bsaList_t * p = (bsaList_t *) ellFirst(pBsaEllList);
 
     while(p) {
-        serviceAdd(p->bsa_name, serviceDataType_t(p->type), &p->slope, &p->offset, &p->doNotTouch);
+        serviceAdd(p->bsa_name, serviceDataType_t(p->type), &p->slope, &p->offset, p->doNotTouch);
         p = (bsaList_t *) ellNext(&p->node);
     }
     printf("Associate %d of channels from bsa port(%s) \n", ellCount(find_drvLast()->pServiceEllList), port_name);
@@ -341,7 +341,7 @@ void serviceAsynDriver::initPVA()
         else
             name = plist->channel_name;
 
-        if (plist->type != float32_service)
+        if (plist->doNotTouch == 1)
             value += {pvxs::Member(pvxs::TypeCode::UInt32A, name)};    
         else
             value += {pvxs::Member(pvxs::TypeCode::Float32, name)};    

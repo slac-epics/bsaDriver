@@ -913,7 +913,7 @@ int createBsaList(const char *port_name)
     return 0;
 }
 
-int addBsa(const char *bsaKey, const char *bsaType, const bool keepAsInteger)
+int addBsa(const char *bsaKey, const char *bsaType, const char *keepAsInteger)
 {
     pDrvList_t *pl = find_drvLast();
 
@@ -943,8 +943,11 @@ int addBsa(const char *bsaKey, const char *bsaType, const bool keepAsInteger)
     strcpy(p->bsa_name, bsaKey);
     strcpy(p->bsa_type, bsaType);
 
-    p->doNotTouch = keepAsInteger;
-
+    if (keepAsInteger == NULL || (strcmp("0", keepAsInteger) == 0))
+        p->doNotTouch = false;
+    else
+        p->doNotTouch = true;
+    
     for(i=0; i< MAX_BSA_ARRAY; i++) {
         p->p_num[i]        = p->p_mean[i]        = p->p_rms2[i]        = -1;   // intialize to invalid parameter
         p->pname_num[i][0] = p->pname_mean[i][0] = p->pname_rms2[i][0] = '\0'; // make null string
@@ -1171,7 +1174,7 @@ static void createBsaCallFunc(const iocshArgBuf *args)
 
 static const iocshArg addBsaArg0 = { "bsaKey", iocshArgString };
 static const iocshArg addBsaArg1 = { "bsaType", iocshArgString };
-static const iocshArg addBsaArg2 = { "keepAsInteger (optional)",iocshArgInt };
+static const iocshArg addBsaArg2 = { "keepAsInteger (optional)",iocshArgString };
 static const iocshArg * const addBsaArgs [] = { &addBsaArg0,
                                                 &addBsaArg1,
                                                 &addBsaArg2 };
@@ -1179,7 +1182,7 @@ static const iocshFuncDef addBsaFuncDef = { "addBsa", 3, addBsaArgs };
 static void addBsaCallFunc(const iocshArgBuf *args)
 {
 
-    addBsa(args[0].sval, args[1].sval, args[2].ival);
+    addBsa(args[0].sval, args[1].sval, (args[2].sval && strlen(args[2].sval))? args[2].sval: NULL);
 }
 
 static const iocshArg addSlaveBsaArg0 = {"bsaKey",   iocshArgString};

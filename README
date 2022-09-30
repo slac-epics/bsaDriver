@@ -138,8 +138,8 @@ Adding BSA names for the driver:
 - Should the data channel stay untouched (not scaled using slope/offset or casted to another type),
   a third optional parameter is passed to the addBsa function. This parameter is only taken into
   consideration for BLD (not BSA/BSAS/BSSS).
-    - 0 (or empty) -> Operable
-    - 1 -> Do not touch
+    - "0" (or empty) -> Operable
+    - "1" -> Do not touch
 
 ex)
 # ====================================
@@ -149,10 +149,10 @@ ex)
 addBsa("PIDL",       "uint32")
 addBsa("PIDU",       "uint32")
 addBsa("TSL",        "uint32")
-addBsa("TSU",        "uint32", 1)
+addBsa("TSU",        "uint32", "1")
 addBsa("RATES",      "uint32")
 addBsa("BEAMREQ",    "uint32")
-addBsa("BEAMNRG01",  "uint32", 1)
+addBsa("BEAMNRG01",  "uint32", "1")
 addBsa("BEAMNRG23",  "uint32")
 addBsa("MPSSTAT",    "uint32")
 addBsa("MPSCLASS01", "uint32")
