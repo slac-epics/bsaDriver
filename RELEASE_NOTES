@@ -1,3 +1,10 @@
+R2.5.0-BSSS_BSA_upgrade
+            Dec 5, 2002      Kukhee Kim
+            - branch out from R2.5.0 to implement new requirements for BSSS and BSA
+              . BSSS supports all of the BSA system EDEFs
+              . BSSS EDEFs are controlled by BSA system EDEFFs
+              . BSSS/BLD packet structure change to support the extended number of BSSS
+
 R2.5.0      Sep 29, 2022     Dawood Alnajjar
             -Added BLD service support
             -Adapted BSSS asyn class for both BLD and BSSS
