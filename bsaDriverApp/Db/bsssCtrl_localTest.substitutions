@@ -5,19 +5,10 @@ file serviceControl.db {
 
 file serviceStatus.db {
     pattern {   DEVICE,    SERVICE }
-            { "$(DEV)" ,  "BSSS"}
+            { "$(DEV)" ,  "BSSS0"}
+            { "$(DEV)" ,  "BSSS1"}
+
 }
 
 
-file serviceRateControl_localTest.db {
-    pattern {  IDX,  SERVICE_INST,  DEVICE,   SERVICE  }
-            {  "0",  "SCUD1",      "$(DEV)",  "BSSS" }
-            {  "1",  "SCUD2",      "$(DEV)",  "BSSS" } 
-            {  "2",  "SCUD3",      "$(DEV)",  "BSSS" }
-            {  "3",  "SCS1H",      "$(DEV)",  "BSSS" }
-            {  "4",  "SCSTH",      "$(DEV)",  "BSSS" }
-            {  "5",  "SCSHH",      "$(DEV)",  "BSSS" }
-            {  "6",  "SCH1H",      "$(DEV)",  "BSSS" }
-            {  "7",  "SCHTH",      "$(DEV)",  "BSSS" }
-            {  "8",  "SCHHH",      "$(DEV)",  "BSSS" }
-}  
+
