@@ -38,8 +38,12 @@
 #define  MAX_BUFF_SIZE 9000
 
 #define  IDX_SERVICE_MASK     5
-#define  BSSS_SERVICE_MASK    0x1ff
-#define  BLD_SERVICE_MASK     0x0f000000
+#define  BSSS_SERVICE_MASK    0x0fffffff
+
+#define  SERVICE_BITS         28
+#define  SERVICE_BSSS         1
+#define  SERVICE_BLD          2
+#define  SERVICE_BSAS         8
 
 #define  BSAS_IDTF_LOC        31
 #define  BSAS_IDTF_MASK       (0x1 << BSAS_IDTF_LOC)
@@ -280,7 +284,7 @@ static void listener(pDrvList_t *p)
         uint32_t  *pu32 = (uint32_t *) np->buff;
 
         if(listener_ready) {
-        if(pu32[IDX_SERVICE_MASK] & BSAS_IDTF_MASK) {   /* bsas */
+        if(pu32[IDX_SERVICE_MASK]>>SERVICE_BITS == SERVICE_BSAS)  {   /* bsas */
             MFTB(p->time_bsas.start);
             p->bsas_count++;
             p->p_last_bsas = (void *) np;
@@ -289,7 +293,7 @@ static void listener(pDrvList_t *p)
             MFTB(p->time_bsas.end);
             calc_minmax(p->time_bsas.start, p->time_bsas.end, p->time_bsas.min, p->time_bsas.max);
         }
-        else if(pu32[IDX_SERVICE_MASK] & BSSS_SERVICE_MASK) { /* bsss */
+        else if(pu32[IDX_SERVICE_MASK]>>SERVICE_BITS <= SERVICE_BSSS) { /* bsss, 0: Bsss0, 1: Bsss1 */
             MFTB(p->time_bsss.start);
             p->bsss_count++;
             p->p_last_bsss = (void *) np;
@@ -298,7 +302,7 @@ static void listener(pDrvList_t *p)
             MFTB(p->time_bsss.end);
             calc_minmax(p->time_bsss.start, p->time_bsss.end, p->time_bsss.min, p->time_bsss.max);
         }
-        else if(pu32[IDX_SERVICE_MASK] & BLD_SERVICE_MASK) { /* bld */
+        else if(pu32[IDX_SERVICE_MASK]>>SERVICE_BITS == SERVICE_BLD) { /* bld */
             MFTB(p->time_bld.start);
             p->bld_count++;
             p->p_last_bld = (void *) np;
@@ -370,7 +374,7 @@ static void show_bsss_buffer(void *p, unsigned size)
     uint32_t *buff = (uint32_t *) p;
     uint64_t *psv  = (uint64_t *) (buff + (size/4) -2);
 
-    if ((buff[IDX_SERVICE_MASK] & BSSS_SERVICE_MASK )== 0 )
+    if (!((buff[IDX_SERVICE_MASK] >> SERVICE_BITS) <= SERVICE_BSSS) )
     {
         printf("\t\t --------------------------------\n");
         printf("\t\t BSSS last packet flushed\n");
@@ -401,7 +405,8 @@ typedef struct __attribute__ ((packed)) {
     uint16_t row_number:   16;
     uint8_t  table_count:   4;
     uint8_t  edef_index:    4;
-    uint8_t  byte_pad:      8;
+    uint8_t  byte_pad:      4;
+    uint8_t  serviceMask:   4;
 } header_t;     /*  24 bytes header */
 
 typedef struct __attribute__ ((packed)) {
@@ -424,16 +429,24 @@ typedef struct __attribute__((packed)) {
 
     packet_t *pk = (packet_t *) p;
 
+    if(pk->hd.serviceMask != SERVICE_BSAS) {
+        printf("\t\t --------------------------------\n");
+        printf("\t\t BSAS last packet flushed\n");
+        printf("\t\t --------------------------------\n");
+        return;
+    }
+
     printf("\t\t --------------------------------\n");
     printf("\t\t BSAS Packet: size(%d)\n", size);
     printf("\t\t --------------------------------\n");
-    printf("\t\t timestamp (64bit): %16llx\n", (long long unsigned int)(pk->hd.timestamp));
-    printf("\t\t pulse id  (64bit): %16llx\n", (long long unsigned int)(pk->hd.pulse_id));
-    printf("\t\t channel mask     : %8x\n",  pk->hd.channelMask);
-    printf("\t\t row number       : %d\n",   pk->hd.row_number);
-    printf("\t\t table_count      : %d\n",   pk->hd.table_count);
-    printf("\t\t edef_index       : %d\n",   pk->hd.edef_index);
-    printf("\t\t byte pad (0x80)  : %2x\n",  pk->hd.byte_pad);
+    printf("\t\t timestamp (64bit)  : %16llx\n", (long long unsigned int)(pk->hd.timestamp));
+    printf("\t\t pulse id  (64bit)  : %16llx\n", (long long unsigned int)(pk->hd.pulse_id));
+    printf("\t\t channel mask       : %8x\n",  pk->hd.channelMask);
+    printf("\t\t row number         : %d\n",   pk->hd.row_number);
+    printf("\t\t table_count        : %d\n",   pk->hd.table_count);
+    printf("\t\t edef_index         : %d\n",   pk->hd.edef_index);
+    printf("\t\t byte pad           : %2x\n",  pk->hd.byte_pad);
+    printf("\t\t service mask (0x80): %2x\n", pk->hd.serviceMask);
 
                printf("\t\t PL CH    CNT EVL ESQ FIX     VAL       SUM       SQUARE      MIN      MAX\n");
                printf("\t\t -------------------------------------------------------------------------\n");
@@ -479,7 +492,7 @@ static void show_bld_buffer(void *p, unsigned size)
     int channelsFound = 0;
     const uint8_t wordSize = 4;
 
-    if ((header->serviceMask & BLD_SERVICE_MASK) == 0 )
+    if ((header->serviceMask >> SERVICE_BITS) != SERVICE_BLD )
     {
         printf("\t\t --------------------------------\n");
         printf("\t\t BLD last packet flushed\n");
