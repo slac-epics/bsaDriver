@@ -6,6 +6,8 @@ file bsaLinearConversion.db {
 file bsaHst.db {
     pattern {  INST,  MDID,   MAXLENGTH      }
 #
+# user Edefs
+#
             {  "21",  "21",  "\$\(BSA_LENGTH=20000\)"  }
             {  "22",  "22",  "\$\(BSA_LENGTH=20000\)"  }
             {  "23",  "23",  "\$\(BSA_LENGTH=20000\)"  }
@@ -37,44 +39,31 @@ file bsaHst.db {
             {  "47",  "47", "\$\(BSA_LENGTH=20000\)"  }
             {  "48",  "48", "\$\(BSA_LENGTH=20000\)"  }
             {  "49",  "49", "\$\(BSA_LENGTH=20000\)"  }
-            {  "50",  "50", "\$\(BSA_LENGTH=20000\)"  }
 #
-            {  "51",  "51", "\$\(BSA_LENGTH=20000\)"  }
-            {  "52",  "52", "\$\(BSA_LENGTH=20000\)"  }
-            {  "53",  "53", "\$\(BSA_LENGTH=20000\)"  }
-            {  "54",  "54", "\$\(BSA_LENGTH=20000\)"  }
-            {  "55",  "55", "\$\(BSA_LENGTH=20000\)"  }
-            {  "56",  "56", "\$\(BSA_LENGTH=20000\)"  }
-            {  "57",  "57", "\$\(BSA_LENGTH=20000\)"  }
-            {  "58",  "58", "\$\(BSA_LENGTH=20000\)"  }
-            {  "59",  "59", "\$\(BSA_LENGTH=20000\)"  }
-            {  "60",  "60", "\$\(BSA_LENGTH=20000\)"  }
+# system Edefs
 #
-            {  "61",  "61", "\$\(BSA_LENGTH=20000\)"  }
-            {  "62",  "62", "\$\(BSA_LENGTH=20000\)"  }
-            {  "63",  "63", "\$\(BSA_LENGTH=20000\)"  }
-            {  "64",  "64", "\$\(BSA_LENGTH=20000\)"  }
-            {  "65",  "SCH1H", "\$\(BSA_LENGTH=20000\)"  }
-            {  "66",  "SCHTH", "\$\(BSA_LENGTH=20000\)"  }
-            {  "67",  "SCHHH", "\$\(BSA_LENGTH=20000\)"  }
-            {  "68",  "SCS1H", "\$\(BSA_LENGTH=20000\)"  }
-            {  "69",  "SCSTH", "\$\(BSA_LENGTH=20000\)"  }
-            {  "70",  "SCSHH", "\$\(BSA_LENGTH=20000\)"  }
+            {  "50",  "SCH1H", "\$\(BSA_LENGTH=20000\)"  }
+            {  "51",  "SCHTH", "\$\(BSA_LENGTH=20000\)"  }
+            {  "52",  "SCHHH", "\$\(BSA_LENGTH=20000\)"  }
+            {  "53",  "SCS1H", "\$\(BSA_LENGTH=20000\)"  }
+            {  "54",  "SCSTH", "\$\(BSA_LENGTH=20000\)"  }
+            {  "55",  "SCSHH", "\$\(BSA_LENGTH=20000\)"  }
+            {  "56",  "RSRV0", "\$\(BSA_LENGTH=20000\)"  }
+            {  "57",  "RSRV1", "\$\(BSA_LENGTH=20000\)"  }
+            {  "58",  "RSRV2", "\$\(BSA_LENGTH=20000\)"  }
+            {  "59",  "RSRV3", "\$\(BSA_LENGTH=20000\)"  }
+            {  "60",  "RSRV4", "\$\(BSA_LENGTH=20000\)"  }
 #
-#            {  "71",  "71", "\$\(BSA_LENGTH=20000\)"  }
-#            {  "72",  "72", "\$\(BSA_LENGTH=20000\)"  }
-#            {  "73",  "73", "\$\(BSA_LENGTH=20000\)"  }
-#            {  "74",  "74", "\$\(BSA_LENGTH=20000\)"  }
-#            {  "75",  "75", "\$\(BSA_LENGTH=20000\)"  }
-#            {  "76",  "76", "\$\(BSA_LENGTH=20000\)"  }
-#            {  "77",  "77", "\$\(BSA_LENGTH=20000\)"  }
-#            {  "78",  "78", "\$\(BSA_LENGTH=20000\)"  }
-#            {  "79",  "F1", "\$\(BSA_LENGTH=20000\)"  }
-#            {  "80",  "F2", "\$\(BSA_LENGTH=20000\)"  }
+            {  "61",  "RSRV5", "\$\(BSA_LENGTH=20000\)"  }
+            {  "62",  "RSRV6", "\$\(BSA_LENGTH=20000\)"  }
+            {  "63",  "RSRV7", "\$\(BSA_LENGTH=20000\)"  }
+            {  "64",  "RSRV8", "\$\(BSA_LENGTH=20000\)"  }
 #
-            {  "81",  "FLTB0", "\$\(FLTB_LENGTH=1000000\)" }
-            {  "82",  "FLTB1", "\$\(FLTB_LENGTH=1000000\)" }
-            {  "83",  "FLTB2", "\$\(FLTB_LENGTH=1000000\)" }
-            {  "84",  "FLTB3", "\$\(FLTB_LENGTH=1000000\)" }
+# fault buffer
+#
+            {  "65",  "FLTB0", "\$\(FLTB_LENGTH=1000000\)" }
+            {  "66",  "FLTB1", "\$\(FLTB_LENGTH=1000000\)" }
+            {  "67",  "FLTB2", "\$\(FLTB_LENGTH=1000000\)" }
+            {  "68",  "FLTB3", "\$\(FLTB_LENGTH=1000000\)" }
 #
 }

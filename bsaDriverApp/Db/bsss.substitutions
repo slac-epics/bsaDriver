@@ -6,14 +6,57 @@ file serviceChannelCtrl.db {
 
 
 file bsssScal.db {
-    pattern {  IDX,     MDID,   DEVICE,        EGU,        ADEL,        PREC,        HOPR,        LOPR,  DESC  }
-            {  "0",  "SCUD1", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
-            {  "1",  "SCUD2", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
-            {  "2",  "SCUD3", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
-            {  "3",  "SCS1H", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
-            {  "4",  "SCSTH", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
-            {  "5",  "SCSHH", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
-            {  "6",  "SCH1H", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
-            {  "7",  "SCHTH", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
-            {  "8",  "SCHHH", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
-}  
+    pattern {   IDX,     MDID,   DEVICE,        EGU,        ADEL,        PREC,        HOPR,        LOPR,  DESC  }
+#
+# user Edefs
+#
+            {   "0",     "21", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {   "1",     "22", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {   "2",     "23", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {   "3",     "24", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {   "4",     "25", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {   "5",     "26", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {   "6",     "27", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {   "7",     "28", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {   "8",     "29", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {   "9",     "30", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+#
+            {  "10",     "31", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "11",     "32", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "12",     "33", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "13",     "34", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "14",     "35", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "15",     "36", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "16",     "37", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "17",     "38", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "18",     "39", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "19",     "40", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+#
+            {  "20",     "41", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "21",     "42", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "22",     "43", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "23",     "44", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "24",     "45", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "25",     "46", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "26",     "47", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "27",     "48", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "28",     "49", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+#
+# system Edefs
+#
+            {  "29",  "SCH1H", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "30",  "SCHTH", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "31",  "SCHHH", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "32",  "SCS1H", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "33",  "SCSTH", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "34",  "SCSHH", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "35",  "RSRV0", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "36",  "RSRV1", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "37",  "RSRV2", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "38",  "RSRV3", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "39",  "RSRV4", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "40",  "RSRV5", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "41",  "RSRV6", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "42",  "RSRV7", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "43",  "RSRV8", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+}
