@@ -28,9 +28,16 @@
 #include <pvxs/nt.h>
 
 
+#define MAX_MOD_NUM          2   // BSSS has 2 moduels, BLD has 1 moduel now.
+#define NUM_BLD_MOD          1   // number of BLD module
+#define NUM_BSSS_MOD         2   // number of BSSS modules
+
+#define BSSS0_NUM_EDEF       28   // BSSS0 module covers 28 EDEFs
+#define BSSS1_NUM_EDEF       16   // BSSS1 module covers 16 EDEFs
+
 #define NUM_BSSS_DATA_MAX    31
 #define NUM_CHANNELS_MAX     31
-#define NUM_EDEF_MAX         9
+#define NUM_EDEF_MAX         64
 #define MAX_BUFF_SIZE        9000
 #define CHNMASK_INVALID      0xFFFFFFFF
 
@@ -142,7 +149,7 @@ class serviceAsynDriver: asynPortDriver {
         pvxs::server::Server server;
 
         ELLLIST *pServiceEllList;
-        AcqService::AcqServiceYaml *pService;
+        AcqService::AcqServiceYaml *pService[MAX_MOD_NUM];
 
         void SetupAsynParams(serviceType_t type);
         void SetRate(int chn);
@@ -151,6 +158,7 @@ class serviceAsynDriver: asynPortDriver {
         int  GetChannelSevr(int chn);
 
         serviceType_t serviceType;
+        int           numMod;
 
     protected:
     
@@ -160,21 +168,23 @@ class serviceAsynDriver: asynPortDriver {
 #endif /* asyn version check, under 4.32 */
 
         // Service status monitoring
-        int p_currPacketSize;
-        int p_currPacketStatus;
-        int p_currPulseIdL;
-        int p_currTimeStampL;
-        int p_currDelta;
-        int p_packetCount;
-        int p_paused;
-        int p_diagnClockRate;
-        int p_diagnStrobeRate;
-        int p_eventSel0Rate;
+        int p_currPacketSize[MAX_MOD_NUM];
+        int p_currPacketStatus[MAX_MOD_NUM];
+        int p_currPulseIdL[MAX_MOD_NUM];
+        int p_currTimeStampL[MAX_MOD_NUM];
+        int p_currDelta[MAX_MOD_NUM];
+        int p_packetCount[MAX_MOD_NUM];
+        int p_paused[MAX_MOD_NUM];
+        int p_diagnClockRate[MAX_MOD_NUM];
+        int p_diagnStrobeRate[MAX_MOD_NUM];
+        int p_eventSel0Rate[MAX_MOD_NUM];
 
         // Service Status Control
         int p_packetSize;
         int p_enable;
 
+        // Rate Limit BSSS specific
+        int p_rateLimitBsss;
 
         // Service Rate Controls
         int p_edefEnable[NUM_EDEF_MAX];
@@ -233,6 +243,7 @@ class serviceAsynDriver: asynPortDriver {
 #define DESTMODE_STR          "%s_destMode_%d"
 #define DESTMASK_STR          "%s_destMask_%d"
 #define RATELIMIT_STR         "%s_rateLimit_%d"
+#define RATELIMIT_PM_STR      "%s_rateLimit"        // use for BSSS rate limit, per module
 
 #define BSSSPV_STR            "%s_bsss_%d"
 #define BSSSPID_STR           "%s_bsssPID_%d"
@@ -241,7 +252,9 @@ class serviceAsynDriver: asynPortDriver {
 #define BLDMULTICASTPORT_STR  "bldMulticastPort_%d"
 
 #define BLD_STR "BLD"
-#define BSSS_STR "BSSS"
+#define BSSS_STR "BSSS"        // use for BSSS PVs
+#define BSSS0_STR "BSSS0"      // use for BSSS packet control/status,  per module 
+#define BSSS1_STR "BSSS1"      // use for BSSS packet control/status,  per moudle  
 
 
 #endif /* BSSS_ASYN_DRIVER_H */

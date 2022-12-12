@@ -43,7 +43,15 @@
 #include <pvxs/nt.h>
 
 
+#define BSSS_ONLY(TYPE, X) \
+if(TYPE == bld) { printf("(%s: %d %s) is only for BSSS\n", __FILE__, __LINE__, __func__); return X; }
+
+#define BLD_ONLY(TYPE, X) \
+if(TYPE == bsss) { printf("(%s:%d %s) is only for BLD\n", __FILE__, __LINE__, __func__); return X; }
+
+
 static const char *driverName = "serviceAsynDriver";
+
 
 static ELLLIST *pDrvEllList = NULL;
 
@@ -222,20 +230,38 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
     if(!pServiceEllList || !ellCount(pServiceEllList)) return;   /* if there is no service data channels in the list, nothing to do */
     this->pServiceEllList = pServiceEllList;
 
+    char reg_path0[128], reg_path1[128];
+    Path reg_, reg0_, reg1_;
     Path root_ = (named_root && strlen(named_root))? cpswGetNamedRoot(named_root): cpswGetRoot();
     if(!root_) {
         printf("%s driver: could not find root path\n", type == bsss? "BSSS" : "BLD");
         return;
     }
 
-    Path reg_ = root_->findByName(reg_path);
-    if(!reg_) {
-        printf("%s driver: could not find registers at path %s\n", type == bsss? "BSSS" : "BLD", reg_path);
-        return;
-    }
     switch (type) {
-        case bld:  this->pService = new Bld::BldYaml(reg_); break;
-        case bsss: this->pService = new Bsss::BsssYaml(reg_); break;
+        case bld:
+            reg_ = root_->findByName(reg_path);
+            if(!reg_) {
+                printf("BLD driver: could not find regisers at path %s\n", reg_path);
+                return;
+            }
+            this->pService[0] = new Bld::BldYaml(reg_);
+            this->pService[1] = NULL;
+            this->numMod = NUM_BLD_MOD;
+            break;
+        case bsss:
+            sprintf(reg_path0, "%s%s", reg_path, "[0]");
+            sprintf(reg_path1, "%s%s", reg_path, "[1]");
+            reg0_ = root_->findByName(reg_path0);
+            reg1_ = root_->findByName(reg_path1);
+            if(!reg0_ || !reg1_) {
+                printf("BSSS driver: could not find register at path %s\n", reg_path);
+                return;
+            }
+            this->pService[0] = new Bsss::BsssYaml(reg0_, BSSS0_NUM_EDEF);
+            this->pService[1] = new Bsss::BsssYaml(reg1_, BSSS1_NUM_EDEF);
+            this->numMod = NUM_BSSS_MOD;
+            break;
     }
     serviceType = type;
     
@@ -255,7 +281,7 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
 
     switch (type) {
         case bld:      
-            for(unsigned int i = 0; i < this->pService->getEdefNum(); i++)
+            for(unsigned int i = 0; i < this->pService[0]->getEdefNum(); i++)
             {
                 socketAPIInitByInterfaceName(ntohl( inet_addr( DEFAULT_MCAST_IP ) ), 
                                     DEFAULT_MCAST_PORT, 
@@ -368,27 +394,38 @@ void serviceAsynDriver::SetupAsynParams(serviceType_t type)
 {
     char param_name[100];
     char prefix[10];
+    char prefix2[2][10];
 
     switch (type) {
-        case bld:  sprintf(prefix, BLD_STR);  break;
-        case bsss: sprintf(prefix, BSSS_STR); break;
+        case bld:
+            sprintf(prefix, BLD_STR);              // prefix for single instance
+            sprintf(prefix2[0], BLD_STR);          // prefix for 1st modue, but actually single instance
+            sprintf(prefix2[1], BLD_STR);          // expect never use this
+            break;
+        case bsss:
+            sprintf(prefix, BSSS_STR);             // prefix for single instance
+            sprintf(prefix2[0], BSSS0_STR);        // prefix for 1st module
+            sprintf(prefix2[1], BSSS1_STR);        // prefix for 2nd module
+            break;
     }
 
-    // Service Status Monitoring
-    sprintf(param_name, CURRPACKETSIZE_STR, prefix);   createParam(param_name, asynParamInt32, &p_currPacketSize);
-    sprintf(param_name, CURRPACKETSTATUS_STR, prefix); createParam(param_name, asynParamInt32, &p_currPacketStatus);
-    sprintf(param_name, CURRPULSEIDL_STR, prefix);     createParam(param_name, asynParamInt32, &p_currPulseIdL);
-    sprintf(param_name, CURRTIMESTAMPL_STR, prefix);   createParam(param_name, asynParamInt32, &p_currTimeStampL);
-    sprintf(param_name, CURRDELTA_STR, prefix);        createParam(param_name, asynParamInt32, &p_currDelta);
-    sprintf(param_name, PACKETCOUNT_STR, prefix);      createParam(param_name, asynParamInt32, &p_packetCount);
-    sprintf(param_name, PAUSED_STR, prefix);           createParam(param_name, asynParamInt32, &p_paused);
-    sprintf(param_name, DIAGNCLOCKRATE_STR, prefix);   createParam(param_name, asynParamInt32, &p_diagnClockRate);
-    sprintf(param_name, DIAGNSTROBERATE_STR, prefix);  createParam(param_name, asynParamInt32, &p_diagnStrobeRate);
-    sprintf(param_name, EVENTSEL0RATE_STR, prefix);    createParam(param_name, asynParamInt32, &p_eventSel0Rate);
-
-    // Service Status Control
+    for(int mod = 0; this->numMod; mod++) {  // both BSSS and BLD, BSSS has 2 instances, BLD has 1 instances 
+        // Service Status Monitoring
+        sprintf(param_name, CURRPACKETSIZE_STR, prefix2[mod]);   createParam(param_name, asynParamInt32, &p_currPacketSize[mod]);
+        sprintf(param_name, CURRPACKETSTATUS_STR, prefix2[mod]); createParam(param_name, asynParamInt32, &p_currPacketStatus[mod]);
+        sprintf(param_name, CURRPULSEIDL_STR, prefix2[mod]);     createParam(param_name, asynParamInt32, &p_currPulseIdL[mod]);
+        sprintf(param_name, CURRTIMESTAMPL_STR, prefix2[mod]);   createParam(param_name, asynParamInt32, &p_currTimeStampL[mod]);
+        sprintf(param_name, CURRDELTA_STR, prefix2[mod]);        createParam(param_name, asynParamInt32, &p_currDelta[mod]);
+        sprintf(param_name, PACKETCOUNT_STR, prefix2[mod]);      createParam(param_name, asynParamInt32, &p_packetCount[mod]);
+        sprintf(param_name, PAUSED_STR, prefix2[mod]);           createParam(param_name, asynParamInt32, &p_paused[mod]);
+        sprintf(param_name, DIAGNCLOCKRATE_STR, prefix2[mod]);   createParam(param_name, asynParamInt32, &p_diagnClockRate[mod]);
+        sprintf(param_name, DIAGNSTROBERATE_STR, prefix2[mod]);  createParam(param_name, asynParamInt32, &p_diagnStrobeRate[mod]);
+        sprintf(param_name, EVENTSEL0RATE_STR, prefix2[mod]);    createParam(param_name, asynParamInt32, &p_eventSel0Rate[mod]);
+     }
+        // Service Status Control
     sprintf(param_name, PACKETSIZE_STR, prefix);       createParam(param_name, asynParamInt32, &p_packetSize);
-    sprintf(param_name, ENABLE_STR, prefix);           createParam(param_name, asynParamInt32, &p_enable);
+    sprintf(param_name, ENABLE_STR, prefix);          createParam(param_name, asynParamInt32, &p_enable);
+    
 
     channelList_t *p = (channelList_t *) ellFirst(pServiceEllList);
     while(p) {
@@ -398,7 +435,8 @@ void serviceAsynDriver::SetupAsynParams(serviceType_t type)
     }
 
     // Service Rate Controls
-    for(unsigned int i = 0; i < this->pService->getEdefNum(); i++) {
+    if(type == bld) {    // rate control is required by BLD only
+    for(unsigned int i = 0; i < this->pService[0]->getEdefNum(); i++) {
         sprintf(param_name, EDEFENABLE_STR, prefix, i);createParam(param_name, asynParamInt32, &p_edefEnable[i]);
         sprintf(param_name, RATEMODE_STR, prefix, i);  createParam(param_name, asynParamInt32, &p_rateMode[i]);
         sprintf(param_name, FIXEDRATE_STR, prefix, i); createParam(param_name, asynParamInt32, &p_fixedRate[i]);
@@ -416,12 +454,13 @@ void serviceAsynDriver::SetupAsynParams(serviceType_t type)
             sprintf(param_name, BLDMULTICASTPORT_STR, i); createParam(param_name, asynParamInt32, &p_multicastPort[i]);
         }
     }
+    }
 
     /* PVs only existant in BSSS driver */
     if (type == bsss)
     {
         // set up dyanamic paramters
-        for(unsigned int i = 0; i < this->pService->getEdefNum(); i++) {
+        for(unsigned int i = 0; i < (this->pService[0]->getEdefNum() + this->pService[1]->getEdefNum()); i++) {
             channelList_t *p  = (channelList_t *) ellFirst(this->pServiceEllList);
             while(p) {
                 sprintf(param_name, BSSSPV_STR,  p->channel_key, i); createParam(param_name, asynParamFloat64, &p->p_channel[i]);    strcpy(p->pkey_channel[i],    param_name);
@@ -436,23 +475,25 @@ void serviceAsynDriver::SetupAsynParams(serviceType_t type)
 
 void serviceAsynDriver::SetRate(int chn)
 {
+    BLD_ONLY(serviceType,);
+
     uint32_t rateMode, fixedRate, acRate, tSlotMask, expSeqNum, expSeqBit;
 
     getIntegerParam(p_rateMode[chn], (epicsInt32*) &rateMode);
     switch(rateMode) {
         case 0: /* fixed rate mode */
             getIntegerParam(p_fixedRate[chn], (epicsInt32*) &fixedRate);
-            pService->setFixedRate(chn, fixedRate);
+            pService[0]->setFixedRate(chn, fixedRate);
             break;
         case 1: /* AC rate mode */
             getIntegerParam(p_acRate[chn], (epicsInt32*) &acRate);
             getIntegerParam(p_tSlotMask[chn], (epicsInt32*) &tSlotMask);
-            pService->setACRate(chn, tSlotMask, acRate);
+            pService[0]->setACRate(chn, tSlotMask, acRate);
             break;
         case 2: /* Seq rate mode */
             getIntegerParam(p_expSeqNum[chn], (epicsInt32*) &expSeqNum);
             getIntegerParam(p_expSeqBit[chn], (epicsInt32*) &expSeqBit);
-            pService->setSeqRate(chn, expSeqNum, expSeqBit);
+            pService[0]->setSeqRate(chn, expSeqNum, expSeqBit);
             break;
         default:  /* nothing todo */
             break;
@@ -461,6 +502,8 @@ void serviceAsynDriver::SetRate(int chn)
 
 void serviceAsynDriver::SetDest(int chn)
 {
+    BLD_ONLY(serviceType,);
+
     uint32_t destMode, destMask;
 
     getIntegerParam(p_destMode[chn], (epicsInt32*) &destMode);
@@ -468,13 +511,13 @@ void serviceAsynDriver::SetDest(int chn)
 
     switch(destMode) {
         case 2:  /* Inclusion */
-            pService->setDestInclusion(chn, destMask);
+            pService[0]->setDestInclusion(chn, destMask);
             break;
         case 1:  /* Exclusion */
-            pService->setDestExclusion(chn, destMask);
+            pService[0]->setDestExclusion(chn, destMask);
             break;
         case 0:  /* Disable */
-            pService->setDestDisable(chn);
+            pService[0]->setDestDisable(chn);
             break;
         default:  /* nothing to do */
             break;
@@ -499,17 +542,18 @@ void serviceAsynDriver::MonitorStatus(void)
 {
     uint32_t v;
 
-    pService->getCurrPacketSize(&v);    setIntegerParam(p_currPacketSize, (epicsInt32) v);
-    pService->getCurrPacketState(&v);   setIntegerParam(p_currPacketStatus, (epicsInt32) v);
-    pService->getCurrPulseIdL(&v);      setIntegerParam(p_currPulseIdL, (epicsInt32) v);
-    pService->getCurrTimeStampL(&v);    setIntegerParam(p_currTimeStampL, (epicsInt32) v);
-    pService->getCurrDelta(&v);         setIntegerParam(p_currDelta, (epicsInt32) v);
-    pService->getPacketCount(&v);       setIntegerParam(p_packetCount, (epicsInt32) v);
-    pService->getPaused(&v);            setIntegerParam(p_paused, (epicsInt32) v);
-    pService->getDiagnClockRate(&v);    setIntegerParam(p_diagnClockRate, (epicsInt32) v);
-    pService->getDiagnStrobeRate(&v);   setIntegerParam(p_diagnStrobeRate, (epicsInt32) v);
-    pService->getEventSel0Rate(&v);     setIntegerParam(p_eventSel0Rate, (epicsInt32) v);
-
+    for(int i = 0; i < numMod; i++) {
+        pService[i]->getCurrPacketSize(&v);    setIntegerParam(p_currPacketSize[i], (epicsInt32) v);
+        pService[i]->getCurrPacketState(&v);   setIntegerParam(p_currPacketStatus[i], (epicsInt32) v);
+        pService[i]->getCurrPulseIdL(&v);      setIntegerParam(p_currPulseIdL[i], (epicsInt32) v);
+        pService[i]->getCurrTimeStampL(&v);    setIntegerParam(p_currTimeStampL[i], (epicsInt32) v);
+        pService[i]->getCurrDelta(&v);         setIntegerParam(p_currDelta[i], (epicsInt32) v);
+        pService[i]->getPacketCount(&v);       setIntegerParam(p_packetCount[i], (epicsInt32) v);
+        pService[i]->getPaused(&v);            setIntegerParam(p_paused[i], (epicsInt32) v);
+        pService[i]->getDiagnClockRate(&v);    setIntegerParam(p_diagnClockRate[i], (epicsInt32) v);
+        pService[i]->getDiagnStrobeRate(&v);   setIntegerParam(p_diagnStrobeRate[i], (epicsInt32) v);
+        pService[i]->getEventSel0Rate(&v);     setIntegerParam(p_eventSel0Rate[i], (epicsInt32) v);
+    }
     callParamCallbacks();
 }
 
@@ -521,11 +565,13 @@ asynStatus serviceAsynDriver::writeOctet (asynUser *pasynUser, const char *value
     asynStatus status = asynSuccess;
     const char *functionName = "writeOctet";
 
-    for(unsigned int edef = 0; edef < this->pService->getEdefNum(); edef++) {
+    if(serviceType == bld) {
+    for(unsigned int edef = 0; edef < this->pService[0]->getEdefNum(); edef++) {
         if(function == p_multicastAddr[edef]) {
             socketAPISetAddr(ntohl( inet_addr( value )), pVoidsocketAPI[edef]);
             break;
         }
+    }
     }
 
     if (status)
@@ -555,17 +601,20 @@ asynStatus serviceAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
     channelList_t *p = (channelList_t *) ellFirst(pServiceEllList);
     while(p) {
        if(function == p->p_channelMask) {
-           pService->setChannelMask(p->index, uint32_t(value));
-           if (serviceType == bld)
-           {
+           if (serviceType == bld) {    // handling channel mask for BLD
                 if (value == 0)
                     channelMask = channelMask & ~(0x1U << p->index);
                 else
                     channelMask = channelMask | (0x1U << p->index);
+                pService[0]->setChannelMask(p->index, uint32_t(value));
                 updatePVA();
+           } else {    // handling channel mask for BSSS
+                pService[0]->setChannelMask(p->index, uint32_t(value));
+                pService[1]->setChannelMask(p->index, uint32_t(value));
            }
            goto done;
        }
+ 
        if(function == p->p_channelSevr) {
            SetChannelSevr(p->index, value);
            goto done;
@@ -575,16 +624,19 @@ asynStatus serviceAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
 
 
     if(function == p_packetSize) {
-        pService->setPacketSize((uint32_t) value);
+        pService[0]->setPacketSize((uint32_t) value);                          // commmon, both for bld and bsss
+        if(serviceType == bsss) pService[1]->setPacketSize((uint32_t) value);  // only for bsss
         goto done;
     }
     else if(function == p_enable) {
-        pService->enablePacket((uint32_t) value);
+        pService[0]->enablePacket((uint32_t) value);                            // common, both for bld and bsss
+        if(serviceType == bsss) pService[1]->enablePacket((uint32_t) value);    // only for bsss
         goto done;
     }
 
 
-    for(unsigned int i = 0; i < this->pService->getEdefNum(); i++) {
+    if(serviceType == bld) {     // EDEF rate control for bld only
+    for(unsigned int i = 0; i < this->pService[0]->getEdefNum(); i++) {
         if(function == p_rateMode[i]  ||
            function == p_fixedRate[i] ||
            function == p_acRate[i]    ||
@@ -601,16 +653,23 @@ asynStatus serviceAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
             goto done;
         }
         else if(function == p_edefEnable[i]) {
-            pService->setEdefEnable(i, (uint32_t) value);
+            pService[0]->setEdefEnable(i, (uint32_t) value);
             goto done;
         }
         else if(function == p_rateLimit[i]) {
-            pService->setRateLimit(i, (uint32_t) value);
+            pService[0]->setRateLimit(i, (uint32_t) value);
             goto done;
         } else if(function == p_multicastPort[i]) {
             socketAPISetPort( value, pVoidsocketAPI[i]);
             goto done;
         }
+    }
+    }
+
+    if(serviceType == bsss && function == p_rateLimitBsss) {
+        pService[0]->setRateLimit((uint32_t) value);
+        pService[1]->setRateLimit((uint32_t) value);
+        goto done;
     }
 
     done:
@@ -631,6 +690,8 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
      uint64_t sevr_mask    = *(uint64_t*) (buf+IDX_SEVR_MASK(size));
      uint64_t pulse_id     = ((uint64_t)(buf[IDX_PIDU])) << 32 | buf[IDX_PIDL];
 
+     int mod = (service_mask & ((uint32_t) 0x1 << 27))?1:0;   // decide BSSS0 or BSSS1
+
      epicsTimeStamp _ts;
      _ts.nsec = buf[IDX_NSEC];
      _ts.secPastEpoch  = buf[IDX_SEC];
@@ -643,7 +704,7 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
      while(plist) {
          if(!(channel_mask & (uint32_t(0x1) << data_chn))) goto skip;   // skipping the channel, if the channel is not in the mask
 
-         for(unsigned int i = 0, svc_mask = 0x1; i < this->pService->getEdefNum(); i++, svc_mask <<= 1) {
+         for(unsigned int i = 0, svc_mask = 0x1; i < this->pService[mod]->getEdefNum(); i++, svc_mask <<= 1) {
              if(service_mask & svc_mask) {
                  setInteger64Param(plist->p_channelPID[i], pulse_id);  // pulse id update if service mask is set
 
@@ -783,7 +844,7 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
         consumedSize += sizeof(bldAxiStreamComplementaryHeader_t);
     } while (consumedSize < size);
 
-    for (uint32_t mask = 0xF & (header->serviceMask >> 24), it = 0; mask != 0x0; mask >>= 1, it++)
+    for (uint32_t mask = 0xF & (header->serviceMask), it = 0; mask != 0x0; mask >>= 1, it++)
     {
         if ( (mask & 0x1) != 0 )
         {
