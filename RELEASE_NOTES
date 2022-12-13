@@ -1,3 +1,19 @@
+
+R2.5.0-0.1   Dec 12, 2022   Kukhee Kim
+             - Integration test ready version
+               . remove rate control for BSSS
+               . adjust number of EDEFs
+                    . 29 user Edefs
+                    . 15 system Edefs
+                    .  4 fault buffers
+               . tweaking for new BSSS
+                    . 2 BSSS mouldes - BSSS0 covers 28 Edefs, BSSS1 covers 16 Edefs
+               . modify listener to fit with the new srvice mask definition
+                     . MSB 4 bits of the service mask: 0 -BSSS0, 1 - BSSS1, 2 - BLD, 8 - BSAS
+
+R2.5.0-0.0   Dec 6, 2022     Kukhee
+            - anchor for BSSS upgrade work
+
 R2.5.0-BSSS_BSA_upgrade
             Dec 5, 2002      Kukhee Kim
             - branch out from R2.5.0 to implement new requirements for BSSS and BSA
