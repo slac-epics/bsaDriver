@@ -44,19 +44,19 @@ file bsssScal.db {
 #
 # system Edefs
 #
-            {  "29",  "SCH1H", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
-            {  "30",  "SCHTH", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
-            {  "31",  "SCHHH", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
-            {  "32",  "SCS1H", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
-            {  "33",  "SCSTH", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
-            {  "34",  "SCSHH", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
-            {  "35",  "RSRV0", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
-            {  "36",  "RSRV1", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
-            {  "37",  "RSRV2", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
-            {  "38",  "RSRV3", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
-            {  "39",  "RSRV4", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
-            {  "40",  "RSRV5", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
-            {  "41",  "RSRV6", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
-            {  "42",  "RSRV7", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
-            {  "43",  "RSRV8", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "29",  "SCD1H", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "30",  "SCDTH", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "31",  "SCDHH", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "32",  "SCL1H", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "33",  "SCLTH", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "34",  "SCLHH", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "35",  "SCB1H", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "36",  "SCBTH", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "37",  "SCBHH", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "38",  "SCH1H", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "39",  "SCHTH", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "40",  "SCHHH", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "41",  "SCS1H", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "42",  "SCSTH", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
+            {  "43",  "SCSHH", "$(DEV)", "$(EGU\=)", "$(ADEL\=)", "$(PREC\=)", "$(HOPR\=)", "$(LOPR\=)", "$(DESC\=\$\(SECN\))" }
 }

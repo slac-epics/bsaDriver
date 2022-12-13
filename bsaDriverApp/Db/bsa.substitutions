@@ -42,22 +42,23 @@ file bsaHst.db {
 #
 # system Edefs
 #
-            {  "50",  "SCH1H", "\$\(BSA_LENGTH=20000\)"  }
-            {  "51",  "SCHTH", "\$\(BSA_LENGTH=20000\)"  }
-            {  "52",  "SCHHH", "\$\(BSA_LENGTH=20000\)"  }
-            {  "53",  "SCS1H", "\$\(BSA_LENGTH=20000\)"  }
-            {  "54",  "SCSTH", "\$\(BSA_LENGTH=20000\)"  }
-            {  "55",  "SCSHH", "\$\(BSA_LENGTH=20000\)"  }
-            {  "56",  "RSRV0", "\$\(BSA_LENGTH=20000\)"  }
-            {  "57",  "RSRV1", "\$\(BSA_LENGTH=20000\)"  }
-            {  "58",  "RSRV2", "\$\(BSA_LENGTH=20000\)"  }
-            {  "59",  "RSRV3", "\$\(BSA_LENGTH=20000\)"  }
-            {  "60",  "RSRV4", "\$\(BSA_LENGTH=20000\)"  }
+            {  "50",  "SCD1H", "\$\(BSA_LENGTH=20000\)"  }
 #
-            {  "61",  "RSRV5", "\$\(BSA_LENGTH=20000\)"  }
-            {  "62",  "RSRV6", "\$\(BSA_LENGTH=20000\)"  }
-            {  "63",  "RSRV7", "\$\(BSA_LENGTH=20000\)"  }
-            {  "64",  "RSRV8", "\$\(BSA_LENGTH=20000\)"  }
+            {  "51",  "SCDTH", "\$\(BSA_LENGTH=20000\)"  }
+            {  "52",  "SCDHH", "\$\(BSA_LENGTH=20000\)"  }
+            {  "53",  "SCL1H", "\$\(BSA_LENGTH=20000\)"  }
+            {  "54",  "SCLTH", "\$\(BSA_LENGTH=20000\)"  }
+            {  "55",  "SCLHH", "\$\(BSA_LENGTH=20000\)"  }
+            {  "56",  "SCB1H", "\$\(BSA_LENGTH=20000\)"  }
+            {  "57",  "SCBTH", "\$\(BSA_LENGTH=20000\)"  }
+            {  "58",  "SCBHH", "\$\(BSA_LENGTH=20000\)"  }
+            {  "59",  "SCH1H", "\$\(BSA_LENGTH=20000\)"  }
+            {  "60",  "SCHTH", "\$\(BSA_LENGTH=20000\)"  }
+#
+            {  "61",  "SCHHH", "\$\(BSA_LENGTH=20000\)"  }
+            {  "62",  "SCS1H", "\$\(BSA_LENGTH=20000\)"  }
+            {  "63",  "SCSTH", "\$\(BSA_LENGTH=20000\)"  }
+            {  "64",  "SCSHH", "\$\(BSA_LENGTH=20000\)"  }
 #
 # fault buffer
 #
