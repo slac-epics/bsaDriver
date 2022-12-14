@@ -250,8 +250,8 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
             this->numMod = NUM_BLD_MOD;
             break;
         case bsss:
-            sprintf(reg_path0, "%s%s", reg_path, "[0]");
-            sprintf(reg_path1, "%s%s", reg_path, "[1]");
+            sprintf(reg_path0, "%s%s", reg_path, "0");
+            sprintf(reg_path1, "%s%s", reg_path, "1");
             reg0_ = root_->findByName(reg_path0);
             reg1_ = root_->findByName(reg_path1);
             if(!reg0_ || !reg1_) {
