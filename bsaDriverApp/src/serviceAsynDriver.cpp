@@ -409,7 +409,7 @@ void serviceAsynDriver::SetupAsynParams(serviceType_t type)
             break;
     }
 
-    for(int mod = 0; this->numMod; mod++) {  // both BSSS and BLD, BSSS has 2 instances, BLD has 1 instances 
+    for(int mod = 0; mod < this->numMod; mod++) {  // both BSSS and BLD, BSSS has 2 instances, BLD has 1 instances 
         // Service Status Monitoring
         sprintf(param_name, CURRPACKETSIZE_STR, prefix2[mod]);   createParam(param_name, asynParamInt32, &p_currPacketSize[mod]);
         sprintf(param_name, CURRPACKETSTATUS_STR, prefix2[mod]); createParam(param_name, asynParamInt32, &p_currPacketStatus[mod]);
@@ -542,7 +542,7 @@ void serviceAsynDriver::MonitorStatus(void)
 {
     uint32_t v;
 
-    for(int i = 0; i < numMod; i++) {
+    for(int i = 0; i < this->numMod; i++) {
         pService[i]->getCurrPacketSize(&v);    setIntegerParam(p_currPacketSize[i], (epicsInt32) v);
         pService[i]->getCurrPacketState(&v);   setIntegerParam(p_currPacketStatus[i], (epicsInt32) v);
         pService[i]->getCurrPulseIdL(&v);      setIntegerParam(p_currPulseIdL[i], (epicsInt32) v);
