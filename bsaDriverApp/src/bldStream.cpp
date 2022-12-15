@@ -147,7 +147,8 @@ typedef struct {
     ELLLIST         *free_list;
 
     void            *p_last_buff;
-    void            *p_last_bsss;
+    void            *p_last_bsss0;
+    void            *p_last_bsss1;
     void            *p_last_bsas;
     void            *p_last_bld;
 
@@ -230,7 +231,8 @@ static pDrvList_t *get_drvNode(const char *named_root)
         p->time_bsas = {}; p->time_bsas.min = 0xffffffff;
 
         p->p_last_buff   = NULL;
-        p->p_last_bsss   = NULL;
+        p->p_last_bsss0  = NULL;
+        p->p_last_bsss1  = NULL;
         p->p_last_bsas   = NULL;
         p->p_last_bld    = NULL;
         p->free_list = (ELLLIST*) mallocMustSucceed(sizeof(ELLLIST), "bldStream drivr: get_drvNode()");
@@ -296,7 +298,8 @@ static void listener(pDrvList_t *p)
         else if(pu32[IDX_SERVICE_MASK]>>SERVICE_BITS <= SERVICE_BSSS) { /* bsss, 0: Bsss0, 1: Bsss1 */
             MFTB(p->time_bsss.start);
             p->bsss_count++;
-            p->p_last_bsss = (void *) np;
+            if(pu32[IDX_SERVICE_MASK]>>SERVICE_BITS) p->p_last_bsss1 = (void *) np;
+            else                                     p->p_last_bsss0 = (void *) np;
             np->type = bsss_packet;
             if(p->bsss_callback) (p->bsss_callback)(p->pUsrBsss, (void *) np->buff, np->size);
             MFTB(p->time_bsss.end);
@@ -373,6 +376,7 @@ static void show_bsss_buffer(void *p, unsigned size)
 {
     uint32_t *buff = (uint32_t *) p;
     uint64_t *psv  = (uint64_t *) (buff + (size/4) -2);
+    int n;
 
     if (!((buff[IDX_SERVICE_MASK] >> SERVICE_BITS) <= SERVICE_BSSS) )
     {
@@ -382,8 +386,11 @@ static void show_bsss_buffer(void *p, unsigned size)
         return;
     }   
 
+    if(buff[IDX_SERVICE_MASK]>>SERVICE_BITS) n = 1;
+    else                                     n = 0;
+
     printf("\t\t --------------------------------\n");
-    printf("\t\t BSSS Packet: size(%d)\n", size);
+    printf("\t\t BSSS%d Packet: size(%d)\n", n, size);
     printf("\t\t --------------------------------\n");
     printf("\t\t timestamp, nsec  : %8x\n", *(buff++));
     printf("\t\t timestamp, sec   : %8x\n", *(buff++));
@@ -598,8 +605,11 @@ static int bldStreamDriverReport(int interest)
         if(interest && p->p_last_buff) {
             pBuff_t *np;
 
-            np = (pBuff_t *) p->p_last_bsss;
-            if(np) show_bsss_buffer(np->buff, np->size);
+            np = (pBuff_t *) p->p_last_bsss0;
+            if(np) show_bsss_buffer(np->buff, np->size);   // report for bsss0 packet
+
+            np = (pBuff_t *) p->p_last_bsss1;
+            if(np) show_bsss_buffer(np->buff, np->size);   // report for bsss1 packet
 
             np = (pBuff_t *) p->p_last_bsas;
             if(np) show_bsas_buffer(np->buff, np->size);
