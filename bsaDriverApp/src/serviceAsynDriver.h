@@ -32,6 +32,7 @@
 #define NUM_BLD_MOD          1   // number of BLD module
 #define NUM_BSSS_MOD         2   // number of BSSS modules
 
+#define BSSS1_BIT            28   // indicator for BSSS1
 #define BSSS0_NUM_EDEF       28   // BSSS0 module covers 28 EDEFs
 #define BSSS1_NUM_EDEF       16   // BSSS1 module covers 16 EDEFs
 

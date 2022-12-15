@@ -690,7 +690,7 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
      uint64_t sevr_mask    = *(uint64_t*) (buf+IDX_SEVR_MASK(size));
      uint64_t pulse_id     = ((uint64_t)(buf[IDX_PIDU])) << 32 | buf[IDX_PIDL];
 
-     int mod = (service_mask & ((uint32_t) 0x1 << 27))?1:0;   // decide BSSS0 or BSSS1
+     int mod = (service_mask & ((uint32_t) 0x1 << BSSS1_BIT))?1:0;   // decide BSSS0 or BSSS1
 
      epicsTimeStamp _ts;
      _ts.nsec = buf[IDX_NSEC];
@@ -708,7 +708,7 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
              if(service_mask & svc_mask) {
                  setInteger64Param(plist->p_channelPID[i], pulse_id);  // pulse id update if service mask is set
 
-                 setDoubleParam(plist->p_channel[i], INFINITY);   // make asyn PV update even posting the same value with previous
+                 setDoubleParam(plist->p_channel[i+mod*BSSS0_NUM_EDEF], INFINITY);   // make asyn PV update even posting the same value with previous
 
                  if(int((sevr_mask >> (data_chn*2)) & 0x3) <= GetChannelSevr(data_chn) ) {  // data update for valid mask
                      switch(plist->type){
@@ -729,7 +729,7 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
                  } else val = NAN;  // put NAN for invalid mask
 
                  if(!isnan(val)) val = val * (*plist->pslope) + (*plist->poffset);
-                 setDoubleParam(plist->p_channel[i], val);
+                 setDoubleParam(plist->p_channel[i+mod*BSSS0_NUM_EDEF], val);
              }
          }
          index++;
