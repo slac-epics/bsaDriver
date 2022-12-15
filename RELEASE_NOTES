@@ -1,5 +1,5 @@
-
-R2.5.0-0.1   Dec 12, 2022   Kukhee Kim
+R2.5.0-0.1   Dec 15, 2022   Kukhee Kim
+             - build against timing/bsa R2.2.0-0.1
              - Integration test ready version
                . remove rate control for BSSS
                . adjust number of EDEFs
