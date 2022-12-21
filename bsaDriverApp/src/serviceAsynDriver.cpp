@@ -459,6 +459,8 @@ void serviceAsynDriver::SetupAsynParams(serviceType_t type)
     /* PVs only existant in BSSS driver */
     if (type == bsss)
     {
+        sprintf(param_name, RATELIMIT_PM_STR, prefix);  createParam(param_name, asynParamInt32, &p_rateLimitBsss);
+
         // set up dyanamic paramters
         for(unsigned int i = 0; i < (this->pService[0]->getEdefNum() + this->pService[1]->getEdefNum()); i++) {
             channelList_t *p  = (channelList_t *) ellFirst(this->pServiceEllList);

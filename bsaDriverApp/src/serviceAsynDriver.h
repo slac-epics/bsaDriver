@@ -244,7 +244,7 @@ class serviceAsynDriver: asynPortDriver {
 #define DESTMODE_STR          "%s_destMode_%d"
 #define DESTMASK_STR          "%s_destMask_%d"
 #define RATELIMIT_STR         "%s_rateLimit_%d"
-#define RATELIMIT_PM_STR      "%s_rateLimit"        // use for BSSS rate limit, per module
+#define RATELIMIT_PM_STR      "%s_rateLimit"        // use for BSSS rate limit, share a single PV for two modules
 
 #define BSSSPV_STR            "%s_bsss_%d"
 #define BSSSPID_STR           "%s_bsssPID_%d"
