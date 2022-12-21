@@ -3,6 +3,11 @@ file serviceControl.db {
             { "$(DEV)",   "BSSS" }
 }
 
+file bsssRateLimit.db {
+    pattern {   DEVICE,   SERVICE }
+            { "$(DEV)" ,  "BSSS"}
+}
+
 file serviceStatus.db {
     pattern {   DEVICE,  SERVICE }
             { "$(DEV)",  "BSSS0" }
