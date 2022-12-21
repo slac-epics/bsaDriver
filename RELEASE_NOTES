@@ -1,3 +1,6 @@
+R2.5.0-0.2   Dec 21, 2022   Kukhee Kim
+             - implement rate limit control PV for BSSS, a single PV conrols both BSSS0 and BSSS1
+
 R2.5.0-0.1   Dec 15, 2022   Kukhee Kim
              - build against timing/bsa R2.2.0-0.1
              - Integration test ready version
