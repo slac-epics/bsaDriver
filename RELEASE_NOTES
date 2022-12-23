@@ -1,3 +1,6 @@
+R2.5.0-0.3   Dec 23, 2022   Kukhee Kim
+             - fix BSA / Fault Buffer Edef boundary for new BSSS/BSA implementation
+
 R2.5.0-0.2   Dec 21, 2022   Kukhee Kim
              - implement rate limit control PV for BSSS, a single PV conrols both BSSS0 and BSSS1
 
