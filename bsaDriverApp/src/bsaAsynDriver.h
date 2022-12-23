@@ -21,14 +21,14 @@
 #include <Processor.hh>
 
 
-#define  START_BSA_ARRAY   21
-#define  MAX_BSA_ARRAY     64
+#define  START_BSA_ARRAY   21             // making index for database temlate, starting 21
+#define  MAX_BSA_ARRAY     48             // internal index, start from 0
 #define  MAX_BSA_LENGTH    20000
 
-#define  FLTB_ARRAY0       60
-#define  FLTB_ARRAY1       61
-#define  FLTB_ARRAY2       62
-#define  FLTB_ARRAY3       63
+#define  FLTB_ARRAY0       44             // internal index, database template should have index n + 21 = 65
+#define  FLTB_ARRAY1       45             // internal index, database template should have index n + 21 = 66
+#define  FLTB_ARRAY2       46             // internal index, database template should have index n + 21 = 67
+#define  FLTB_ARRAY3       47             // internal index, database template should have index n + 21 = 68
 #define  MAX_FLTB_LENGTH   1000000
 
 #define  INT32STRING     "int32"
