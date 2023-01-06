@@ -596,7 +596,7 @@ int bsaAsynDriver::BsaRetreivePoll(void)
             try {
               pending = pProcessor->pending();
             } catch(...) {
-                printf("Bsa POll: error detecting pProcessor->pending()\n");
+                printf("Bsa Poll: error detecting pProcessor->pending()\n");
             }
         else  return 0;
 //        } else {
