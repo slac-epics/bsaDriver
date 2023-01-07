@@ -110,6 +110,7 @@ typedef struct {
     unsigned        bld_count;
     unsigned        bsss_count;
     unsigned        bsas_count;
+    unsigned        else_count;
 
     struct {
         uint32_t start;
@@ -225,6 +226,7 @@ static pDrvList_t *get_drvNode(const char *named_root)
         p->bld_count  = 0;
         p->bsss_count = 0;
         p->bsas_count = 0;
+        p->else_count = 0;
 
         p->time_bld = {};  p->time_bld.min  = 0xffffffff;
         p->time_bsss = {}; p->time_bsss.min = 0xffffffff;
@@ -313,7 +315,7 @@ static void listener(pDrvList_t *p)
             if(p->bld_callback) (p->bld_callback)(p->pUsrBld, (void *) np->buff, np->size);
             MFTB(p->time_bld.end);
             calc_minmax(p->time_bld.start, p->time_bld.end, p->time_bld.min, p->time_bld.max);
-        }
+        } else p->else_count++;  // something wrong, packet could not be specified
         }  // if(listener_ready)
         p->read_count++;
         ellAdd(p->free_list, &np->node);
@@ -585,6 +587,7 @@ static int bldStreamDriverReport(int interest)
         printf("\t  bld count  : %u\n", p->bld_count);
         printf("\t  bsss count : %u\n", p->bsss_count);
         printf("\t  bsas count : %u\n", p->bsas_count);
+        printf("\t  else count : %u\n", p->else_count);
         printf("\t  bld callback : %p\n", p->bld_callback);
         printf("\t  bld_usr      : %p\n", p->pUsrBld);
         printf("\t  bsss_callback: %p\n", p->bsss_callback);
