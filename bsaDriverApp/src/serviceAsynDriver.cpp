@@ -701,16 +701,17 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
 
 
      channelList_t *plist = (channelList_t *) ellFirst(pServiceEllList);
-     int data_chn = 0;
-     int index = 0;
+     int data_chn = 0;     // data channel number
+     int index = 0;        // indicate the data location
      while(plist) {
          if(!(channel_mask & (uint32_t(0x1) << data_chn))) goto skip;   // skipping the channel, if the channel is not in the mask
 
          for(unsigned int i = 0, svc_mask = 0x1; i < this->pService[mod]->getEdefNum(); i++, svc_mask <<= 1) {
+             int edef = i + mod * BSSS0_NUM_EDEF;    // calculate edef number
              if(service_mask & svc_mask) {
-                 setInteger64Param(plist->p_channelPID[i], pulse_id);  // pulse id update if service mask is set
+                 setInteger64Param(plist->p_channelPID[edef], pulse_id);  // pulse id update if service mask is set
 
-                 setDoubleParam(plist->p_channel[i+mod*BSSS0_NUM_EDEF], INFINITY);   // make asyn PV update even posting the same value with previous
+                 setDoubleParam(plist->p_channel[edef], INFINITY);   // make asyn PV update even posting the same value with previous
 
                  if(int((sevr_mask >> (data_chn*2)) & 0x3) <= GetChannelSevr(data_chn) ) {  // data update for valid mask
                      switch(plist->type){
@@ -731,7 +732,7 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
                  } else val = NAN;  // put NAN for invalid mask
 
                  if(!isnan(val)) val = val * (*plist->pslope) + (*plist->poffset);
-                 setDoubleParam(plist->p_channel[i+mod*BSSS0_NUM_EDEF], val);
+                 setDoubleParam(plist->p_channel[edef], val);
              }
          }
          index++;
