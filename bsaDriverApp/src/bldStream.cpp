@@ -728,6 +728,7 @@ static int bldStreamDriverReport(int interest)
 
         for(int i = 0; i < MAX_BLDQ; i++) {
             printf("\t  bldQueue[%d]\n", i);
+            printf("\t\t name of thread: %s\n", p->bldQ[i].name);
             printf("\t\t pending count : %u\n", p->bldQ[i].pend_cnt);
             printf("\t\t water mark    : %u\n", p->bldQ[i].water_mark);
             printf("\t\t fail  count   : %u\n", p->bldQ[i].fail);
@@ -736,6 +737,7 @@ static int bldStreamDriverReport(int interest)
 
         for(int i = 0; i < MAX_BSSSQ; i++) {  
             printf("\t  bsssQueue[%d]\n", i);
+            printf("\t\t name of thread: %s\n", p->bsssQ[i].name);
             printf("\t\t pending count : %u\n", p->bsssQ[i].pend_cnt);
             printf("\t\t water mark    : %u\n", p->bsssQ[i].water_mark);
             printf("\t\t fail  count   : %u\n", p->bsssQ[i].fail);
@@ -744,14 +746,37 @@ static int bldStreamDriverReport(int interest)
 
         for (int i = 0; i < MAX_BSASQ; i++) { 
             printf("\t  bsasQueue[%d]\n", i);
+            printf("\t\t name of thread: %s\n", p->bsasQ[i].name);
             printf("\t\t pending count : %u\n", p->bsasQ[i].pend_cnt);
             printf("\t\t water mark    : %u\n", p->bsasQ[i].water_mark);
             printf("\t\t fail  count   : %u\n", p->bsasQ[i].fail);
             printf("\t\t overrun count : %u\n", p->bsasQ[i].overrun);
         }
 
-        if(interest > 1) {  // reset min and max for the processing time mesasurement
+        if(interest > 10) {  // reset min and max for the processing time mesasurement
+            for(int i = 0; i < MAX_BLDQ; i++) {
+                p->bldQ[i].water_mark = 0;
+                p->bldQ[i].fail       = 0;
+                p->bldQ[i].overrun    = 0;
+            }
 
+            for(int i = 0; i < MAX_BSSSQ; i++) {
+                p->bsssQ[i].water_mark = 0;
+                p->bsssQ[i].fail       = 0;
+                p->bsssQ[i].overrun    = 0;
+            }
+
+            for(int i = 0; i < MAX_BSASQ; i++) {
+                p->bsasQ[i].water_mark = 0;
+                p->bsasQ[i].fail       = 0;
+                p->bsasQ[i].overrun    = 0;
+            }
+
+            p->read_count  = 0;
+            p->bld_count   = 0;
+            p->bsss_count  = 0;
+            p->bsas_count  = 0;
+            p->else_count  = 0;
         }
 
         if(interest && p->p_last_buff) {
