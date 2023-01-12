@@ -20,12 +20,16 @@
 #include <epicsTimer.h>
 #include <epicsMutex.h>
 #include <epicsEvent.h>
+#include <epicsMessageQueue.h>
 #include <epicsPrint.h>
 #include <ellLib.h>
 #include <iocsh.h>
 
 #include <drvSup.h>
 #include <epicsExport.h>
+
+#include <epicsTime.h>
+#include <epicsString.h>
 
 #include <yamlLoader.h>
 #include "bldStream.h"
@@ -34,8 +38,8 @@
 #define  BSSS_PACKET 2
 #define  BSAS_PACKET 3
 
-#define  MAX_FREE_LIST 64
-#define  MAX_BUFF_SIZE 9000
+#define  MAX_FREE_LIST 1024
+#define  MAX_BUFF_SIZE 2048
 
 #define  IDX_SERVICE_MASK     5
 #define  BSSS_SERVICE_MASK    0x0fffffff
@@ -105,6 +109,7 @@ typedef struct {
                                of the linked list. (EPICS ellLib.h) */
     char            *named_root; /**< String representing the named root. */
     char            *listener_name;
+
     unsigned        read_size;
     unsigned        read_count;
     unsigned        bld_count;
@@ -113,12 +118,21 @@ typedef struct {
     unsigned        else_count;
 
     struct {
+        char    *name;
+        unsigned pend_cnt;
+        unsigned water_mark;
+        unsigned overrun;
+        unsigned fail;
+    } bsssQ, bldQ, bsasQ;
+
+    struct {
         uint32_t start;
         uint32_t end;
         uint32_t min;
         uint32_t max;
     } time_bld, time_bsss, time_bsas;
 
+    epicsMessageQueueId   bsasQueue;
     void (*bsas_callback)(void *, void *, unsigned);
     void *pUsrBsas;
 
@@ -127,6 +141,7 @@ typedef struct {
      *
      * @{
      */
+    epicsMessageQueueId   bsssQueue;
     void (*bsss_callback)(void *, 
                           void *, 
                           unsigned); /**< Pointer to function that will be called
@@ -135,6 +150,7 @@ typedef struct {
     void *pUsrBsss; /**< General data that will be available to the function
                         called back when a BSSS packet arrives. Data can be
                         of any type. */
+    epicsMessageQueueId  bldQueue;
     void (*bld_callback)(void *, 
                          void *, 
                          unsigned); /**< Pointer to function that will be called
@@ -159,6 +175,7 @@ typedef struct {
     ELLNODE         node;
     packet_type_t   type;
     unsigned        size;
+    pDrvList_t      *p;
     char            buff[MAX_BUFF_SIZE];
 } pBuff_t;
 
@@ -216,10 +233,16 @@ static pDrvList_t *get_drvNode(const char *named_root)
         p = (pDrvList_t *) mallocMustSucceed(sizeof(pDrvList_t), "bldStream driver: get_drvNode()");
         p->named_root = epicsStrDup(named_root);
         p->listener_name = NULL;
+        p->bsssQ         = { NULL, 0, 0, 0, 0};
+        p->bldQ          = { NULL, 0, 0, 0, 0};
+        p->bsasQ         = { NULL, 0, 0, 0, 0};
+        p->bsssQueue     = 0;
         p->bsss_callback = NULL;
         p->pUsrBsss      = NULL;
+        p->bldQueue      = 0;
         p->bld_callback  = NULL;
         p->pUsrBld       = NULL;
+        p->bsasQueue     = 0;
         p->bsas_callback = NULL;
         p->pUsrBsas      = NULL;
         p->read_count = 0;
@@ -283,6 +306,7 @@ static void listener(pDrvList_t *p)
         ellDelete(p->free_list, &np->node);
         p->read_size = bld_stream->read((uint8_t*)(np->buff), MAX_BUFF_SIZE, CTimeout());
         np->size = p->read_size;
+        np->p    = p;
         p->p_last_buff = (void*) np;
 
         uint32_t  *pu32 = (uint32_t *) np->buff;
@@ -293,9 +317,11 @@ static void listener(pDrvList_t *p)
             p->bsas_count++;
             p->p_last_bsas = (void *) np;
             np->type = bsas_packet;
-            if(p->bsas_callback) (p->bsas_callback)(p->pUsrBsas, (void *) np->buff, np->size);
-            MFTB(p->time_bsas.end);
-            calc_minmax(p->time_bsas.start, p->time_bsas.end, p->time_bsas.min, p->time_bsas.max);
+            if(p->bsasQueue) {
+                epicsMessageQueueSend(p->bsasQueue, (void *) &np, sizeof(np));
+                p->bsasQ.pend_cnt = epicsMessageQueuePending(p->bsasQueue);
+                if(p->bsasQ.pend_cnt > p->bsasQ.water_mark) p->bsasQ.water_mark = p->bsasQ.pend_cnt;
+            }
         }
         else if(pu32[IDX_SERVICE_MASK]>>SERVICE_BITS <= SERVICE_BSSS) { /* bsss, 0: Bsss0, 1: Bsss1 */
             MFTB(p->time_bsss.start);
@@ -303,35 +329,146 @@ static void listener(pDrvList_t *p)
             if(pu32[IDX_SERVICE_MASK]>>SERVICE_BITS) p->p_last_bsss1 = (void *) np;
             else                                     p->p_last_bsss0 = (void *) np;
             np->type = bsss_packet;
-            if(p->bsss_callback) (p->bsss_callback)(p->pUsrBsss, (void *) np->buff, np->size);
-            MFTB(p->time_bsss.end);
-            calc_minmax(p->time_bsss.start, p->time_bsss.end, p->time_bsss.min, p->time_bsss.max);
+            if(p->bsssQueue) {
+                epicsMessageQueueSend(p->bsssQueue, (void *) &np, sizeof(np));
+                p->bsssQ.pend_cnt = epicsMessageQueuePending(p->bsssQueue);
+                if(p->bsssQ.pend_cnt > p->bsssQ.water_mark) p->bsssQ.water_mark = p->bsssQ.pend_cnt;
+            }
         }
         else if(pu32[IDX_SERVICE_MASK]>>SERVICE_BITS == SERVICE_BLD) { /* bld */
             MFTB(p->time_bld.start);
             p->bld_count++;
             p->p_last_bld = (void *) np;
             np->type = bld_packet;
-            if(p->bld_callback) (p->bld_callback)(p->pUsrBld, (void *) np->buff, np->size);
-            MFTB(p->time_bld.end);
-            calc_minmax(p->time_bld.start, p->time_bld.end, p->time_bld.min, p->time_bld.max);
+            if(p->bldQueue) {
+                epicsMessageQueueSend(p->bldQueue, (void *) &np, sizeof(np));
+                p->bldQ.pend_cnt = epicsMessageQueuePending(p->bldQueue);
+                if(p->bldQ.pend_cnt > p->bldQ.water_mark) p->bldQ.water_mark = p->bldQ.pend_cnt;
+            }
         } else p->else_count++;  // something wrong, packet could not be specified
         }  // if(listener_ready)
+
+        /* {
+            static uint32_t cnt = 0, prev_bsas =0, prev_bsss=0, c_bsas=0, c_bsss=0;
+            uint32_t *buf = (uint32_t *) np->buff;
+            char timeText[80];
+            epicsTimeStamp ts;
+            epicsTimeGetCurrent(&ts);
+            epicsTimeToStrftime(timeText, 80, "%Y-%m-%d %H:%M:%S.%06f" ,&ts);
+            
+            printf("%s\t%u %d %u", timeText, ++cnt, p->read_size, *(buf+2));
+            if(pu32[IDX_SERVICE_MASK]>>SERVICE_BITS == SERVICE_BSAS) {
+                c_bsas = *(buf+2);
+                if(prev_bsas != c_bsas) printf("\t %u\n", c_bsas - prev_bsas);
+                else                    printf("\n");
+                prev_bsas = c_bsas;
+            }
+            else if(pu32[IDX_SERVICE_MASK]>>SERVICE_BITS <= SERVICE_BSSS) {
+                c_bsss = *(buf+2);
+                if(prev_bsss != c_bsss) printf("\t\t %u\n", c_bsss - prev_bsss);
+                prev_bsss = c_bsss;
+            }
+        } */
         p->read_count++;
         ellAdd(p->free_list, &np->node);
     }
 }
 
+static void bsssQTask(void *usrPvt)
+{
+    pDrvList_t *p = (pDrvList_t *) usrPvt;
+    pBuff_t   *np;
+
+    while(true) {
+        int msg = epicsMessageQueueReceive(p->bsssQueue, (void *) &np, sizeof(np));
+        if(msg != sizeof(np)) {p->bsssQ.fail++; continue;}
+
+        if(np->type == bsss_packet) {
+            MFTB(p->time_bsss.start);
+            (p->bsss_callback)(p->pUsrBsss, (void *) np->buff, np->size);
+            MFTB(p->time_bsss.end);
+            calc_minmax(p->time_bsss.start, p->time_bsss.end, p->time_bsss.min, p->time_bsss.max);
+        } else p->bsssQ.overrun++;
+    }
+}
+
+static void bldQTask(void *usrPvt)
+{
+    pDrvList_t *p = (pDrvList_t *) usrPvt;
+    pBuff_t    *np;
+
+    while(true) {
+        int msg = epicsMessageQueueReceive(p->bldQueue, (void *) &np, sizeof(np));
+        if(msg != sizeof(np)) {p->bldQ.fail++; continue;}
+
+        if(np->type == bld_packet) {
+            MFTB(p->time_bld.start);
+            (p->bld_callback)(p->pUsrBld, (void *) np->buff, np->size);
+            MFTB(p->time_bld.end);
+            calc_minmax(p->time_bld.start, p->time_bld.end, p->time_bld.min, p->time_bld.max);
+        } else p->bldQ.overrun++;
+    }
+}
+
+static void bsasQTask(void *usrPvt)
+{
+    pDrvList_t *p = (pDrvList_t *) usrPvt;
+    pBuff_t    *np;
+    while(true) {
+        int msg = epicsMessageQueueReceive(p->bsasQueue, (void *) &np, sizeof(np));
+        if(msg != sizeof(np)) {p->bsasQ.fail++; continue;}
+
+        if(np->type == bsas_packet) {
+            MFTB(p->time_bsas.start);
+            (p->bsas_callback)(p->pUsrBsas, (void *) np->buff, np->size);
+            MFTB(p->time_bsas.end);
+            calc_minmax(p->time_bsas.start, p->time_bsas.end, p->time_bsas.min, p->time_bsas.max);
+        } else p->bsasQ.overrun++;
+    }
+}
 
 static void createListener(pDrvList_t *p) {
     char name[80];
     sprintf(name, "bldStrm_%s", p->named_root);
     p->listener_name = epicsStrDup(name);
 
-    epicsThreadCreate(name, epicsThreadPriorityMedium,
+    epicsThreadCreate(name, epicsThreadPriorityHigh-10,
                       epicsThreadGetStackSize(epicsThreadStackMedium),
                       (EPICSTHREADFUNC) listener, (void*) p);
 
+}
+
+static void createBsssQTask(pDrvList_t *p) {
+    char name[80];
+    sprintf(name, "bsssQ_%s", p->named_root);
+    p->bsssQ.name = epicsStrDup(name);
+    p->bsssQueue = epicsMessageQueueCreate(MAX_FREE_LIST, sizeof(pBuff_t *));
+
+    epicsThreadCreate(name, epicsThreadPriorityMedium,
+                      epicsThreadGetStackSize(epicsThreadStackMedium),
+                      (EPICSTHREADFUNC) bsssQTask, (void *) p); 
+}
+
+static void createBldQTask(pDrvList_t *p) {
+    char name[80];
+    sprintf(name, "bldQ_%s", p->named_root);
+    p->bldQ.name = epicsStrDup(name);
+    p->bldQueue = epicsMessageQueueCreate(MAX_FREE_LIST, sizeof(pBuff_t *));
+
+    epicsThreadCreate(name, epicsThreadPriorityMedium,
+                      epicsThreadGetStackSize(epicsThreadStackMedium),
+                      (EPICSTHREADFUNC) bldQTask, (void *) p);
+}
+
+static void createBsasQTask(pDrvList_t *p) {
+    char name[80];
+    sprintf(name, "bsasQ_%s", p->named_root);
+    p->bsasQ.name = epicsStrDup(name);
+    p->bsasQueue = epicsMessageQueueCreate(MAX_FREE_LIST , sizeof(pBuff_t *));
+
+    epicsThreadCreate(name, epicsThreadPriorityMedium,
+                      epicsThreadGetStackSize(epicsThreadStackMedium),
+                      (EPICSTHREADFUNC) bsasQTask, (void *) p);
 }
 
 
@@ -343,6 +480,7 @@ int registerBsssCallback(const char *named_root, void (*bsss_callback)(void*, vo
     p->pUsrBsss      = pUsrBsss;
 
    if(!p->listener_name) createListener(p);
+   if(!p->bsssQueue)     createBsssQTask(p);
 
 
     return 0;
@@ -356,7 +494,7 @@ int registerBldCallback(const char *named_root, void (*bld_callback)(void*, void
     p->pUsrBld      = pUsrBld;
 
    if(!p->listener_name) createListener(p);
-
+   if(!p->bldQueue)      createBldQTask(p);
 
 
     return 0;
@@ -369,7 +507,7 @@ int registerBsasCallback(const char *named_root, void (*bsas_callback)(void *, v
     p->pUsrBsas      = pUsrBsas;
 
     if(!p->listener_name) createListener(p);
-
+    if(!p->bsasQueue)     createBsasQTask(p);
     return 0;
 }
 
@@ -595,6 +733,21 @@ static int bldStreamDriverReport(int interest)
         printf("\t  bsas_callback: %p\n", p->bsas_callback);
         printf("\t  bsas_usr     : %p\n", p->pUsrBsas);
         printf("\t  free list    : %p\n", p->free_list);
+        printf("\t  bldQueue\n");
+        printf("\t\t pending count : %u\n", p->bldQ.pend_cnt);
+        printf("\t\t water mark    : %u\n", p->bldQ.water_mark);
+        printf("\t\t failt count   : %u\n", p->bldQ.fail);
+        printf("\t\t overrun count : %u\n", p->bldQ.overrun);
+        printf("\t  bsssQueue\n");
+        printf("\t\t pending count : %u\n", p->bsssQ.pend_cnt);
+        printf("\t\t water mark    : %u\n", p->bsssQ.water_mark);
+        printf("\t\t failt count   : %u\n", p->bsssQ.fail);
+        printf("\t\t overrun count : %u\n", p->bsssQ.overrun);
+        printf("\t  bsasQueue\n");
+        printf("\t\t pending count : %u\n", p->bsasQ.pend_cnt);
+        printf("\t\t water mark    : %u\n", p->bsasQ.water_mark);
+        printf("\t\t failt count   : %u\n", p->bsasQ.fail);
+        printf("\t\t overrun count : %u\n", p->bsasQ.overrun);
         printf("\t  bld  callback processing (usec): snapshot %8.3f, min %8.3f, max %8.3f\n",  calc_delay(p->time_bld.start,  p->time_bld.end), calc_delay(p->time_bld.min), calc_delay(p->time_bld.max));
         printf("\t  bsss callback processing (usec): snapshot %8.3f, min %8.3f, max %8.3f\n",  calc_delay(p->time_bsss.start, p->time_bsss.end), calc_delay(p->time_bsss.min), calc_delay(p->time_bsss.max));
         printf("\t  bsas callback processing (usec): snapshot %8.3f, min %8.3f, max %8.3f\n",  calc_delay(p->time_bsas.start, p->time_bsas.end), calc_delay(p->time_bsas.min), calc_delay(p->time_bsas.max));
