@@ -41,6 +41,11 @@
 #define  MAX_FREE_LIST 1024
 #define  MAX_BUFF_SIZE 2048
 
+// number of worker threads
+#define  MAX_BSSSQ            4
+#define  MAX_BLDQ             1      /* please, do not change it */
+#define  MAX_BSASQ            1      /* please, do not change it */
+
 #define  IDX_SERVICE_MASK     5
 #define  BSSS_SERVICE_MASK    0x0fffffff
 
@@ -119,20 +124,15 @@ typedef struct {
 
     struct {
         char    *name;
+        void     *q;
         unsigned pend_cnt;
         unsigned water_mark;
         unsigned overrun;
         unsigned fail;
-    } bsssQ, bldQ, bsasQ;
+    } bsssQ[MAX_BSSSQ], bldQ[MAX_BLDQ], bsasQ[MAX_BSASQ];
 
-    struct {
-        uint32_t start;
-        uint32_t end;
-        uint32_t min;
-        uint32_t max;
-    } time_bld, time_bsss, time_bsas;
 
-    epicsMessageQueueId   bsasQueue;
+    epicsMessageQueueId   bsasQueue[MAX_BSASQ];
     void (*bsas_callback)(void *, void *, unsigned);
     void *pUsrBsas;
 
@@ -141,7 +141,7 @@ typedef struct {
      *
      * @{
      */
-    epicsMessageQueueId   bsssQueue;
+    epicsMessageQueueId   bsssQueue[MAX_BSSSQ];
     void (*bsss_callback)(void *, 
                           void *, 
                           unsigned); /**< Pointer to function that will be called
@@ -150,7 +150,7 @@ typedef struct {
     void *pUsrBsss; /**< General data that will be available to the function
                         called back when a BSSS packet arrives. Data can be
                         of any type. */
-    epicsMessageQueueId  bldQueue;
+    epicsMessageQueueId  bldQueue[MAX_BLDQ];
     void (*bld_callback)(void *, 
                          void *, 
                          unsigned); /**< Pointer to function that will be called
@@ -178,6 +178,11 @@ typedef struct {
     pDrvList_t      *p;
     char            buff[MAX_BUFF_SIZE];
 } pBuff_t;
+
+typedef struct {
+    int             qid;
+    pDrvList_t      *p;
+} pUsrPvtQ_t;
 
 /** @brief Initializes pDrvEllList if needed.
  *
@@ -233,16 +238,16 @@ static pDrvList_t *get_drvNode(const char *named_root)
         p = (pDrvList_t *) mallocMustSucceed(sizeof(pDrvList_t), "bldStream driver: get_drvNode()");
         p->named_root = epicsStrDup(named_root);
         p->listener_name = NULL;
-        p->bsssQ         = { NULL, 0, 0, 0, 0};
-        p->bldQ          = { NULL, 0, 0, 0, 0};
-        p->bsasQ         = { NULL, 0, 0, 0, 0};
-        p->bsssQueue     = 0;
+        for(int i = 0; i < MAX_BSSSQ; i++) { p->bsssQ[i] = { NULL, 0, 0, 0, 0}; }
+        for(int i = 0; i < MAX_BLDQ;  i++) { p->bldQ[i]  = { NULL, 0, 0, 0, 0}; }
+        for(int i = 0; i < MAX_BSASQ; i++) { p->bsasQ[i] = { NULL, 0, 0, 0, 0}; }
+        for(int i = 0; i < MAX_BSSSQ; i++) { p->bsssQueue[i]     = 0; }
         p->bsss_callback = NULL;
         p->pUsrBsss      = NULL;
-        p->bldQueue      = 0;
+        for(int i = 0; i < MAX_BLDQ;  i++) { p->bldQueue[i]      = 0; }
         p->bld_callback  = NULL;
         p->pUsrBld       = NULL;
-        p->bsasQueue     = 0;
+        for(int i = 0; i < MAX_BSASQ; i++) { p->bsasQueue[i]     = 0; }
         p->bsas_callback = NULL;
         p->pUsrBsas      = NULL;
         p->read_count = 0;
@@ -251,9 +256,6 @@ static pDrvList_t *get_drvNode(const char *named_root)
         p->bsas_count = 0;
         p->else_count = 0;
 
-        p->time_bld = {};  p->time_bld.min  = 0xffffffff;
-        p->time_bsss = {}; p->time_bsss.min = 0xffffffff;
-        p->time_bsas = {}; p->time_bsas.min = 0xffffffff;
 
         p->p_last_buff   = NULL;
         p->p_last_bsss0  = NULL;
@@ -275,26 +277,6 @@ static pDrvList_t *get_drvNode(const char *named_root)
     return p;
 }
 
-static double calc_delay(uint32_t start, uint32_t end)
-{
-    if(end>start) return (double(end) - double(start))/double(ticks_in_sec) * 1.E+6;
-    else          return 0.;
-}
-
-static double calc_delay(uint32_t diff)
-{
-    if(diff == 0 || diff ==  0xffffffff) return 0.;
-    else return double(diff) / double(ticks_in_sec) * 1.E+6;
-}
-
-__inline__ static void calc_minmax(uint32_t &start, uint32_t &end, uint32_t &min, uint32_t &max)
-{
-    if(end>start) {
-        uint32_t diff = end - start;
-        if(diff > max) max = diff;
-        if(diff < min) min = diff;
-    }
-}
 
 static void listener(pDrvList_t *p)
 {
@@ -310,65 +292,42 @@ static void listener(pDrvList_t *p)
         p->p_last_buff = (void*) np;
 
         uint32_t  *pu32 = (uint32_t *) np->buff;
+        int qid;
 
         if(listener_ready) {
         if(pu32[IDX_SERVICE_MASK]>>SERVICE_BITS == SERVICE_BSAS)  {   /* bsas */
-            MFTB(p->time_bsas.start);
-            p->bsas_count++;
+            qid = (p->bsas_count++) % MAX_BSASQ;
             p->p_last_bsas = (void *) np;
             np->type = bsas_packet;
-            if(p->bsasQueue) {
-                epicsMessageQueueSend(p->bsasQueue, (void *) &np, sizeof(np));
-                p->bsasQ.pend_cnt = epicsMessageQueuePending(p->bsasQueue);
-                if(p->bsasQ.pend_cnt > p->bsasQ.water_mark) p->bsasQ.water_mark = p->bsasQ.pend_cnt;
+            if(p->bsasQueue[qid]) {
+                epicsMessageQueueSend(p->bsasQueue[qid], (void *) &np, sizeof(np));
+                p->bsasQ[qid].pend_cnt = epicsMessageQueuePending(p->bsasQueue[qid]);
+                if(p->bsasQ[qid].pend_cnt > p->bsasQ[qid].water_mark) p->bsasQ[qid].water_mark = p->bsasQ[qid].pend_cnt;
             }
         }
         else if(pu32[IDX_SERVICE_MASK]>>SERVICE_BITS <= SERVICE_BSSS) { /* bsss, 0: Bsss0, 1: Bsss1 */
-            MFTB(p->time_bsss.start);
-            p->bsss_count++;
+            qid = (p->bsss_count++) % MAX_BSSSQ;
             if(pu32[IDX_SERVICE_MASK]>>SERVICE_BITS) p->p_last_bsss1 = (void *) np;
             else                                     p->p_last_bsss0 = (void *) np;
             np->type = bsss_packet;
-            if(p->bsssQueue) {
-                epicsMessageQueueSend(p->bsssQueue, (void *) &np, sizeof(np));
-                p->bsssQ.pend_cnt = epicsMessageQueuePending(p->bsssQueue);
-                if(p->bsssQ.pend_cnt > p->bsssQ.water_mark) p->bsssQ.water_mark = p->bsssQ.pend_cnt;
+            if(p->bsssQueue[qid]) {
+                epicsMessageQueueSend(p->bsssQueue[qid], (void *) &np, sizeof(np));
+                p->bsssQ[qid].pend_cnt = epicsMessageQueuePending(p->bsssQueue[qid]);
+                if(p->bsssQ[qid].pend_cnt > p->bsssQ[qid].water_mark) p->bsssQ[qid].water_mark = p->bsssQ[qid].pend_cnt;
             }
         }
         else if(pu32[IDX_SERVICE_MASK]>>SERVICE_BITS == SERVICE_BLD) { /* bld */
-            MFTB(p->time_bld.start);
-            p->bld_count++;
+            qid = (p->bld_count++) % MAX_BLDQ;
             p->p_last_bld = (void *) np;
             np->type = bld_packet;
-            if(p->bldQueue) {
-                epicsMessageQueueSend(p->bldQueue, (void *) &np, sizeof(np));
-                p->bldQ.pend_cnt = epicsMessageQueuePending(p->bldQueue);
-                if(p->bldQ.pend_cnt > p->bldQ.water_mark) p->bldQ.water_mark = p->bldQ.pend_cnt;
+            if(p->bldQueue[qid]) {
+                epicsMessageQueueSend(p->bldQueue[qid], (void *) &np, sizeof(np));
+                p->bldQ[qid].pend_cnt = epicsMessageQueuePending(p->bldQueue[qid]);
+                if(p->bldQ[qid].pend_cnt > p->bldQ[qid].water_mark) p->bldQ[qid].water_mark = p->bldQ[qid].pend_cnt;
             }
         } else p->else_count++;  // something wrong, packet could not be specified
         }  // if(listener_ready)
 
-        /* {
-            static uint32_t cnt = 0, prev_bsas =0, prev_bsss=0, c_bsas=0, c_bsss=0;
-            uint32_t *buf = (uint32_t *) np->buff;
-            char timeText[80];
-            epicsTimeStamp ts;
-            epicsTimeGetCurrent(&ts);
-            epicsTimeToStrftime(timeText, 80, "%Y-%m-%d %H:%M:%S.%06f" ,&ts);
-            
-            printf("%s\t%u %d %u", timeText, ++cnt, p->read_size, *(buf+2));
-            if(pu32[IDX_SERVICE_MASK]>>SERVICE_BITS == SERVICE_BSAS) {
-                c_bsas = *(buf+2);
-                if(prev_bsas != c_bsas) printf("\t %u\n", c_bsas - prev_bsas);
-                else                    printf("\n");
-                prev_bsas = c_bsas;
-            }
-            else if(pu32[IDX_SERVICE_MASK]>>SERVICE_BITS <= SERVICE_BSSS) {
-                c_bsss = *(buf+2);
-                if(prev_bsss != c_bsss) printf("\t\t %u\n", c_bsss - prev_bsss);
-                prev_bsss = c_bsss;
-            }
-        } */
         p->read_count++;
         ellAdd(p->free_list, &np->node);
     }
@@ -376,54 +335,52 @@ static void listener(pDrvList_t *p)
 
 static void bsssQTask(void *usrPvt)
 {
-    pDrvList_t *p = (pDrvList_t *) usrPvt;
+    pUsrPvtQ_t  *q = (pUsrPvtQ_t *) usrPvt;
+    pDrvList_t  *p = q->p;
+    int        qid = q->qid;
     pBuff_t   *np;
 
     while(true) {
-        int msg = epicsMessageQueueReceive(p->bsssQueue, (void *) &np, sizeof(np));
-        if(msg != sizeof(np)) {p->bsssQ.fail++; continue;}
+        int msg = epicsMessageQueueReceive(p->bsssQueue[qid], (void *) &np, sizeof(np));
+        if(msg != sizeof(np)) {p->bsssQ[qid].fail++; continue;}
 
         if(np->type == bsss_packet) {
-            MFTB(p->time_bsss.start);
             (p->bsss_callback)(p->pUsrBsss, (void *) np->buff, np->size);
-            MFTB(p->time_bsss.end);
-            calc_minmax(p->time_bsss.start, p->time_bsss.end, p->time_bsss.min, p->time_bsss.max);
-        } else p->bsssQ.overrun++;
+        } else p->bsssQ[qid].overrun++;
     }
 }
 
 static void bldQTask(void *usrPvt)
 {
-    pDrvList_t *p = (pDrvList_t *) usrPvt;
-    pBuff_t    *np;
+    pUsrPvtQ_t  *q = (pUsrPvtQ_t *) usrPvt;
+    pDrvList_t  *p = q->p;
+    int        qid = q->qid;
+    pBuff_t   *np;
 
     while(true) {
-        int msg = epicsMessageQueueReceive(p->bldQueue, (void *) &np, sizeof(np));
-        if(msg != sizeof(np)) {p->bldQ.fail++; continue;}
+        int msg = epicsMessageQueueReceive(p->bldQueue[qid], (void *) &np, sizeof(np));
+        if(msg != sizeof(np)) {p->bldQ[qid].fail++; continue;}
 
         if(np->type == bld_packet) {
-            MFTB(p->time_bld.start);
             (p->bld_callback)(p->pUsrBld, (void *) np->buff, np->size);
-            MFTB(p->time_bld.end);
-            calc_minmax(p->time_bld.start, p->time_bld.end, p->time_bld.min, p->time_bld.max);
-        } else p->bldQ.overrun++;
+        } else p->bldQ[qid].overrun++;
     }
 }
 
 static void bsasQTask(void *usrPvt)
 {
-    pDrvList_t *p = (pDrvList_t *) usrPvt;
-    pBuff_t    *np;
+    pUsrPvtQ_t  *q = (pUsrPvtQ_t *) usrPvt;
+    pDrvList_t  *p = q->p;
+    int        qid = q->qid;
+    pBuff_t   *np;
+
     while(true) {
-        int msg = epicsMessageQueueReceive(p->bsasQueue, (void *) &np, sizeof(np));
-        if(msg != sizeof(np)) {p->bsasQ.fail++; continue;}
+        int msg = epicsMessageQueueReceive(p->bsasQueue[qid], (void *) &np, sizeof(np));
+        if(msg != sizeof(np)) {p->bsasQ[qid].fail++; continue;}
 
         if(np->type == bsas_packet) {
-            MFTB(p->time_bsas.start);
             (p->bsas_callback)(p->pUsrBsas, (void *) np->buff, np->size);
-            MFTB(p->time_bsas.end);
-            calc_minmax(p->time_bsas.start, p->time_bsas.end, p->time_bsas.min, p->time_bsas.max);
-        } else p->bsasQ.overrun++;
+        } else p->bsasQ[qid].overrun++;
     }
 }
 
@@ -438,37 +395,43 @@ static void createListener(pDrvList_t *p) {
 
 }
 
-static void createBsssQTask(pDrvList_t *p) {
+static void createBsssQTask(pUsrPvtQ_t *q) {
+    int       qid = q->qid;
+    pDrvList_t *p = q->p;
     char name[80];
-    sprintf(name, "bsssQ_%s", p->named_root);
-    p->bsssQ.name = epicsStrDup(name);
-    p->bsssQueue = epicsMessageQueueCreate(MAX_FREE_LIST, sizeof(pBuff_t *));
+    sprintf(name, "bsssQ%d_%s", qid, p->named_root);
+    p->bsssQ[qid].name = epicsStrDup(name);
+    p->bsssQueue[qid] = epicsMessageQueueCreate(MAX_FREE_LIST, sizeof(pBuff_t *));
 
     epicsThreadCreate(name, epicsThreadPriorityMedium,
                       epicsThreadGetStackSize(epicsThreadStackMedium),
-                      (EPICSTHREADFUNC) bsssQTask, (void *) p); 
+                      (EPICSTHREADFUNC) bsssQTask, (void *) q); 
 }
 
-static void createBldQTask(pDrvList_t *p) {
+static void createBldQTask(pUsrPvtQ_t *q) {
+    int       qid = q->qid;
+    pDrvList_t *p = q->p;
     char name[80];
-    sprintf(name, "bldQ_%s", p->named_root);
-    p->bldQ.name = epicsStrDup(name);
-    p->bldQueue = epicsMessageQueueCreate(MAX_FREE_LIST, sizeof(pBuff_t *));
+    sprintf(name, "bldQ%d_%s", qid, p->named_root);
+    p->bldQ[qid].name = epicsStrDup(name);
+    p->bldQueue[qid] = epicsMessageQueueCreate(MAX_FREE_LIST, sizeof(pBuff_t *));
 
     epicsThreadCreate(name, epicsThreadPriorityMedium,
                       epicsThreadGetStackSize(epicsThreadStackMedium),
-                      (EPICSTHREADFUNC) bldQTask, (void *) p);
+                      (EPICSTHREADFUNC) bldQTask, (void *) q);
 }
 
-static void createBsasQTask(pDrvList_t *p) {
+static void createBsasQTask(pUsrPvtQ_t *q) {
+    int       qid = q->qid;
+    pDrvList_t *p = q->p;
     char name[80];
-    sprintf(name, "bsasQ_%s", p->named_root);
-    p->bsasQ.name = epicsStrDup(name);
-    p->bsasQueue = epicsMessageQueueCreate(MAX_FREE_LIST , sizeof(pBuff_t *));
+    sprintf(name, "bsasQ%d_%s", qid, p->named_root);
+    p->bsasQ[qid].name = epicsStrDup(name);
+    p->bsasQueue[qid] = epicsMessageQueueCreate(MAX_FREE_LIST , sizeof(pBuff_t *));
 
     epicsThreadCreate(name, epicsThreadPriorityMedium,
                       epicsThreadGetStackSize(epicsThreadStackMedium),
-                      (EPICSTHREADFUNC) bsasQTask, (void *) p);
+                      (EPICSTHREADFUNC) bsasQTask, (void *) q);
 }
 
 
@@ -480,7 +443,17 @@ int registerBsssCallback(const char *named_root, void (*bsss_callback)(void*, vo
     p->pUsrBsss      = pUsrBsss;
 
    if(!p->listener_name) createListener(p);
-   if(!p->bsssQueue)     createBsssQTask(p);
+
+   for(int i = 0; i < MAX_BSSSQ; i++) {
+       if(!p->bsssQueue[i]) {
+           pUsrPvtQ_t *q = (pUsrPvtQ_t *) mallocMustSucceed(sizeof(pUsrPvtQ_t), "registerBsssCallback");
+           q->qid = i;
+           q->p   = p;
+           p->bsssQ[i].q = q;
+           
+           createBsssQTask(q);
+        }
+   }
 
 
     return 0;
@@ -494,8 +467,17 @@ int registerBldCallback(const char *named_root, void (*bld_callback)(void*, void
     p->pUsrBld      = pUsrBld;
 
    if(!p->listener_name) createListener(p);
-   if(!p->bldQueue)      createBldQTask(p);
 
+    for(int i = 0; i < MAX_BLDQ; i++) {
+        if(!p->bldQueue[i]) {
+           pUsrPvtQ_t *q = (pUsrPvtQ_t *) mallocMustSucceed(sizeof(pUsrPvtQ_t), "registerBldCallback");
+           q->qid = i;
+           q->p   = p;
+           p->bldQ[i].q = q;
+
+           createBldQTask(q);
+        }
+    }
 
     return 0;
 }
@@ -507,7 +489,17 @@ int registerBsasCallback(const char *named_root, void (*bsas_callback)(void *, v
     p->pUsrBsas      = pUsrBsas;
 
     if(!p->listener_name) createListener(p);
-    if(!p->bsasQueue)     createBsasQTask(p);
+
+    for (int i = 0; i < MAX_BSASQ; i++) {
+        if(!p->bsasQueue[i]) {
+           pUsrPvtQ_t *q = (pUsrPvtQ_t *) mallocMustSucceed(sizeof(pUsrPvtQ_t), "registerBsasCallback");
+           q->qid = i;
+           q->p   = p;
+           p->bsasQ[i].q = q;
+
+           createBsasQTask(q);
+        }
+    }
     return 0;
 }
 
@@ -733,29 +725,33 @@ static int bldStreamDriverReport(int interest)
         printf("\t  bsas_callback: %p\n", p->bsas_callback);
         printf("\t  bsas_usr     : %p\n", p->pUsrBsas);
         printf("\t  free list    : %p\n", p->free_list);
-        printf("\t  bldQueue\n");
-        printf("\t\t pending count : %u\n", p->bldQ.pend_cnt);
-        printf("\t\t water mark    : %u\n", p->bldQ.water_mark);
-        printf("\t\t failt count   : %u\n", p->bldQ.fail);
-        printf("\t\t overrun count : %u\n", p->bldQ.overrun);
-        printf("\t  bsssQueue\n");
-        printf("\t\t pending count : %u\n", p->bsssQ.pend_cnt);
-        printf("\t\t water mark    : %u\n", p->bsssQ.water_mark);
-        printf("\t\t failt count   : %u\n", p->bsssQ.fail);
-        printf("\t\t overrun count : %u\n", p->bsssQ.overrun);
-        printf("\t  bsasQueue\n");
-        printf("\t\t pending count : %u\n", p->bsasQ.pend_cnt);
-        printf("\t\t water mark    : %u\n", p->bsasQ.water_mark);
-        printf("\t\t failt count   : %u\n", p->bsasQ.fail);
-        printf("\t\t overrun count : %u\n", p->bsasQ.overrun);
-        printf("\t  bld  callback processing (usec): snapshot %8.3f, min %8.3f, max %8.3f\n",  calc_delay(p->time_bld.start,  p->time_bld.end), calc_delay(p->time_bld.min), calc_delay(p->time_bld.max));
-        printf("\t  bsss callback processing (usec): snapshot %8.3f, min %8.3f, max %8.3f\n",  calc_delay(p->time_bsss.start, p->time_bsss.end), calc_delay(p->time_bsss.min), calc_delay(p->time_bsss.max));
-        printf("\t  bsas callback processing (usec): snapshot %8.3f, min %8.3f, max %8.3f\n",  calc_delay(p->time_bsas.start, p->time_bsas.end), calc_delay(p->time_bsas.min), calc_delay(p->time_bsas.max));
+
+        for(int i = 0; i < MAX_BLDQ; i++) {
+            printf("\t  bldQueue[%d]\n", i);
+            printf("\t\t pending count : %u\n", p->bldQ[i].pend_cnt);
+            printf("\t\t water mark    : %u\n", p->bldQ[i].water_mark);
+            printf("\t\t fail  count   : %u\n", p->bldQ[i].fail);
+            printf("\t\t overrun count : %u\n", p->bldQ[i].overrun);
+        }
+
+        for(int i = 0; i < MAX_BSSSQ; i++) {  
+            printf("\t  bsssQueue[%d]\n", i);
+            printf("\t\t pending count : %u\n", p->bsssQ[i].pend_cnt);
+            printf("\t\t water mark    : %u\n", p->bsssQ[i].water_mark);
+            printf("\t\t fail  count   : %u\n", p->bsssQ[i].fail);
+            printf("\t\t overrun count : %u\n", p->bsssQ[i].overrun);
+        }
+
+        for (int i = 0; i < MAX_BSASQ; i++) { 
+            printf("\t  bsasQueue[%d]\n", i);
+            printf("\t\t pending count : %u\n", p->bsasQ[i].pend_cnt);
+            printf("\t\t water mark    : %u\n", p->bsasQ[i].water_mark);
+            printf("\t\t fail  count   : %u\n", p->bsasQ[i].fail);
+            printf("\t\t overrun count : %u\n", p->bsasQ[i].overrun);
+        }
 
         if(interest > 1) {  // reset min and max for the processing time mesasurement
-            p->time_bld = {};  p->time_bld.min = 0xffffffff;
-            p->time_bsss = {}; p->time_bsss.min = 0xffffffff;
-            p->time_bsas = {}; p->time_bsas.min = 0xffffffff;
+
         }
 
         if(interest && p->p_last_buff) {
