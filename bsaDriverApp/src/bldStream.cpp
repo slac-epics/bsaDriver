@@ -403,7 +403,7 @@ static void createBsssQTask(pUsrPvtQ_t *q) {
     p->bsssQ[qid].name = epicsStrDup(name);
     p->bsssQueue[qid] = epicsMessageQueueCreate(MAX_FREE_LIST, sizeof(pBuff_t *));
 
-    epicsThreadCreate(name, epicsThreadPriorityMedium,
+    epicsThreadCreate(name, epicsThreadPriorityMedium+15,
                       epicsThreadGetStackSize(epicsThreadStackMedium),
                       (EPICSTHREADFUNC) bsssQTask, (void *) q); 
 }
@@ -416,7 +416,7 @@ static void createBldQTask(pUsrPvtQ_t *q) {
     p->bldQ[qid].name = epicsStrDup(name);
     p->bldQueue[qid] = epicsMessageQueueCreate(MAX_FREE_LIST, sizeof(pBuff_t *));
 
-    epicsThreadCreate(name, epicsThreadPriorityMedium,
+    epicsThreadCreate(name, epicsThreadPriorityMedium+15,
                       epicsThreadGetStackSize(epicsThreadStackMedium),
                       (EPICSTHREADFUNC) bldQTask, (void *) q);
 }
@@ -429,7 +429,7 @@ static void createBsasQTask(pUsrPvtQ_t *q) {
     p->bsasQ[qid].name = epicsStrDup(name);
     p->bsasQueue[qid] = epicsMessageQueueCreate(MAX_FREE_LIST , sizeof(pBuff_t *));
 
-    epicsThreadCreate(name, epicsThreadPriorityMedium,
+    epicsThreadCreate(name, epicsThreadPriorityMedium+15,
                       epicsThreadGetStackSize(epicsThreadStackMedium),
                       (EPICSTHREADFUNC) bsasQTask, (void *) q);
 }
