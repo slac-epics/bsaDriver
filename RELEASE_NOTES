@@ -1,3 +1,8 @@
+R2.5.0-0.4   Jan 18, 2023  Kukhee Kim
+             - build against timing/bsa R2.2.0-0.2
+             - throttling for the fault buffer reading
+             - adjust number of Edefs to 48
+
 R2.5.0-0.3   Dec 23, 2022   Kukhee Kim
              - fix BSA / Fault Buffer Edef boundary for new BSSS/BSA implementation
 
