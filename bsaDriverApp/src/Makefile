@@ -35,6 +35,7 @@ bsaDriver_SRCS += bldStream.cpp
 bsaDriver_SRCS += bsaAsynDriver.cpp
 bsaDriver_SRCS += serviceAsynDriver.cpp
 bsaDriver_SRCS += bsasAsynDriver.cpp
+bsaDriver_SRCS += devBsss.c
 
 cpsw_DIR = $(CPSW_FRAMEWORK_LIB)
 bsaDriver_LIBS += cpsw
