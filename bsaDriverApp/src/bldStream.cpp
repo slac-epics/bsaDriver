@@ -42,7 +42,7 @@
 #define  MAX_BUFF_SIZE 2048
 
 // number of worker threads
-#define  MAX_BSSSQ            4
+#define  MAX_BSSSQ            1
 #define  MAX_BLDQ             1      /* please, do not change it */
 #define  MAX_BSASQ            1      /* please, do not change it */
 
