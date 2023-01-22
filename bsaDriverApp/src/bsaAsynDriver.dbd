@@ -17,6 +17,11 @@ driver(bldStreamDriver)
 #
 registrar(serviceAsynDriverRegister)
 driver(serviceAsynDriver)
+#
+#    device support for BSSS (devBsss)
+#
+device(int64in, INST_IO, devBsssPid, "BSSS")
+device(ai,      INST_IO, devBsssV,   "BSSS")
 
 #
 #   bsasAsynDriver
