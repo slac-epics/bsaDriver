@@ -54,7 +54,6 @@ static long get_ioint_info(int cmd, dbCommon *prec, IOSCANPVT *ppvt)
         *ppvt = 0;
     }
 
-    printf("scan %s, %x\n", prec->name, *ppvt);
 
     return 0;
 }
@@ -69,7 +68,6 @@ static long init_record_pid(int64inRecord *prec)
 
     switch(prec->inp.type) {
         case INST_IO:
-            printf("init_reord, %s (%s)\n", prec->name, prec->inp.value.instio.string);
             sscanf(prec->inp.value.instio.string, "%s %s %d", port, key, &edef);
             pvt = find_pidPv(port, key, edef);
             if(!pvt) goto err;
@@ -116,7 +114,6 @@ static long init_record_v(aiRecord *prec)
 
     switch(prec->inp.type) {
         case INST_IO:
-            printf("init_record, %s (%s)\n", prec->name, prec->inp.value.instio.string);
             sscanf(prec->inp.value.instio.string, "%s %s %d", port, key, &edef);
             pvt = find_vPv(port, key, edef);
             if(!pvt) goto err;

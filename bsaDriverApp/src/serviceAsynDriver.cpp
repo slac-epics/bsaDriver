@@ -718,9 +718,6 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
                  plist->pidPv[edef].pid = pulse_id;
                  plist->pidPv[edef].time = _ts;
                  process_pidPv(&plist->pidPv[edef]);
-                 // khkim: setInteger64Param(plist->p_channelPID[edef], pulse_id);  // pulse id update if service mask is set
-
-                 // khkim: setDoubleParam(plist->p_channel[edef], INFINITY);   // make asyn PV update even posting the same value with previous
 
                  if(int((sevr_mask >> (data_chn*2)) & 0x3) <= GetChannelSevr(data_chn) ) {  // data update for valid mask
                      switch(plist->type){
@@ -744,7 +741,6 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
                  plist->vPv[edef].v = val;
                  plist->vPv[edef].time = _ts;
                  process_vPv(&plist->vPv[edef]);
-                 // khkim: setDoubleParam(plist->p_channel[edef], val);
              }
          }
          index++;
@@ -755,9 +751,6 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
          data_chn++;      // evolve data channel number to next channel
      }
      
-
-     // khkim: callParamCallbacks();
-
 }
 
 serviceType_t serviceAsynDriver::getServiceType()
