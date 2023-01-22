@@ -27,6 +27,7 @@
 #include <pvxs/iochooks.h>
 #include <pvxs/nt.h>
 
+#include "devBsss.h"
 
 #define MAX_MOD_NUM          2   // BSSS has 2 moduels, BLD has 1 moduel now.
 #define NUM_BLD_MOD          1   // number of BLD module
@@ -97,7 +98,9 @@ typedef struct {
     double  *pslope;
     double  *poffset;
 
-    /* BSSS */
+    /* BSSS only*/
+    pid_pvt pidPv[NUM_EDEF_MAX];      // pv for pid, bridge to the devBSSS
+    v_pvt   vPv[NUM_EDEF_MAX];        // pv for value, bridge to the devBSSS
     char    pkey_channel[NUM_EDEF_MAX][STR_SIZE];
     char    pkey_channelPID[NUM_EDEF_MAX][STR_SIZE];
 

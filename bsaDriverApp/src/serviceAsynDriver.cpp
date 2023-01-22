@@ -42,6 +42,7 @@
 #include <pvxs/iochooks.h>
 #include <pvxs/nt.h>
 
+#include "devBsss.h"
 
 #define BSSS_ONLY(TYPE, X) \
 if(TYPE == bld) { printf("(%s: %d %s) is only for BSSS\n", __FILE__, __LINE__, __func__); return X; }
@@ -139,13 +140,18 @@ static int serviceAdd(const char *channelKey, serviceDataType_t type, double *sl
     for(unsigned int i = 0; i < NUM_EDEF_MAX; i++) {
         p->p_channel[i] = -1;              /* initialize paramters with invalid */
         p->pkey_channel[i][0] = '\0';     /* initialize with a null string */
-        p->pkey_channelPID[i][0] = '\0';  /* initialize with a null string */ 
+        p->pkey_channelPID[i][0] = '\0';  /* initialize with a null string */
+        p->pidPv[i].dpvt = NULL;
+        p->pidPv[i].pid  = 0;
+        p->vPv[i].dpvt = NULL;
+        p->vPv[i].v = 0.; 
     }
 
     p->type    = type;
     p->pslope  = slope;
     p->poffset = offset;
     p->doNotTouch = doNotTouch;
+
     ellAdd(pl->pServiceEllList, &p->node);
     return 0;
 }
@@ -697,7 +703,7 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
      epicsTimeStamp _ts;
      _ts.nsec = buf[IDX_NSEC];
      _ts.secPastEpoch  = buf[IDX_SEC];
-     setTimeStamp(&_ts);    // timestamp update for asyn port and related PVs
+     // setTimeStamp(&_ts);    // timestamp update for asyn port and related PVs
 
 
      channelList_t *plist = (channelList_t *) ellFirst(pServiceEllList);
@@ -709,9 +715,12 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
          for(unsigned int i = 0, svc_mask = 0x1; i < this->pService[mod]->getEdefNum(); i++, svc_mask <<= 1) {
              int edef = i + mod * BSSS0_NUM_EDEF;    // calculate edef number
              if(service_mask & svc_mask) {
-                 setInteger64Param(plist->p_channelPID[edef], pulse_id);  // pulse id update if service mask is set
+                 plist->pidPv[edef].pid = pulse_id;
+                 plist->pidPv[edef].time = _ts;
+                 process_pidPv(&plist->pidPv[edef]);
+                 // khkim: setInteger64Param(plist->p_channelPID[edef], pulse_id);  // pulse id update if service mask is set
 
-                 setDoubleParam(plist->p_channel[edef], INFINITY);   // make asyn PV update even posting the same value with previous
+                 // khkim: setDoubleParam(plist->p_channel[edef], INFINITY);   // make asyn PV update even posting the same value with previous
 
                  if(int((sevr_mask >> (data_chn*2)) & 0x3) <= GetChannelSevr(data_chn) ) {  // data update for valid mask
                      switch(plist->type){
@@ -732,7 +741,10 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
                  } else val = NAN;  // put NAN for invalid mask
 
                  if(!isnan(val)) val = val * (*plist->pslope) + (*plist->poffset);
-                 setDoubleParam(plist->p_channel[edef], val);
+                 plist->vPv[edef].v = val;
+                 plist->vPv[edef].time = _ts;
+                 process_vPv(&plist->vPv[edef]);
+                 // khkim: setDoubleParam(plist->p_channel[edef], val);
              }
          }
          index++;
@@ -744,7 +756,7 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
      }
      
 
-     callParamCallbacks();
+     // khkim: callParamCallbacks();
 
 }
 
@@ -859,6 +871,40 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
 }
 
 extern "C" {
+
+/* devBSSS API */
+pid_pvt *find_pidPv(char *port, char *key, int edef)
+{
+    pDrvList_t *pDrv = find_drvByPort(port);
+    if(!pDrv || !pDrv->pServiceEllList || ellCount(pDrv->pServiceEllList)==0) return NULL;
+
+    channelList_t * p = (channelList_t *) ellFirst(pDrv->pServiceEllList);
+    while(p) {
+        if(!strcmp(key, p->channel_key)) break;
+        p = (channelList_t *) ellNext(&p->node);
+    }
+
+    if(p) return &p->pidPv[edef];
+    else  return NULL;
+}
+
+v_pvt * find_vPv(char *port, char *key, int edef)
+{
+    pDrvList_t *pDrv = find_drvByPort(port);
+    if(!pDrv || !pDrv->pServiceEllList || ellCount(pDrv->pServiceEllList)==0) return NULL;
+
+    channelList_t * p = (channelList_t *) ellFirst(pDrv->pServiceEllList);
+    while(p) {
+        if(!strcmp(key, p->channel_key)) break;
+        p = (channelList_t *) ellNext(&p->node);
+    }
+
+    if(p) return &p->vPv[edef];
+    else  return NULL;
+}
+
+
+/* end of devBSSS API */
 
 static int  serviceMonitorPoll(void)
 {
