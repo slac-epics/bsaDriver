@@ -5,7 +5,7 @@ file serviceChannelCtrl.db {
 }
 
 
-file bsssScal.db {
+file devBsssScal.db {
     pattern {   IDX,     MDID,   DEVICE,        EGU,        ADEL,        PREC,        HOPR,        LOPR,  DESC  }
 #
 # user Edefs
