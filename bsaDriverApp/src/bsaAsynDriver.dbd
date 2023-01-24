@@ -9,6 +9,11 @@ variable(fltb_length, int)
 variable(bsa_item_cnt, int)
 
 #
+#    device support for SCBSA
+#
+device(waveform, INST_IO, devScBsa, "SCBSA")
+
+#
 #   bldStreamDriver
 #
 driver(bldStreamDriver)
