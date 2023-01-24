@@ -3,7 +3,7 @@ file bsaLinearConversion.db {
             { _NOTHING_TODO_ }
 }
 
-file bsaHst.db {
+file devScBsaHst.db {
     pattern {  INST,  MDID,   MAXLENGTH      }
 #
 # user Edefs
