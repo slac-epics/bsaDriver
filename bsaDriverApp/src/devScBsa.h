@@ -17,7 +17,6 @@ typedef struct {
     int  nreq;
     int  entry_sz;
     void *bptr;
-    void *save_bptr;
 } devBsaPvt_t;
 
 

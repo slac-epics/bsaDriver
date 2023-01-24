@@ -68,7 +68,8 @@ static long init_record(waveformRecord *prec)
             if(!ppvt) goto err;
             dpvt->pvt = (void *) ppvt;
             ppvt->dpvt = (void *) dpvt;
-            if(prec->bptr) { ppvt->save_bptr = prec->bptr; free(prec->bptr); }  // since we are trying zero copy buffer, we do not need pre-allocated memory in the record
+            if(prec->bptr) free(prec->bptr);  // since we are trying zero copy buffer, 
+                                              // we do not need pre-allocated memory in the record
             break;
         default:
             err:
@@ -98,8 +99,9 @@ static long read_wf(waveformRecord *prec)
     nreq = ppvt->nreq;
     if(nreq > prec->nelm) nreq = prec->nelm;
     if(nreq != prec->nord) prec->nord = nreq;
-    //memcpy(prec->bptr, ppvt->bptr, nreq * ppvt->entry_sz);
-    prec->bptr = ppvt->bptr;    // using zerro  copy buffer
+    // memcpy(prec->bptr, ppvt->bptr, nreq * ppvt->entry_sz);
+    prec->bptr = ppvt->bptr;    // using zerro  copy buffer, 
+                                // simply expose driver layer buffer to record
 
     
 
