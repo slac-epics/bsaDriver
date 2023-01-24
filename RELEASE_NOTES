@@ -1,3 +1,6 @@
+R2.5.0-2.0   Jan 23, 2023  Kukhee Kim
+             - implement own device support for BSA for performance improvement
+
 R2.5.0-1.0   Jan 22, 2023  Kukhee Kim
              - implement own device support for BSSS for preformance improvement
              - restore back to a single worker thrad for the BSSS
