@@ -20,6 +20,8 @@
 #include <BsaField.hh>
 #include <Processor.hh>
 
+#include "devScBsa.h"
+
 
 #define  START_BSA_ARRAY   21             // making index for database temlate, starting 21
 #define  MAX_BSA_ARRAY     48             // internal index, start from 0
@@ -55,7 +57,8 @@ class bsaAsynDriver;
 
 class BsaField : public Bsa::Field {
     public:
-        BsaField(char *name, int index, int p_num, int p_mean, int p_rms2, double * p_slope, double * p_offset, bsaDataType_t * p_type);
+        BsaField(char *name, int index, int p_num, int p_mean, int p_rms2, double * p_slope, double * p_offset, bsaDataType_t * p_type,
+                  devBsaPvt_t *ppvt_num, devBsaPvt_t *ppvt_mean, devBsaPvt_t *ppvt_rms2);
         const char *name() const { return _name.c_str(); }
         const int get_p_num()  const { return _p_num; }
         const int get_p_mean() const { return _p_mean; }
@@ -66,6 +69,10 @@ class BsaField : public Bsa::Field {
         unsigned get_max_size(void) { return max_size; }
 
         bsaDataType_t * get_p_type() const { return _p_type; }
+
+        devBsaPvt_t *get_ppvt_num() const  { return _ppvt_num; }
+        devBsaPvt_t *get_ppvt_mean() const { return _ppvt_mean; }
+        devBsaPvt_t *get_ppvt_rms2() const { return _ppvt_rms2; }
 
         std::vector <BsaField *> slaveField;
 
@@ -80,6 +87,10 @@ class BsaField : public Bsa::Field {
         double *_p_offset;   // offset data pointer from bsa driver
 
         bsaDataType_t *_p_type;
+
+        devBsaPvt_t *_ppvt_num;
+        devBsaPvt_t *_ppvt_mean;
+        devBsaPvt_t *_ppvt_rms2;
 
         unsigned max_size;
 
@@ -97,6 +108,10 @@ class BsaPv : public Bsa::Pv {
         void append();
         void append(unsigned n, double mean, double rms2);
         void flush();
+
+        devBsaPvt_t *get_ppvt_num() { return _ppvt_num; }
+        devBsaPvt_t *get_ppvt_mean() { return _ppvt_mean; }
+        devBsaPvt_t *get_ppvt_rms2() { return _ppvt_rms2; }
 
         std::vector <BsaPv *> slavePv;
 
@@ -122,13 +137,17 @@ class BsaPv : public Bsa::Pv {
 
         bsaDataType_t *_p_type;
 
+        devBsaPvt_t *_ppvt_num;
+        devBsaPvt_t *_ppvt_mean;
+        devBsaPvt_t *_ppvt_rms2;
+
 
 };
 
 
 class BsaPvArray : public Bsa::PvArray {
     public:
-        BsaPvArray(unsigned array, const std::vector <Bsa::Pv*>& pvs, int p_pid_UL, bsaAsynDriver *pBsaDrv);
+        BsaPvArray(unsigned array, const std::vector <Bsa::Pv*>& pvs, int p_pid_UL, bsaAsynDriver *pBsaDrv, devBsaPvt_t *ppvt);
         unsigned array() const { return _array; }
         void reset(unsigned sec, unsigned nsec);
         void set(unsigned sec, unsigned nsec);
@@ -146,6 +165,7 @@ class BsaPvArray : public Bsa::PvArray {
         unsigned    _array;
         unsigned    _ts_sec;
         unsigned    _ts_nsec;
+        devBsaPvt_t *_ppvt_pid;
         std::vector <uint64_t> _pid;
 
         unsigned size, loc, max_size;
@@ -181,6 +201,10 @@ typedef struct {
 
     bsaDataType_t type;
 
+    devBsaPvt_t ppvt_num[MAX_BSA_ARRAY];
+    devBsaPvt_t ppvt_mean[MAX_BSA_ARRAY];
+    devBsaPvt_t ppvt_rms2[MAX_BSA_ARRAY];
+
     char     pname_num[MAX_BSA_ARRAY][64];
     char     pname_mean[MAX_BSA_ARRAY][64];
     char     pname_rms2[MAX_BSA_ARRAY][64];
@@ -213,10 +237,10 @@ public:
     int  bsaAsynDriverEnable(void);
     int  bsaAsynDriverDisable(void);
 
-    asynStatus flush(double *pData, unsigned size, int param);
-    asynStatus flush(unsigned *pData, unsigned size, int param);
-    asynStatus flush(int *pData, unsigned size, int param);
-    asynStatus flush(uint64_t *pData, unsigned size, int param);
+    devBsaPvt_t *findPvt(char *key, char *param, int edef);
+
+
+    asynStatus flush(devBsaPvt_t *ppvt);
 
     asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
    //	asynStatus writeInt32Array(asynUser *pasynUser, epicsInt32 *value, size_t nElements);
@@ -228,6 +252,7 @@ private:
     std::vector <Bsa::Field*> fields[MAX_BSA_ARRAY];
     std::vector <Bsa::Pv*> pvs[MAX_BSA_ARRAY];
     std::vector <BsaPvArray*> pBsaPvArray;
+    devBsaPvt_t ppvt_pid[MAX_BSA_ARRAY];
 
 
 

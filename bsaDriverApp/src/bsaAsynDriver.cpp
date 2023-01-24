@@ -37,6 +37,8 @@
 
 #include <yamlLoader.h>
 
+#include "devScBsa.h"
+
 static const  char *driverName = "bsaAsynDriver";
 static char port_name[32];
 static char ip_string[32];
@@ -185,7 +187,8 @@ static unsigned determine_max_size(unsigned array_index)
 }
 
 
-BsaField::BsaField(char *name, int index, int p_num, int p_mean, int p_rms2, double * p_slope, double * p_offset, bsaDataType_t * p_type)
+BsaField::BsaField(char *name, int index, int p_num, int p_mean, int p_rms2, double * p_slope, double * p_offset, bsaDataType_t * p_type,
+                   devBsaPvt_t *ppvt_num, devBsaPvt_t *ppvt_mean, devBsaPvt_t *ppvt_rms2)
 {
     std::ostringstream o;
     o << name << index;
@@ -201,6 +204,11 @@ BsaField::BsaField(char *name, int index, int p_num, int p_mean, int p_rms2, dou
     _p_offset = p_offset;
 
     _p_type = p_type;
+
+    _ppvt_num  = ppvt_num;
+    _ppvt_mean = ppvt_mean;
+    _ppvt_rms2 = ppvt_rms2;
+  
 
     max_size = determine_max_size(index);
 }
@@ -221,6 +229,10 @@ BsaPv::BsaPv (Bsa::Field& f, bsaAsynDriver *pBsaDrv) : _f(f), _n(0), _mean(0), _
     _p_offset = p->get_p_offset();
 
     _p_type = p->get_p_type();
+
+    _ppvt_num  = p->get_ppvt_num();
+    _ppvt_mean = p->get_ppvt_mean();
+    _ppvt_rms2 = p->get_ppvt_rms2();
 
     max_size = p->get_max_size();
 
@@ -328,10 +340,29 @@ void BsaPv::append(unsigned n, double mean, double rms2)
 
 void BsaPv::flush()
 {
-// need to callback to asyn level to post out PVs
-    pBsaDrv->flush(&_n[max_size + loc -size],   size, _p_num);
-    pBsaDrv->flush(&_mean[max_size + loc-size], size, _p_mean);
-    pBsaDrv->flush(&_rms2[max_size + loc-size], size, _p_rms2);
+    (_ppvt_num)->ts.secPastEpoch = _ts_sec;
+    (_ppvt_num)->ts.nsec         = _ts_nsec;
+    (_ppvt_num)->nreq            = size;
+    (_ppvt_num)->entry_sz        = sizeof(unsigned);
+    (_ppvt_num)->bptr            = &_n[max_size + loc - size];
+    pBsaDrv->flush(_ppvt_num);
+ 
+ 
+    (_ppvt_mean)->ts.secPastEpoch = _ts_sec;
+    (_ppvt_mean)->ts.nsec         = _ts_nsec;
+    (_ppvt_mean)->nreq            = size;
+    (_ppvt_mean)->entry_sz        = sizeof(double);
+    (_ppvt_mean)->bptr            = &_mean[max_size + loc - size];
+    pBsaDrv->flush(_ppvt_mean);
+
+ 
+    (_ppvt_rms2)->ts.secPastEpoch = _ts_sec;
+    (_ppvt_rms2)->ts.nsec         = _ts_nsec;
+    (_ppvt_rms2)->nreq            = size;
+    (_ppvt_rms2)->entry_sz        = sizeof(double);
+    (_ppvt_rms2)->bptr            = &_rms2[max_size + loc - size];
+    pBsaDrv->flush(_ppvt_rms2);
+
 
     for(unsigned i=0; i < slavePv.size(); i++) {
         slavePv[i]->flush();              /* execture flush() method for all of slaves */
@@ -341,8 +372,8 @@ void BsaPv::flush()
 
 
 
-BsaPvArray::BsaPvArray(unsigned array, const std::vector <Bsa::Pv*>& pvs, int p_pid_UL, bsaAsynDriver *pBsaDrv)
-                       : _array(array), size(0), loc(0), _pvs(pvs), _p_pid_UL(p_pid_UL)
+BsaPvArray::BsaPvArray(unsigned array, const std::vector <Bsa::Pv*>& pvs, int p_pid_UL, bsaAsynDriver *pBsaDrv, devBsaPvt_t *ppvt)
+                       : _array(array), size(0), loc(0), _pvs(pvs), _p_pid_UL(p_pid_UL), _ppvt_pid(ppvt)
 {
     this->pBsaDrv = pBsaDrv;
     max_size = determine_max_size(array);
@@ -396,7 +427,12 @@ std::vector <Bsa::Pv*> BsaPvArray::pvs()
 
 void BsaPvArray::flush()
 {
-    pBsaDrv->flush(&_pid[max_size + loc -size], size, _p_pid_UL);
+    (_ppvt_pid)->ts.secPastEpoch = _ts_sec;
+    (_ppvt_pid)->ts.nsec         = _ts_nsec;
+    (_ppvt_pid)->nreq            = size;
+    (_ppvt_pid)->entry_sz        = sizeof(uint64_t);
+    (_ppvt_pid)->bptr            = &_pid[max_size + loc - size];
+    pBsaDrv->flush(_ppvt_pid);
 
 }
 
@@ -544,6 +580,27 @@ void bsaAsynDriver::SetupAsynParams(void)
 
 }
 
+devBsaPvt_t * bsaAsynDriver::findPvt(char *key, char *param, int idx)
+{
+    bsaList_t *p = (bsaList_t *) ellFirst(pBsaEllList);
+    int edef = idx - START_BSA_ARRAY;
+
+    if(p && !strcmp(param, PARAM_BSAPID)) return &ppvt_pid[edef];
+
+    while(p) {
+        if(!strcmp(key, p->bsa_name)) break;
+        p = (bsaList_t *) ellNext(&p->node);
+    }
+
+    if(!p) return NULL;
+
+    if(!strcmp(param, PARAM_BSAMEAN)) return &p->ppvt_mean[edef];
+    if(!strcmp(param, PARAM_BSANUM))  return &p->ppvt_num[edef];
+    if(!strcmp(param, PARAM_BSARMS2)) return &p->ppvt_rms2[edef];
+
+    return NULL;
+    
+}
 
 void bsaAsynDriver::SetupFields(void)
 {
@@ -553,12 +610,14 @@ void bsaAsynDriver::SetupFields(void)
     for(i = 0; i< MAX_BSA_ARRAY; i++) {
         p = (bsaList_t *) ellFirst(pBsaEllList);
         while(p) {    /* register parent field */
-            BsaField *pField = new BsaField(p->bsa_name, i, p->p_num[i], p->p_mean[i], p->p_rms2[i], &p->slope, &p->offset, &p->type);
+            BsaField *pField = new BsaField(p->bsa_name, i, p->p_num[i], p->p_mean[i], p->p_rms2[i], &p->slope, &p->offset, &p->type, 
+                                            &p->ppvt_num[i], &p->ppvt_mean[i], &p->ppvt_rms2[i]);
             fields[i].push_back(pField);
 
             q = (bsaList_t *) ellFirst(p->pSlaveEllList);
             while(q) {  /* register slave field */
-                BsaField *qField = new BsaField(q->bsa_name, i, q->p_num[i], q->p_mean[i], q->p_rms2[i], &q->slope, &q->offset, &p->type);
+                BsaField *qField = new BsaField(q->bsa_name, i, q->p_num[i], q->p_mean[i], q->p_rms2[i], &q->slope, &q->offset, &p->type,  
+                                                &p->ppvt_num[i], &p->ppvt_mean[i], &p->ppvt_rms2[i]);
                 pField->slaveField.push_back(qField);
                 q = (bsaList_t *) ellNext(&q->node);
             }
@@ -581,7 +640,10 @@ void bsaAsynDriver::SetupPvs(void)
 void bsaAsynDriver::SetupPvArray(void)
 {
 
-    for(int i=0; i< MAX_BSA_ARRAY; i++) pBsaPvArray.push_back(new BsaPvArray(i, pvs[i], p_pid_UL[i], this));
+    for(int i=0; i< MAX_BSA_ARRAY; i++) {
+        ppvt_pid[i] = {0};
+        pBsaPvArray.push_back(new BsaPvArray(i, pvs[i], p_pid_UL[i], this, &ppvt_pid[i]));
+    }
 }
 
 
@@ -590,7 +652,7 @@ int bsaAsynDriver::BsaRetreivePoll(void)
     epicsTimeStamp    _ts;
     uint64_t  pending;
 
-//    while(1) {
+
 
         if(bsa_enable) // {
             try {
@@ -599,10 +661,6 @@ int bsaAsynDriver::BsaRetreivePoll(void)
                 printf("Bsa Poll: error detecting pProcessor->pending()\n");
             }
         else  return 0;
-//        } else {
-//            epicsThreadSleep(1.);
-//            continue;
-//        }
 
         for(int i=0; i< MAX_BSA_ARRAY; i++) {
             try { 
@@ -625,10 +683,6 @@ int bsaAsynDriver::BsaRetreivePoll(void)
             }
 
         }
-//        epicsThreadSleep(.1);
-//    }
-
-
 
     return 0;
 }
@@ -645,42 +699,16 @@ int bsaAsynDriver::bsaAsynDriverDisable(void)
     return 0;
 }
 
-asynStatus bsaAsynDriver::flush(double *pData, unsigned size, int param)
-{
-    asynStatus status;
 
-    status = doCallbacksFloat64Array((epicsFloat64*) pData, size, param, 0);
+asynStatus bsaAsynDriver::flush(devBsaPvt_t *ppvt)
+{
+    asynStatus status = asynSuccess;
+
+    process_bsa_pv(ppvt);
 
     return status;
 }
 
-
-asynStatus bsaAsynDriver::flush(unsigned *pData, unsigned size, int param)
-{
-    asynStatus status;
-
-    status = doCallbacksInt32Array((epicsInt32*) pData, size, param, 0);
-
-    return status;
-}
-
-asynStatus bsaAsynDriver::flush(int *pData, unsigned size, int param)
-{
-    asynStatus status;
-
-    status = doCallbacksInt32Array((epicsInt32*) pData, size, param, 0);
-
-    return status;
-}
-
-asynStatus bsaAsynDriver::flush(uint64_t *pData, unsigned size, int param)
-{
-    asynStatus status;
-
-    status = doCallbacksInt64Array((epicsInt64*) pData, size, param, 0);
-
-    return status;
-}
 
 
 
@@ -951,6 +979,9 @@ int addBsa(const char *bsaKey, const char *bsaType, const char *keepAsInteger)
     for(i=0; i< MAX_BSA_ARRAY; i++) {
         p->p_num[i]        = p->p_mean[i]        = p->p_rms2[i]        = -1;   // intialize to invalid parameter
         p->pname_num[i][0] = p->pname_mean[i][0] = p->pname_rms2[i][0] = '\0'; // make null string
+        p->ppvt_num[i] = {0};
+        p->ppvt_mean[i] = {0};
+        p->ppvt_rms2[i] = {0};
     }
 
     p->slope  = 1.;   // setup default linear conversion, it will be override by epics PV
@@ -1107,6 +1138,17 @@ ELLLIST * find_bsaChannelList(const char *port_name)
     if(p) return p->pBsaEllList;
     else  return NULL;
 }
+
+
+// inteface for BSA device support
+devBsaPvt_t * find_bsa_pvt(char *port, char *key, char *param, int edef)
+{
+    pDrvList_t *pDrv = find_drvByPort(port);
+
+    if(pDrv && pDrv->pBsaDrv) return pDrv->pBsaDrv->findPvt(key, param, edef); 
+    else                      return NULL;
+}
+
 
 /* EPICS iocsh shell commands */
 
