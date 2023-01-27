@@ -1,17 +1,17 @@
 file serviceControl.db {
     pattern {   DEVICE,   SERVICE }
-            { "$(DEV)",   "BSSS" }
+            { "$(DEV)",   "BSSS_" }
 }
 
 file bsssRateLimit.db {
     pattern {   DEVICE,   SERVICE }
-            { "$(DEV)" ,  "BSSS"}
+            { "$(DEV)" ,  "BSSS_"}
 }
 
 file serviceStatus.db {
     pattern {   DEVICE,  SERVICE }
-            { "$(DEV)",  "BSSS0" }
-            { "$(DEV)",  "BSSS1" }
+            { "$(DEV)",  "BSSS0_" }
+            { "$(DEV)",  "BSSS1_" }
 }
 
 

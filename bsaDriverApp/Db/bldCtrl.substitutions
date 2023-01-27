@@ -1,27 +1,27 @@
 file serviceControl.db {
     pattern {   DEVICE,   SERVICE }
-            { "$(DEV)",   "BLD" }
+            { "$(DEV)",   "BLD_" }
 }
 
 file serviceStatus.db {
     pattern {   DEVICE,  SERVICE }
-            { "$(DEV)",  "BLD" }
+            { "$(DEV)",  "BLD_" }
 }
 
 
 file serviceRateControl.db {
     pattern {  IDX,  SERVICE_INST,  DEVICE,  GLOBAL,       SERVICE       }
-            {  "0",  "SCSBR",   "$(DEV)", "TPG:SYS0:1", "BLD"        }
-            {  "1",  "SCHBR",   "$(DEV)", "TPG:SYS0:1", "BLD"        } 
-            {  "2",  "EDEF3",   "$(DEV)", "TPG:SYS0:1", "BLD"        }
-            {  "3",  "EDEF4",   "$(DEV)", "TPG:SYS0:1", "BLD"        }
+            {  "0",  "SCSBR_",   "$(DEV)", "TPG:SYS0:1", "BLD_"        }
+            {  "1",  "SCHBR_",   "$(DEV)", "TPG:SYS0:1", "BLD_"        } 
+            {  "2",  "PATH3_",   "$(DEV)", "TPG:SYS0:1", "BLD_"        }
+            {  "3",  "PATH4_",   "$(DEV)", "TPG:SYS0:1", "BLD_"        }
 }
 
 
 file bldSpecific.db {
     pattern {   IDX,       DEVICE,       BLD_RATEID }
-            {   "0",      "$(DEV)",        "SCSBR"  }
-            {   "1",      "$(DEV)",        "SCHBR"  }
-            {   "2",      "$(DEV)",        "EDEF3"  }
-            {   "3",      "$(DEV)",        "EDEF4"  }
+            {   "0",      "$(DEV)",        "SCSBR_"  }
+            {   "1",      "$(DEV)",        "SCHBR_"  }
+            {   "2",      "$(DEV)",        "PATH3_"  }
+            {   "3",      "$(DEV)",        "PATH4_"  }
 }

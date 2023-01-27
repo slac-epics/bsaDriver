@@ -11,16 +11,16 @@ file serviceStatus.db {
 
 file serviceRateControl_localTest.db {
     pattern {  IDX,  SERVICE_INST,  DEVICE,   SERVICE  }
-            {  "0",  "SCHBR",      "$(DEV)",  "BLD" }
-            {  "1",  "SCSBR",      "$(DEV)",  "BLD" } 
-            {  "2",  "EDEF3",      "$(DEV)",  "BLD" }
-            {  "3",  "EDEF4",      "$(DEV)",  "BLD" }
+            {  "0",  "SCHBR_",      "$(DEV)",  "BLD_" }
+            {  "1",  "SCSBR_",      "$(DEV)",  "BLD_" } 
+            {  "2",  "PATH3_",      "$(DEV)",  "BLD_" }
+            {  "3",  "PATH4_",      "$(DEV)",  "BLD_" }
 }  
 
 file bldSpecific.db {
     pattern {   IDX,       DEVICE,       BLD_RATEID }
-            {   "0",      "$(DEV)",        "SCHBR"  }
-            {   "1",      "$(DEV)",        "SCSBR"  }
-            {   "2",      "$(DEV)",        "EDEF3"  }
-            {   "3",      "$(DEV)",        "EDEF4"  }
+            {   "0",      "$(DEV)",        "SCHBR_"  }
+            {   "1",      "$(DEV)",        "SCSBR_"  }
+            {   "2",      "$(DEV)",        "PATH3_"  }
+            {   "3",      "$(DEV)",        "PATH4_"  }
 }
