@@ -1,3 +1,6 @@
+R2.5.0-3.0   Jan 25, 2023  Kukhee KIm
+             - discard worker thread queue for BLD/BSSS/BSAS until ioc initialization is completed
+
 R2.5.0-2.0   Jan 23, 2023  Kukhee Kim
              - implement own device support for BSA for performance improvement
 
