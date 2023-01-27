@@ -24,7 +24,7 @@
 #include <epicsPrint.h>
 #include <ellLib.h>
 #include <iocsh.h>
-
+#include <initHooks.h>
 #include <drvSup.h>
 #include <epicsExport.h>
 
@@ -33,6 +33,7 @@
 
 #include <yamlLoader.h>
 #include "bldStream.h"
+
 
 #define  BLD_PACKET  1
 #define  BSSS_PACKET 2
@@ -384,6 +385,17 @@ static void bsasQTask(void *usrPvt)
     }
 }
 
+static void delay_fuse(initHookState state)
+{
+    switch (state) {
+        case initHookAfterIocRunning:
+            listener_ready = true;
+            break;
+        default:
+            break;
+    }
+}
+
 static void createListener(pDrvList_t *p) {
     char name[80];
     sprintf(name, "bldStrm_%s", p->named_root);
@@ -392,6 +404,8 @@ static void createListener(pDrvList_t *p) {
     epicsThreadCreate(name, epicsThreadPriorityHigh-10,
                       epicsThreadGetStackSize(epicsThreadStackMedium),
                       (EPICSTHREADFUNC) listener, (void*) p);
+
+    initHookRegister(delay_fuse);
 
 }
 
@@ -820,9 +834,6 @@ static int bldStreamDriverInitialize(void)
     } while(tick_start >= tick_stop);
 
     ticks_in_sec = tick_stop - tick_start;
-
-
-    listener_ready = true;     // postpone to activate listener until the driver instialization is done
 
     return 0;
 }
