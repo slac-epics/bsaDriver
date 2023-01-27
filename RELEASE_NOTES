@@ -1,3 +1,13 @@
+R2.5.0-3.1   Jan 27, 2023  C.B. Mattison
+	     - Changing names to match PV naming convention:
+               bld.substitutions
+               bldCtrl.substitutions
+               bldCtrl_localTest.substitutions
+               bldSpecific.db
+               bsss.substitutions
+               bsssCtrl.substitutions
+
+
 R2.5.0-3.0   Jan 25, 2023  Kukhee KIm
              - discard worker thread queue for BLD/BSSS/BSAS until ioc initialization is completed
 
