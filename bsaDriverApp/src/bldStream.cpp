@@ -40,7 +40,7 @@
 #define  BSAS_PACKET 3
 
 #define  MAX_FREE_LIST 1024
-#define  MAX_BUFF_SIZE 2048
+#define  MAX_BUFF_SIZE  (1024 *9)
 
 // number of worker threads
 #define  MAX_BSSSQ            1
