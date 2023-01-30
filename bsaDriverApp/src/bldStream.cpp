@@ -288,7 +288,7 @@ static void listener(pDrvList_t *p)
     Path p_root = (p->named_root && strlen(p->named_root))? cpswGetNamedRoot(p->named_root): cpswGetRoot();
     Stream bld_stream = IStream::create(p_root->findByName(BLDSTREAM_NAME));
     pBuff_t *np;
-    uint8_t gbg[MAX_BUFF_SIZE];
+    uint8_t *bypass_buf = (uint8_t *) mallocMustSucceed(sizeof(uint8_t) * MAX_BUFF_SIZE, "bldStreamDriver: listener");
 
 
     while(true) {
@@ -299,7 +299,7 @@ static void listener(pDrvList_t *p)
             epicsMutexUnlock(p->lock);
         } else {
             p->overrun++;
-            bld_stream->read(gbg, MAX_BUFF_SIZE, CTimeout());
+            bld_stream->read(bypass_buf, MAX_BUFF_SIZE, CTimeout());
             continue;
         }
         p->read_size = bld_stream->read((uint8_t*)(np->buff), MAX_BUFF_SIZE, CTimeout());

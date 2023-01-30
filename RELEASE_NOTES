@@ -1,3 +1,6 @@
+R2.5.0-3.0.2 Jan 30, 2023  Kukhee Kim
+             - allocated bypass buffer in memory heap heap instead of stacks, since the size is ~ 9k to cover the BLD packet
+
 R2.5.0-3.0.1 Jan 30, 2023  Dawood Alnajjar
              - Increase BLD buffer to include jumbo packets 9K
              - Fixed some variable names and added comments
