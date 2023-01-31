@@ -4,8 +4,8 @@ file serviceControl.db {
 }
 
 file bsssRateLimit.db {
-    pattern {   DEVICE,   SERVICE }
-            { "$(DEV)" ,  "BSSS"}
+    pattern {   DEVICE,   SERVICE,      GLOBAL }
+            { "$(DEV)" ,  "BSSS",  "TPG:SYS0:1"}
 }
 
 file serviceStatus.db {
