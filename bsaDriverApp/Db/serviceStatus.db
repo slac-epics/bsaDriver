@@ -2,7 +2,7 @@
 #   service status monitoring PVs
 #
 
-record(longin, "$(DEVICE):$(SERVICE)_ST:CURPKTSZ")
+record(longin, "$(DEVICE):$(SERVICE):CURPKTSZ")
 {
     field(DESC, "$(SERVICE) Current Packet Size")
     field(DTYP, "asynInt32")
@@ -10,7 +10,7 @@ record(longin, "$(DEVICE):$(SERVICE)_ST:CURPKTSZ")
     field(SCAN, "I/O Intr")
 }
 
-record(mbbi, "$(DEVICE):$(SERVICE)_ST:CURPKTST")
+record(mbbi, "$(DEVICE):$(SERVICE):CURPKTST")
 {
     field(DESC, "$(SERVICE) Current Packet Status")
     field(DTYP, "asynInt32")
@@ -44,7 +44,7 @@ record(mbbi, "$(DEVICE):$(SERVICE)_ST:CURPKTST")
 }
 
 
-record(longin, "$(DEVICE):$(SERVICE)_ST:CURPIDL")
+record(longin, "$(DEVICE):$(SERVICE):CURPIDL")
 {
     field(DESC, "$(SERVICE) Current PIDL")
     field(DTYP, "asynInt32")
@@ -52,7 +52,7 @@ record(longin, "$(DEVICE):$(SERVICE)_ST:CURPIDL")
     field(SCAN, "I/O Intr")
 }
 
-record(longin, "$(DEVICE):$(SERVICE)_ST:CURTSL")
+record(longin, "$(DEVICE):$(SERVICE):CURTSL")
 {
     field(DESC, "$(SERVICE) Current TimeStampL")
     field(DTYP, "asynInt32")
@@ -60,7 +60,7 @@ record(longin, "$(DEVICE):$(SERVICE)_ST:CURTSL")
     field(SCAN, "I/O Intr")
 }
 
-record(longin, "$(DEVICE):$(SERVICE)_ST:CURDLT")
+record(longin, "$(DEVICE):$(SERVICE):CURDLT")
 {
     field(DESC, "$(SERVICE) Current Delta")
     field(DTYP, "asynInt32")
@@ -68,7 +68,7 @@ record(longin, "$(DEVICE):$(SERVICE)_ST:CURDLT")
     field(SCAN, "I/O Intr")
 }
 
-record(longin, "$(DEVICE):$(SERVICE)_ST:PKTCNT")
+record(longin, "$(DEVICE):$(SERVICE):PKTCNT")
 {
     field(DESC, "$(SERVICE) Packet Count")
     field(DTYP, "asynInt32")
@@ -76,7 +76,7 @@ record(longin, "$(DEVICE):$(SERVICE)_ST:PKTCNT")
     field(SCAN, "I/O Intr")
 }
 
-record(longin, "$(DEVICE):$(SERVICE)_ST:PAUSED")
+record(longin, "$(DEVICE):$(SERVICE):PAUSED")
 {
     field(DESC, "$(SERVICE) Paused")
     field(DTYP, "asynInt32")
@@ -84,7 +84,7 @@ record(longin, "$(DEVICE):$(SERVICE)_ST:PAUSED")
     field(SCAN, "I/O Intr")
 }
 
-record(longin, "$(DEVICE):$(SERVICE)_ST:DGCLKRATE")
+record(longin, "$(DEVICE):$(SERVICE):DGCLKRATE")
 {
     field(DESC, "$(SERVICE) Diag Clock Rate")
     field(DTYP, "asynInt32")
@@ -92,7 +92,7 @@ record(longin, "$(DEVICE):$(SERVICE)_ST:DGCLKRATE")
     field(SCAN, "I/O Intr")
 }
 
-record(longin, "$(DEVICE):$(SERVICE)_ST:DGSTBRATE")
+record(longin, "$(DEVICE):$(SERVICE):DGSTBRATE")
 {
     field(DESC, "$(SERVICE) Diag Strobe Rate")
     field(DTYP, "asynInt32")
@@ -100,7 +100,7 @@ record(longin, "$(DEVICE):$(SERVICE)_ST:DGSTBRATE")
     field(SCAN, "I/O Intr")
 }
 
-record(longin, "$(DEVICE):$(SERVICE)_ST:EVSELRATE")
+record(longin, "$(DEVICE):$(SERVICE):EVSELRATE")
 {
     field(DESC, "$(SERVICE) Event Select0 Rate")
     field(DTYP, "asynInt32")

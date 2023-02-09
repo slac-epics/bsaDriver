@@ -1,4 +1,4 @@
-record(bo, "$(DEVICE):$(SERVICE_INST):ENB")
+record(bo, "$(DEVICE):$(SERVICE)$(SERVICE_INST):ENB")
 {
     field(DESC, "enable/disable for $(SERVICE) EDEF $(IDX)")
     field(PINI, "YES")
@@ -9,7 +9,7 @@ record(bo, "$(DEVICE):$(SERVICE_INST):ENB")
     info(autosaveFields, "VAL")
 }
 
-record(mbbo, "$(DEVICE):$(SERVICE_INST):RATEMODE")
+record(mbbo, "$(DEVICE):$(SERVICE)$(SERVICE_INST):RATEMODE")
 {
     field(DESC, "$(SERVICE) Rate Mode")
     field(PINI, "YES")
@@ -26,7 +26,7 @@ record(mbbo, "$(DEVICE):$(SERVICE_INST):RATEMODE")
     info(autosaveFields, "VAL")
 }
 
-record(longout, "$(DEVICE):$(SERVICE_INST):EXPSEQ")
+record(longout, "$(DEVICE):$(SERVICE)$(SERVICE_INST):EXPSEQ")
 {
     field(DESC, "$(SERVICE) Exp Sequence Mode")
     field(PINI, "YES")
@@ -36,7 +36,7 @@ record(longout, "$(DEVICE):$(SERVICE_INST):EXPSEQ")
     info(autosaveFields, "VAL")
 }
 
-record(mbbo, "$(DEVICE):$(SERVICE_INST):FIXEDRATE")
+record(mbbo, "$(DEVICE):$(SERVICE)$(SERVICE_INST):FIXEDRATE")
 {
     field(DESC, "$(SERVICE) Fixed Rate Controls")
     field(PINI, "YES")
@@ -61,7 +61,7 @@ record(mbbo, "$(DEVICE):$(SERVICE_INST):FIXEDRATE")
     info(autosaveFields, "VAL")
 }
 
-record(mbbo, "$(DEVICE):$(SERVICE_INST):ACRATE")
+record(mbbo, "$(DEVICE):$(SERVICE)$(SERVICE_INST):ACRATE")
 {
     field(DESC, "$(SERVICE) AC Rate Controls")
     field(PINI, "YES")
@@ -84,7 +84,7 @@ record(mbbo, "$(DEVICE):$(SERVICE_INST):ACRATE")
     info(autosaveFields, "VAL")
 }
 
-record(longout, "$(DEVICE):$(SERVICE_INST):TSLOTMASK")
+record(longout, "$(DEVICE):$(SERVICE)$(SERVICE_INST):TSLOTMASK")
 {
     field(DESC, "$(SERVICE) Timeslot Mask")
     field(PINI, "YES")
@@ -94,7 +94,7 @@ record(longout, "$(DEVICE):$(SERVICE_INST):TSLOTMASK")
     info(autosaveFields, "VAL")
 }
 
-record(longout, "$(DEVICE):$(SERVICE_INST):EXPSEQBIT")
+record(longout, "$(DEVICE):$(SERVICE)$(SERVICE_INST):EXPSEQBIT")
 {
     field(DESC, "$(SERVICE) Exp Sequence Bit")
     field(PINI, "YES")
@@ -104,7 +104,7 @@ record(longout, "$(DEVICE):$(SERVICE_INST):EXPSEQBIT")
     info(autosaveFields, "VAL")
 }
 
-record(mbbo, "$(DEVICE):$(SERVICE_INST):DESTMODE")
+record(mbbo, "$(DEVICE):$(SERVICE)$(SERVICE_INST):DESTMODE")
 {
     field(DESC, "$(SERVICE) Destination Mode")
     field(PINI, "YES")
@@ -121,7 +121,7 @@ record(mbbo, "$(DEVICE):$(SERVICE_INST):DESTMODE")
     info(autosaveFields, "VAL")
 }
 
-record(longout, "$(DEVICE):$(SERVICE_INST):DESTMASK")
+record(longout, "$(DEVICE):$(SERVICE)$(SERVICE_INST):DESTMASK")
 {
     field(DESC, "$(SERVICE) Destinatin Mask")
     field(PINI, "YES")
@@ -132,7 +132,7 @@ record(longout, "$(DEVICE):$(SERVICE_INST):DESTMASK")
 }
 
 
-record(mbbo, "$(DEVICE):$(SERVICE_INST):RATELIMIT")
+record(mbbo, "$(DEVICE):$(SERVICE)$(SERVICE_INST):RATELIMIT")
 {
     field(DESC, "$(SERVICE) Rate Limit")
     field(PINI, "YES")

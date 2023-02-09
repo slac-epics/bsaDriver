@@ -1,5 +1,6 @@
 R2.5.0-3.0.3 Feb 8, 2023  Kukhee Kim
              - introduce $(GLOBAL) macro for pv refix for the global PVs, (default is TPG:SYS0:1)
+             - global PV names and local PV names change for recommendations of naming Czars
 
 R2.5.0-3.0.2 Jan 30, 2023  Kukhee Kim
              - allocated bypass buffer in memory heap heap instead of stacks, since the size is ~ 9k to cover the BLD packet
