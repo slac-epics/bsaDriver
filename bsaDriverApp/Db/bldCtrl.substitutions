@@ -11,10 +11,10 @@ file serviceStatus.db {
 
 file serviceRateControl.db {
     pattern {  IDX,  SERVICE_INST,  DEVICE,  GLOBAL,       SERVICE       }
-            {  "0",  "SCSBR",   "$(DEV)", "TPG:SYS0:1", "BLD"        }
-            {  "1",  "SCHBR",   "$(DEV)", "TPG:SYS0:1", "BLD"        } 
-            {  "2",  "EDEF3",   "$(DEV)", "TPG:SYS0:1", "BLD"        }
-            {  "3",  "EDEF4",   "$(DEV)", "TPG:SYS0:1", "BLD"        }
+            {  "0",  "SCSBR",   "$(DEV)", "\$\(GLOBAL=TPG:SYS0:1\)", "BLD"        }
+            {  "1",  "SCHBR",   "$(DEV)", "\$\(GLOBAL=TPG:SYS0:1\)", "BLD"        } 
+            {  "2",  "EDEF3",   "$(DEV)", "\$(\GLOBAL=TPG:SYS0:1\)", "BLD"        }
+            {  "3",  "EDEF4",   "$(DEV)", "\$\(GLOBAL=TPG:SYS0:1\)", "BLD"        }
 }
 
 

@@ -5,7 +5,7 @@ file serviceControl.db {
 
 file bsssRateLimit.db {
     pattern {   DEVICE,   SERVICE,      GLOBAL }
-            { "$(DEV)" ,  "BSSS",  "TPG:SYS0:1"}
+            { "$(DEV)" ,  "BSSS",  "\$\(GLOBAL=TPG:SYS0:1\)"}
 }
 
 file serviceStatus.db {
