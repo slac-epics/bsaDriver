@@ -33,6 +33,9 @@
 #define  FLTB_ARRAY3       47             // internal index, database template should have index n + 21 = 68
 #define  MAX_FLTB_LENGTH   1000000
 
+#define  UINT2STRING     "uint2"
+#define  INT16STRING     "int16"
+#define  UINT16STRING    "uint16"
 #define  INT32STRING     "int32"
 #define  UINT32STRING    "uint32"
 #define  UINT64STRING    "uint64"
@@ -42,22 +45,24 @@ extern "C" {
 // interface for BSSS driver
 ELLLIST * find_bsaChannelList(const char *port_name);
 }
-
-typedef enum {
-    int32,
-    uint32,
-    uint64,
-    float32,
-    fault
-} bsaDataType_t;
-
+struct ChannelDataStruct {
+    unsigned n;
+    double mean;
+    double rms2;
+    ChannelDataStruct(unsigned nVal, double meanVal, double rms2Val)
+    : n    (nVal   ),
+      mean (meanVal),
+      rms2 (rms2Val)
+      {
+      }
+};
 
 class bsaAsynDriver;
 
 
 class BsaField : public Bsa::Field {
     public:
-        BsaField(char *name, int index, int p_num, int p_mean, int p_rms2, double * p_slope, double * p_offset, bsaDataType_t * p_type,
+        BsaField(char *name, int index, int p_num, int p_mean, int p_rms2, double * p_slope, double * p_offset, Bsa::bsaDataType_t * p_type,
                   devBsaPvt_t *ppvt_num, devBsaPvt_t *ppvt_mean, devBsaPvt_t *ppvt_rms2);
         const char *name() const { return _name.c_str(); }
         const int get_p_num()  const { return _p_num; }
@@ -68,7 +73,7 @@ class BsaField : public Bsa::Field {
         double * get_p_offset() const { return _p_offset; }
         unsigned get_max_size(void) { return max_size; }
 
-        bsaDataType_t * get_p_type() const { return _p_type; }
+        Bsa::bsaDataType_t * get_p_type() const { return _p_type; }
 
         devBsaPvt_t *get_ppvt_num() const  { return _ppvt_num; }
         devBsaPvt_t *get_ppvt_mean() const { return _ppvt_mean; }
@@ -86,15 +91,13 @@ class BsaField : public Bsa::Field {
         double *_p_slope;    // slope data pointer from bsa driver
         double *_p_offset;   // offset data pointer from bsa driver
 
-        bsaDataType_t *_p_type;
+        Bsa::bsaDataType_t *_p_type;
 
         devBsaPvt_t *_ppvt_num;
         devBsaPvt_t *_ppvt_mean;
         devBsaPvt_t *_ppvt_rms2;
 
         unsigned max_size;
-
-
 };
 
 
@@ -135,13 +138,9 @@ class BsaPv : public Bsa::Pv {
         double * _p_slope;
         double * _p_offset;
 
-        bsaDataType_t *_p_type;
-
         devBsaPvt_t *_ppvt_num;
         devBsaPvt_t *_ppvt_mean;
         devBsaPvt_t *_ppvt_rms2;
-
-
 };
 
 
@@ -155,6 +154,8 @@ class BsaPvArray : public Bsa::PvArray {
         std::vector <Bsa::Pv*> pvs();
         void flush();
 
+        void procChannelData(unsigned n, double mean, double rms2, bool done);
+
         unsigned get_ts_sec(void)  { return _ts_sec; }
         unsigned get_ts_nsec(void) { return _ts_nsec; }
 
@@ -167,6 +168,8 @@ class BsaPvArray : public Bsa::PvArray {
         unsigned    _ts_nsec;
         devBsaPvt_t *_ppvt_pid;
         std::vector <uint64_t> _pid;
+
+        std::vector <ChannelDataStruct*> _rawChannelData; 
 
         unsigned size, loc, max_size;
 
@@ -199,7 +202,7 @@ typedef struct {
     double   slope;
     double   offset;
 
-    bsaDataType_t type;
+    Bsa::bsaDataType_t type;
 
     devBsaPvt_t ppvt_num[MAX_BSA_ARRAY];
     devBsaPvt_t ppvt_mean[MAX_BSA_ARRAY];
@@ -212,7 +215,6 @@ typedef struct {
     char     pname_slope[64];
     char     pname_offset[64];
     bool     doNotTouch;
-
 } bsaList_t;
 
 
