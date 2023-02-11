@@ -19,9 +19,9 @@ file serviceRateControl.db {
 
 
 file bldSpecific.db {
-    pattern {   IDX,       DEVICE,       BLD_RATEID }
-            {   "0",      "$(DEV)",        "SCSBR"  }
-            {   "1",      "$(DEV)",        "SCHBR"  }
-            {   "2",      "$(DEV)",        "EDEF3"  }
-            {   "3",      "$(DEV)",        "EDEF4"  }
+    pattern {   IDX,       DEVICE,       BLD_RATEID,  SERVICE    }
+            {   "0",      "$(DEV)",        "SCSBR" ,   "BLD"     }
+            {   "1",      "$(DEV)",        "SCHBR" ,   "BLD"     }
+            {   "2",      "$(DEV)",        "EDEF3" ,   "BLD"     }
+            {   "3",      "$(DEV)",        "EDEF4" ,   "BLD"     }
 }
