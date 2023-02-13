@@ -310,6 +310,9 @@ void BsaPv::append(unsigned n, double mean, double rms2)
     u.u32 = (uint32_t) mean;
 
     switch(*_p_type) {
+        case uint2:
+            __mean = (double) u.u32;
+            break;
         case int16:
             __mean = (double) u.i32;
             break;
