@@ -1,4 +1,4 @@
-record(bo, "$(DEVICE):BSAS_M$(IDX)$(CTRL_PV):ENB")
+record(bo, "$(DEVICE):BSAS$(EDEF):$(CTRL_PV)ENB")
 {
     field(DESC, "enable/disable for BSAS EDEF")
     field(PINI, "YES")
@@ -9,7 +9,7 @@ record(bo, "$(DEVICE):BSAS_M$(IDX)$(CTRL_PV):ENB")
     info(autosaveFields, "VAL")
 }
 
-record(mbbo, "$(DEVICE):BSAS_M$(IDX)$(CTRL_PV):RATEMODE")
+record(mbbo, "$(DEVICE):BSAS$(EDEF):$(CTRL_PV)RATEMODE")
 {
     field(DESC, "BSAS Rate Mode")
     field(PINI, "YES")
@@ -26,7 +26,7 @@ record(mbbo, "$(DEVICE):BSAS_M$(IDX)$(CTRL_PV):RATEMODE")
     info(autosaveFields, "VAL")
 }
 
-record(longout, "$(DEVICE):BSAS_M$(IDX)$(CTRL_PV):EXPSEQ")
+record(longout, "$(DEVICE):BSAS$(EDEF):$(CTRL_PV)EXPSEQ")
 {
     field(DESC, "BSAS Exp Sequence Mode")
     field(PINI, "YES")
@@ -36,7 +36,7 @@ record(longout, "$(DEVICE):BSAS_M$(IDX)$(CTRL_PV):EXPSEQ")
     info(autosaveFields, "VAL")
 }
 
-record(mbbo, "$(DEVICE):BSAS_M$(IDX)$(CTRL_PV):FIXEDRATE")
+record(mbbo, "$(DEVICE):BSAS$(EDEF):$(CTRL_PV)FIXEDRATE")
 {
     field(DESC, "BSAS Fixed Rate Controls")
     field(PINI, "YES")
@@ -61,7 +61,7 @@ record(mbbo, "$(DEVICE):BSAS_M$(IDX)$(CTRL_PV):FIXEDRATE")
     info(autosaveFields, "VAL")
 }
 
-record(mbbo, "$(DEVICE):BSAS_M$(IDX)$(CTRL_PV):ACRATE")
+record(mbbo, "$(DEVICE):BSAS$(EDEF):$(CTRL_PV)ACRATE")
 {
     field(DESC, "BSAS AC Rate Controls")
     field(PINI, "YES")
@@ -84,7 +84,7 @@ record(mbbo, "$(DEVICE):BSAS_M$(IDX)$(CTRL_PV):ACRATE")
     info(autosaveFields, "VAL")
 }
 
-record(longout, "$(DEVICE):BSAS_M$(IDX)$(CTRL_PV):TSLOTMASK")
+record(longout, "$(DEVICE):BSAS$(EDEF):$(CTRL_PV)TSLOTMASK")
 {
     field(DESC, "BSAS Timeslot Mask")
     field(PINI, "YES")
@@ -94,7 +94,7 @@ record(longout, "$(DEVICE):BSAS_M$(IDX)$(CTRL_PV):TSLOTMASK")
     info(autosaveFields, "VAL")
 }
 
-record(longout, "$(DEVICE):BSAS_M$(IDX)$(CTRL_PV):EXPSEQBIT")
+record(longout, "$(DEVICE):BSAS$(EDEF):$(CTRL_PV)EXPSEQBIT")
 {
     field(DESC, "BSAS Exp Sequence Bit")
     field(PINI, "YES")
@@ -104,7 +104,7 @@ record(longout, "$(DEVICE):BSAS_M$(IDX)$(CTRL_PV):EXPSEQBIT")
     info(autosaveFields, "VAL")
 }
 
-record(mbbo, "$(DEVICE):BSAS_M$(IDX)$(CTRL_PV):DESTMODE")
+record(mbbo, "$(DEVICE):BSAS$(EDEF):$(CTRL_PV)DESTMODE")
 {
     field(DESC, "BSAS Destination Mode")
     field(PINI, "YES")
@@ -121,7 +121,7 @@ record(mbbo, "$(DEVICE):BSAS_M$(IDX)$(CTRL_PV):DESTMODE")
     info(autosaveFields, "VAL")
 }
 
-record(longout, "$(DEVICE):BSAS_M$(IDX)$(CTRL_PV):DESTMASK")
+record(longout, "$(DEVICE):BSAS$(EDEF):$(CTRL_PV)DESTMASK")
 {
     field(DESC, "BSAS Destinatin Mask")
     field(PINI, "YES")

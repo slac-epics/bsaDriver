@@ -115,11 +115,33 @@ typedef struct __attribute__((__packed__)) {
 } bldAxiStreamHeader_t;
 
 typedef struct __attribute__((__packed__)) {
-    uint32_t deltaTimeStamp:20;
-    uint32_t deltaPulseID:12;
+    union deltas_union {
+        struct {
+            uint32_t deltaTimeStamp:20;
+            uint32_t deltaPulseID:12;
+        } deltas_struct;
+        uint32_t deltasCombined;
+    } deltas_u;
     uint32_t serviceMask;
 } bldAxiStreamComplementaryHeader_t;
 
+typedef struct __attribute__((__packed__)) {
+    uint64_t timeStamp;
+    uint64_t pulseID;
+    uint32_t version;
+    uint64_t severityMask;
+} bldMulticastPacketHeader_t;
+
+typedef struct __attribute__((__packed__)) {
+    union deltas_union {
+        struct {
+            uint32_t deltaTimeStamp:20;
+            uint32_t deltaPulseID:12;
+        } deltas_struct;
+        uint32_t deltasCombined;
+    } deltas_u;
+    uint64_t severityMask;
+} bldMulticastPacketComplementaryHeader_t;
 
 typedef struct {
 
@@ -128,7 +150,7 @@ typedef struct {
 class serviceAsynDriver: asynPortDriver {
 
     public:
-        serviceAsynDriver(const char *portName, const char *reg_path, const int num_dyn_param, ELLLIST *pServiceEllList,  serviceType_t type, const char *named_root, const char* pva_basename);
+        serviceAsynDriver(const char *portName, const char *reg_path, const int num_dyn_param, ELLLIST *pChannelEllList,  serviceType_t type, const char *named_root, const char* pva_basename);
         ~serviceAsynDriver();
 
         asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
@@ -152,7 +174,7 @@ class serviceAsynDriver: asynPortDriver {
         pvxs::server::SharedPV                pv;
         pvxs::server::Server server;
 
-        ELLLIST *pServiceEllList;
+        ELLLIST *pChannelEllList;
         AcqService::AcqServiceYaml *pService[MAX_MOD_NUM];
 
         void SetupAsynParams(serviceType_t type);

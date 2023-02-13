@@ -4,7 +4,7 @@
 #
 
 
-record(longout, "$(DEVICE):$(SERVICE)_CTRL:PKSZ")
+record(longout, "$(DEVICE):$(SERVICE):PKSZ")
 {
     field(DESC, "$(SERVICE) Packet Size")
 #    field(PINI, "YES")
@@ -15,7 +15,7 @@ record(longout, "$(DEVICE):$(SERVICE)_CTRL:PKSZ")
     info(autosaveFields, "VAL")
 }
 
-record(bo, "$(DEVICE):$(SERVICE)_CTRL:ENB")
+record(bo, "$(DEVICE):$(SERVICE):ENB")
 {
     field(DESC, "Enable $(SERVICE)")
     field(PINI, "YES")

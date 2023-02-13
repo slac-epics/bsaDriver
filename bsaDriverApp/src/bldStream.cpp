@@ -24,7 +24,7 @@
 #include <epicsPrint.h>
 #include <ellLib.h>
 #include <iocsh.h>
-
+#include <initHooks.h>
 #include <drvSup.h>
 #include <epicsExport.h>
 
@@ -34,12 +34,13 @@
 #include <yamlLoader.h>
 #include "bldStream.h"
 
+
 #define  BLD_PACKET  1
 #define  BSSS_PACKET 2
 #define  BSAS_PACKET 3
 
 #define  MAX_FREE_LIST 1024
-#define  MAX_BUFF_SIZE 2048
+#define  MAX_BUFF_SIZE  (1024 *9)
 
 // number of worker threads
 #define  MAX_BSSSQ            1
@@ -121,6 +122,7 @@ typedef struct {
     unsigned        bsss_count;
     unsigned        bsas_count;
     unsigned        else_count;
+    unsigned        overrun;
 
     struct {
         char    *name;
@@ -161,6 +163,7 @@ typedef struct {
                         of any type. */
     /**@}*/
 
+    epicsMutexId    lock;
     ELLLIST         *free_list;
 
     void            *p_last_buff;
@@ -255,6 +258,7 @@ static pDrvList_t *get_drvNode(const char *named_root)
         p->bsss_count = 0;
         p->bsas_count = 0;
         p->else_count = 0;
+        p->overrun    = 0;
 
 
         p->p_last_buff   = NULL;
@@ -270,6 +274,7 @@ static pDrvList_t *get_drvNode(const char *named_root)
             ellAdd(p->free_list, &pn->node);   
         }
 
+        p->lock = epicsMutexCreate();
         ellAdd(pDrvEllList, &p->node);
 
     }
@@ -282,10 +287,21 @@ static void listener(pDrvList_t *p)
 {
     Path p_root = (p->named_root && strlen(p->named_root))? cpswGetNamedRoot(p->named_root): cpswGetRoot();
     Stream bld_stream = IStream::create(p_root->findByName(BLDSTREAM_NAME));
+    pBuff_t *np;
+    uint8_t *bypass_buf = (uint8_t *) mallocMustSucceed(sizeof(uint8_t) * MAX_BUFF_SIZE, "bldStreamDriver: listener");
+
 
     while(true) {
-        pBuff_t *np = (pBuff_t *) ellFirst(p->free_list);
-        ellDelete(p->free_list, &np->node);
+        if(ellCount(p->free_list)) {
+            epicsMutexLock(p->lock);
+                np = (pBuff_t *) ellFirst(p->free_list);
+                ellDelete(p->free_list, &np->node);
+            epicsMutexUnlock(p->lock);
+        } else {
+            p->overrun++;
+            bld_stream->read(bypass_buf, MAX_BUFF_SIZE, CTimeout());
+            continue;
+        }
         p->read_size = bld_stream->read((uint8_t*)(np->buff), MAX_BUFF_SIZE, CTimeout());
         np->size = p->read_size;
         np->p    = p;
@@ -326,10 +342,14 @@ static void listener(pDrvList_t *p)
                 if(p->bldQ[qid].pend_cnt > p->bldQ[qid].water_mark) p->bldQ[qid].water_mark = p->bldQ[qid].pend_cnt;
             }
         } else p->else_count++;  // something wrong, packet could not be specified
+        } else {
+            epicsMutexLock(p->lock);
+            ellAdd(p->free_list, &np->node);
+            epicsMutexUnlock(p->lock);
         }  // if(listener_ready)
 
         p->read_count++;
-        ellAdd(p->free_list, &np->node);
+
     }
 }
 
@@ -342,11 +362,21 @@ static void bsssQTask(void *usrPvt)
 
     while(true) {
         int msg = epicsMessageQueueReceive(p->bsssQueue[qid], (void *) &np, sizeof(np));
-        if(msg != sizeof(np)) {p->bsssQ[qid].fail++; continue;}
+        if(msg != sizeof(np)) {
+            p->bsssQ[qid].fail++; 
+            epicsMutexLock(p->lock);
+            ellAdd(p->free_list, &np->node);
+            epicsMutexUnlock(p->lock);
+            continue;
+        }
 
         if(np->type == bsss_packet) {
             (p->bsss_callback)(p->pUsrBsss, (void *) np->buff, np->size);
         } else p->bsssQ[qid].overrun++;
+
+        epicsMutexLock(p->lock);
+        ellAdd(p->free_list, &np->node);
+        epicsMutexUnlock(p->lock);
     }
 }
 
@@ -359,11 +389,21 @@ static void bldQTask(void *usrPvt)
 
     while(true) {
         int msg = epicsMessageQueueReceive(p->bldQueue[qid], (void *) &np, sizeof(np));
-        if(msg != sizeof(np)) {p->bldQ[qid].fail++; continue;}
+        if(msg != sizeof(np)) {
+            p->bldQ[qid].fail++; 
+            epicsMutexLock(p->lock);
+            ellAdd(p->free_list, &np->node);
+            epicsMutexUnlock(p->lock);
+            continue;
+        }
 
         if(np->type == bld_packet) {
             (p->bld_callback)(p->pUsrBld, (void *) np->buff, np->size);
         } else p->bldQ[qid].overrun++;
+
+        epicsMutexLock(p->lock);
+        ellAdd(p->free_list, &np->node);
+        epicsMutexUnlock(p->lock);
     }
 }
 
@@ -376,11 +416,32 @@ static void bsasQTask(void *usrPvt)
 
     while(true) {
         int msg = epicsMessageQueueReceive(p->bsasQueue[qid], (void *) &np, sizeof(np));
-        if(msg != sizeof(np)) {p->bsasQ[qid].fail++; continue;}
+        if(msg != sizeof(np)) {
+            p->bsasQ[qid].fail++; 
+            epicsMutexLock(p->lock);
+            ellAdd(p->free_list, &np->node);
+            epicsMutexUnlock(p->lock);
+            continue;
+        }
 
         if(np->type == bsas_packet) {
             (p->bsas_callback)(p->pUsrBsas, (void *) np->buff, np->size);
         } else p->bsasQ[qid].overrun++;
+
+        epicsMutexLock(p->lock);
+        ellAdd(p->free_list, &np->node);
+        epicsMutexUnlock(p->lock);
+    }
+}
+
+static void delay_fuse(initHookState state)
+{
+    switch (state) {
+        case initHookAfterIocRunning:
+            listener_ready = true;
+            break;
+        default:
+            break;
     }
 }
 
@@ -392,6 +453,8 @@ static void createListener(pDrvList_t *p) {
     epicsThreadCreate(name, epicsThreadPriorityHigh-10,
                       epicsThreadGetStackSize(epicsThreadStackMedium),
                       (EPICSTHREADFUNC) listener, (void*) p);
+
+    initHookRegister(delay_fuse);
 
 }
 
@@ -718,6 +781,7 @@ static int bldStreamDriverReport(int interest)
         printf("\t  bsss count : %u\n", p->bsss_count);
         printf("\t  bsas count : %u\n", p->bsas_count);
         printf("\t  else count : %u\n", p->else_count);
+        printf("\t  overrun    : %u\n", p->overrun);
         printf("\t  bld callback : %p\n", p->bld_callback);
         printf("\t  bld_usr      : %p\n", p->pUsrBld);
         printf("\t  bsss_callback: %p\n", p->bsss_callback);
@@ -820,9 +884,6 @@ static int bldStreamDriverInitialize(void)
     } while(tick_start >= tick_stop);
 
     ticks_in_sec = tick_stop - tick_start;
-
-
-    listener_ready = true;     // postpone to activate listener until the driver instialization is done
 
     return 0;
 }

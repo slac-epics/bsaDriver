@@ -1,20 +1,20 @@
 
 file bsasRateControl.db {
-    pattern {  IDX,  CTRL_PV,        CTRL,    DEVICE,   GLOBAL        }
+    pattern {  IDX, EDEF,   CTRL_PV,        CTRL,    DEVICE,   GLOBAL        }
 #
-            {  "0",    "ACQ",       "acq",   "$(DEV)",  "TPG:SYS0:1"  }
-            {  "0", "ROWADV",    "rowAdv",   "$(DEV)",  "TPG:SYS0:1"  } 
-            {  "0", "TBLRST",  "tblReset",   "$(DEV)",  "TPG:SYS0:1"  }
+            {  "0", "0",      "ACQ",       "acq",   "$(DEV)",  "\$\(GLOBAL=TPG:SYS0:1\)"  }
+            {  "0", "0",   "ROWADV",    "rowAdv",   "$(DEV)",  "\$\(GLOBAL=TPG:SYS0:1\)"  } 
+            {  "0", "0",   "TBLRST",  "tblReset",   "$(DEV)",  "\$\(GLOBAL=TPG:SYS0:1\)"  }
 #
-            {  "1",    "ACQ",       "acq",   "$(DEV)",  "TPG:SYS0:1"  }
-            {  "1", "ROWADV",    "rowAdv",   "$(DEV)",  "TPG:SYS0:1"  } 
-            {  "1", "TBLRST",  "tblReset",   "$(DEV)",  "TPG:SYS0:1"  }
+            {  "1", "1",      "ACQ",       "acq",   "$(DEV)",  "\$\(GLOBAL=TPG:SYS0:1\)"  }
+            {  "1", "1",   "ROWADV",    "rowAdv",   "$(DEV)",  "\$\(GLOBAL=TPG:SYS0:1\)"  } 
+            {  "1", "1",   "TBLRST",  "tblReset",   "$(DEV)",  "\$\(GLOBAL=TPG:SYS0:1\)"  }
 #
-            {  "2",    "ACQ",       "acq",   "$(DEV)",  "TPG:SYS0:1"  }
-            {  "2", "ROWADV",    "rowAdv",   "$(DEV)",  "TPG:SYS0:1"  } 
-            {  "2", "TBLRST",  "tblReset",   "$(DEV)",  "TPG:SYS0:1"  }
+            {  "2", "2",      "ACQ",       "acq",   "$(DEV)",  "\$\(GLOBAL=TPG:SYS0:1\)"  }
+            {  "2", "2",   "ROWADV",    "rowAdv",   "$(DEV)",  "\$\(GLOBAL=TPG:SYS0:1\)"  } 
+            {  "2", "2",   "TBLRST",  "tblReset",   "$(DEV)",  "\$\(GLOBAL=TPG:SYS0:1\)"  }
 #
-            {  "3",    "ACQ",       "acq",   "$(DEV)",  "TPG:SYS0:1"  }
-            {  "3", "ROWADV",    "rowAdv",   "$(DEV)",  "TPG:SYS0:1"  } 
-            {  "3", "TBLRST",  "tblReset",   "$(DEV)",  "TPG:SYS0:1"  }
+            {  "3", "3",      "ACQ",       "acq",   "$(DEV)",  "\$\(GLOBAL=TPG:SYS0:1\)"  }
+            {  "3", "3",   "ROWADV",    "rowAdv",   "$(DEV)",  "\$\(GLOBAL=TPG:SYS0:1\)"  } 
+            {  "3", "3",   "TBLRST",  "tblReset",   "$(DEV)",  "\$\(GLOBAL=TPG:SYS0:1\)"  }
 }  

@@ -3,7 +3,7 @@
 #    macros: $(DEVICE)
 
 
-record(stringout, "$(DEVICE):$(BLD_RATEID):MULT_ADDR")
+record(stringout, "$(DEVICE):$(SERVICE)$(BLD_RATEID):MULT_ADDR")
 {
     field(DESC, "BLD $(BLD_RATEID) multicast address")
     field(DTYP, "asynOctetWrite")
@@ -12,7 +12,7 @@ record(stringout, "$(DEVICE):$(BLD_RATEID):MULT_ADDR")
     info(autosaveFields, "VAL")
 }
 
-record(longout, "$(DEVICE):$(BLD_RATEID):MULT_PORT")
+record(longout, "$(DEVICE):$(SERVICE)$(BLD_RATEID):MULT_PORT")
 {
     field(DESC, "BLD $(BLD_RATEID) multicast port")
     field(DTYP, "asynInt32")

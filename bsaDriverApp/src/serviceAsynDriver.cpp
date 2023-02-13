@@ -62,7 +62,7 @@ typedef struct {
     char            *port_name;
     char            *reg_path;
     serviceAsynDriver  *pServiceDrv;
-    ELLLIST         *pServiceEllList;
+    ELLLIST         *pChannelEllList;
 } pDrvList_t;
 
 
@@ -106,14 +106,14 @@ static int prep_drvAnonimous(void)
     p->port_name  = NULL;
     p->reg_path   = NULL;
     p->pServiceDrv   = NULL;
-    p->pServiceEllList  = NULL;
+    p->pChannelEllList  = NULL;
 
     ellAdd(pDrvEllList, &p->node);
     return ellCount(pDrvEllList);
 }
 
 
-static int serviceAdd(const char *channelKey, serviceDataType_t type, double *slope, double *offset, bool doNotTouch)
+static int channelAdd(const char *channelKey, serviceDataType_t type, double *slope, double *offset, bool doNotTouch)
 {
     pDrvList_t * pl = find_drvLast();
 
@@ -127,12 +127,12 @@ static int serviceAdd(const char *channelKey, serviceDataType_t type, double *sl
         pl = find_drvLast();
     }
 
-    while(!pl->pServiceEllList) {   /* initialize the linked list once */
-        pl->pServiceEllList = (ELLLIST *) mallocMustSucceed(sizeof(ELLLIST), "serviceAsynDriver (serviceAdd)");
-        ellInit(pl->pServiceEllList);
+    while(!pl->pChannelEllList) {   /* initialize the linked list once */
+        pl->pChannelEllList = (ELLLIST *) mallocMustSucceed(sizeof(ELLLIST), "serviceAsynDriver (channelAdd)");
+        ellInit(pl->pChannelEllList);
     }
 
-    channelList_t *p = (channelList_t *) mallocMustSucceed(sizeof(channelList_t), "serviceAsynDriver (serviceAdd)");
+    channelList_t *p = (channelList_t *) mallocMustSucceed(sizeof(channelList_t), "serviceAsynDriver (channelAdd)");
     strcpy(p->channel_key, channelKey);
     p->index = 0;
     p->p_channelMask = -1;
@@ -152,7 +152,7 @@ static int serviceAdd(const char *channelKey, serviceDataType_t type, double *sl
     p->poffset = offset;
     p->doNotTouch = doNotTouch;
 
-    ellAdd(pl->pServiceEllList, &p->node);
+    ellAdd(pl->pChannelEllList, &p->node);
     return 0;
 }
 
@@ -165,10 +165,10 @@ static int associateBsaChannels(const char *port_name)
     bsaList_t * p = (bsaList_t *) ellFirst(pBsaEllList);
 
     while(p) {
-        serviceAdd(p->bsa_name, serviceDataType_t(p->type), &p->slope, &p->offset, p->doNotTouch);
+        channelAdd(p->bsa_name, serviceDataType_t(p->type), &p->slope, &p->offset, p->doNotTouch);
         p = (bsaList_t *) ellNext(&p->node);
     }
-    printf("Associate %d of channels from bsa port(%s) \n", ellCount(find_drvLast()->pServiceEllList), port_name);
+    printf("Associate %d of channels from bsa port(%s) \n", ellCount(find_drvLast()->pChannelEllList), port_name);
 
     return 0;
 }
@@ -214,7 +214,7 @@ static void bld_callback(void *pUsr, void *buf, unsigned size)
 }
 
 
-serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path, const int num_dyn_param, ELLLIST *pServiceEllList,  serviceType_t type, const char *named_root, const char* pva_basename)
+serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path, const int num_dyn_param, ELLLIST *pChannelEllList,  serviceType_t type, const char *named_root, const char* pva_basename)
     : asynPortDriver(portName,
                                         1,  /* number of elements of this device */
 #if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 | 32)
@@ -233,8 +233,8 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
 {
     
 
-    if(!pServiceEllList || !ellCount(pServiceEllList)) return;   /* if there is no service data channels in the list, nothing to do */
-    this->pServiceEllList = pServiceEllList;
+    if(!pChannelEllList || !ellCount(pChannelEllList)) return;   /* if there is no service data channels in the list, nothing to do */
+    this->pChannelEllList = pChannelEllList;
 
     char reg_path0[128], reg_path1[128];
     Path reg_, reg0_, reg1_;
@@ -274,7 +274,7 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
     channelSevr = 0;
 
     int i = 0;
-    channelList_t *p = (channelList_t *) ellFirst(pServiceEllList);
+    channelList_t *p = (channelList_t *) ellFirst(pChannelEllList);
     while(p) {
         p->index = i++;
         p = (channelList_t *) ellNext(&p->node);
@@ -314,7 +314,7 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
 void serviceAsynDriver::addBldChannelName(const char * key, const char * name)
 {
     bool found = false;
-    for (channelList_t *plist = (channelList_t *) ellFirst(pServiceEllList);
+    for (channelList_t *plist = (channelList_t *) ellFirst(pChannelEllList);
         plist!=NULL;
         plist = (channelList_t *) ellNext(&plist->node))
     {
@@ -361,7 +361,7 @@ void serviceAsynDriver::initPVA()
 
     pv = pvxs::server::SharedPV::buildReadonly();
 
-    for (plist = (channelList_t *) ellFirst(pServiceEllList), mask = 0x1;
+    for (plist = (channelList_t *) ellFirst(pChannelEllList), mask = 0x1;
         plist!=NULL;
         plist = (channelList_t *) ellNext(&plist->node), mask <<= 1)
     {
@@ -433,7 +433,7 @@ void serviceAsynDriver::SetupAsynParams(serviceType_t type)
     sprintf(param_name, ENABLE_STR, prefix);          createParam(param_name, asynParamInt32, &p_enable);
     
 
-    channelList_t *p = (channelList_t *) ellFirst(pServiceEllList);
+    channelList_t *p = (channelList_t *) ellFirst(pChannelEllList);
     while(p) {
         sprintf(param_name, CHANNELMASK_STR, prefix, p->channel_key); createParam(param_name, asynParamInt32, &(p->p_channelMask)); 
         sprintf(param_name, CHANNELSEVR_STR, prefix, p->channel_key); createParam(param_name, asynParamInt32, &(p->p_channelSevr));
@@ -469,7 +469,7 @@ void serviceAsynDriver::SetupAsynParams(serviceType_t type)
 
         // set up dyanamic paramters
         for(unsigned int i = 0; i < (this->pService[0]->getEdefNum() + this->pService[1]->getEdefNum()); i++) {
-            channelList_t *p  = (channelList_t *) ellFirst(this->pServiceEllList);
+            channelList_t *p  = (channelList_t *) ellFirst(this->pChannelEllList);
             while(p) {
                 sprintf(param_name, BSSSPV_STR,  p->channel_key, i); createParam(param_name, asynParamFloat64, &p->p_channel[i]);    strcpy(p->pkey_channel[i],    param_name);
                 sprintf(param_name, BSSSPID_STR, p->channel_key, i); createParam(param_name, asynParamInt64,   &p->p_channelPID[i]); strcpy(p->pkey_channelPID[i], param_name);
@@ -606,7 +606,7 @@ asynStatus serviceAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
     /* set the parameter in the parameter library */
     status = (asynStatus) setIntegerParam(function, value);
 
-    channelList_t *p = (channelList_t *) ellFirst(pServiceEllList);
+    channelList_t *p = (channelList_t *) ellFirst(pChannelEllList);
     while(p) {
        if(function == p->p_channelMask) {
            if (serviceType == bld) {    // handling channel mask for BLD
@@ -706,7 +706,7 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
      // setTimeStamp(&_ts);    // timestamp update for asyn port and related PVs
 
 
-     channelList_t *plist = (channelList_t *) ellFirst(pServiceEllList);
+     channelList_t *plist = (channelList_t *) ellFirst(pChannelEllList);
      int data_chn = 0;     // data channel number
      int index = 0;        // indicate the data location
      while(plist) {
@@ -768,7 +768,7 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
     bldAxiStreamHeader_t *header = (bldAxiStreamHeader_t *) p;
     bldAxiStreamComplementaryHeader_t * compHeader;
     double   val;
-    int data_chn, index;
+    int data_chn, dataIndex;
     uint64_t sevr_mask;
     channelList_t *plist;
     static uint32_t versionSize = 0;
@@ -793,7 +793,7 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
     uint32_t consumedSize = sizeof(bldAxiStreamHeader_t);
     do{
     
-        for (plist = (channelList_t *) ellFirst(pServiceEllList), index = 0, data_chn = 0;
+        for (plist = (channelList_t *) ellFirst(pChannelEllList), dataIndex = 0, data_chn = 0;
             plist!=NULL;
             plist = (channelList_t *) ellNext(&plist->node), data_chn++) 
         {
@@ -802,13 +802,13 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
 
             switch(plist->type){
                 case int32_service:
-                    val = (double) (p_int32[index]);
+                    val = (double) (p_int32[dataIndex]);
                     break;
                 case uint32_service:
-                    val = (double) (p_uint32[index]);
+                    val = (double) (p_uint32[dataIndex]);
                     break;
                 case float32_service:
-                    val = (double) (p_float32[index]);
+                    val = (double) (p_float32[dataIndex]);
                     break;
                 case uint64_service:
                 default:
@@ -821,17 +821,17 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
 
             /* If fixed, apply correct format */
             if (plist->doNotTouch == 1)
-                bldPacketPayload[multicastIndex++] = p_uint32[index]; /* formatted to int32/uint32 (untouched) */
+                bldPacketPayload[multicastIndex++] = p_uint32[dataIndex]; /* formatted to int32/uint32 (untouched) */
             else
                 bldPacketPayloadfloat[multicastIndex++] = val; /* formatted to IEEE 754 */
 
-            index++; /* Increment index only if not skipping */
+            dataIndex++; /* Increment dataIndex only if not skipping */
             consumedSize += 4;
         }
 
-        sevr_mask    = *(uint64_t*) (buf + index + IDX_DATA);
-        bldPacketPayload[severityMaskAddrL] = *(buf + index + IDX_DATA);
-        bldPacketPayload[severityMaskAddrH] = *(buf + index + IDX_DATA + 1);
+        sevr_mask    = *(uint64_t*) (buf + dataIndex + IDX_DATA);
+        bldPacketPayload[severityMaskAddrL] = *(buf + dataIndex + IDX_DATA);
+        bldPacketPayload[severityMaskAddrH] = *(buf + dataIndex + IDX_DATA + 1);
 
         consumedSize += sizeof(sevr_mask);
 
@@ -841,13 +841,17 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
         /* If reaches here is because there is more event data */
         compHeader = (bldAxiStreamComplementaryHeader_t *) (buf + (consumedSize/4));
 
-        bldPacketPayload[multicastIndex++] = *(buf + (consumedSize/4));
+        /* Copy deltas to multicast packet */
+        bldPacketPayload[multicastIndex++] = compHeader->deltas_u.deltasCombined;
+
+        /* Store Severity Mask address location */
         severityMaskAddrL = multicastIndex++;
         severityMaskAddrH = multicastIndex++;
 
-        p_uint32    = (uint32_t *) (compHeader + sizeof(bldAxiStreamComplementaryHeader_t));
-        p_int32     = (int32_t *) (compHeader + sizeof(bldAxiStreamComplementaryHeader_t));
-        p_float32   = (float*) (compHeader + sizeof(bldAxiStreamComplementaryHeader_t));
+        /* Override data type pointers */
+        p_uint32    = (uint32_t *) (compHeader + sizeof(bldMulticastPacketComplementaryHeader_t));
+        p_int32     = (int32_t *) (compHeader + sizeof(bldMulticastPacketComplementaryHeader_t));
+        p_float32   = (float*) (compHeader + sizeof(bldMulticastPacketComplementaryHeader_t));
 
         consumedSize += sizeof(bldAxiStreamComplementaryHeader_t);
     } while (consumedSize < size);
@@ -869,9 +873,9 @@ extern "C" {
 pid_pvt *find_pidPv(char *port, char *key, int edef)
 {
     pDrvList_t *pDrv = find_drvByPort(port);
-    if(!pDrv || !pDrv->pServiceEllList || ellCount(pDrv->pServiceEllList)==0) return NULL;
+    if(!pDrv || !pDrv->pChannelEllList || ellCount(pDrv->pChannelEllList)==0) return NULL;
 
-    channelList_t * p = (channelList_t *) ellFirst(pDrv->pServiceEllList);
+    channelList_t * p = (channelList_t *) ellFirst(pDrv->pChannelEllList);
     while(p) {
         if(!strcmp(key, p->channel_key)) break;
         p = (channelList_t *) ellNext(&p->node);
@@ -884,9 +888,9 @@ pid_pvt *find_pidPv(char *port, char *key, int edef)
 v_pvt * find_vPv(char *port, char *key, int edef)
 {
     pDrvList_t *pDrv = find_drvByPort(port);
-    if(!pDrv || !pDrv->pServiceEllList || ellCount(pDrv->pServiceEllList)==0) return NULL;
+    if(!pDrv || !pDrv->pChannelEllList || ellCount(pDrv->pChannelEllList)==0) return NULL;
 
-    channelList_t * p = (channelList_t *) ellFirst(pDrv->pServiceEllList);
+    channelList_t * p = (channelList_t *) ellFirst(pDrv->pChannelEllList);
     while(p) {
         if(!strcmp(key, p->channel_key)) break;
         p = (channelList_t *) ellNext(&p->node);
@@ -931,10 +935,10 @@ int serviceAsynDriverConfigure(const char *portName, const char *reg_path, const
 
     pl->named_root = (named_root && strlen(named_root))?epicsStrDup(named_root): cpswGetRootName();
 
-    if(!pl->pServiceEllList) return -1;
+    if(!pl->pChannelEllList) return -1;
 
     int i = 0;
-    channelList_t *p = (channelList_t *) ellFirst(pl->pServiceEllList);
+    channelList_t *p = (channelList_t *) ellFirst(pl->pChannelEllList);
     while(p) {
         i += (int) (&p->p_lastParam - &p->p_firstParam -1);
         p = (channelList_t *) ellNext(&p->node);
@@ -948,7 +952,7 @@ int serviceAsynDriverConfigure(const char *portName, const char *reg_path, const
 
     pl->port_name = epicsStrDup(portName);
     pl->reg_path  = epicsStrDup(reg_path);
-    pl->pServiceDrv  = new serviceAsynDriver(portName, reg_path, i, pl->pServiceEllList, type, pl->named_root, pva_basename);
+    pl->pServiceDrv  = new serviceAsynDriver(portName, reg_path, i, pl->pChannelEllList, type, pl->named_root, pva_basename);
 
     return 0;
 }
@@ -1048,7 +1052,7 @@ static int serviceAsynDriverReport(int interest)
               (p->named_root && strlen(p->named_root))?p->named_root: "Unknown",
               (p->port_name && strlen(p->port_name))? p->port_name: "Unknown",
               p->pServiceDrv,
-              (p->pServiceEllList)? ellCount(p->pServiceEllList): -1);
+              (p->pChannelEllList)? ellCount(p->pChannelEllList): -1);
         p = (pDrvList_t *) ellNext(&p->node);
     }
 
