@@ -432,66 +432,72 @@ void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done
         unsigned wordIndex = 0;
 
         // Incoming data are 32-bits
-        unsigned wordWidth = 32;
+        const unsigned wordWidth = BLOCK_WIDTH_32;
 
         // Keep track of bit boundaries
         unsigned bitSum = 0;
 
         // Fault flag for bit boundaries
-        bool faultBB = false;
+        bool fault = false;
 
         // Useful varibales for splitting the data
-        unsigned val      = 0;
+        uint32_t val      = 0;
         unsigned bitWidth = wordWidth;
-        unsigned mask     = 0x00000000;
+        unsigned mask     = DEFAULT_MASK;
 
         // Loop through the channel data and split if necessary
         for (Bsa::Pv* pv:_pvs)
         {
             // Get the data type of the next PV (32-bit or less)
             bsaDataType_t *type  = pv->get_p_type();
-            
-            // Partition 32-bit data and distribute to new PVs if needed
+
+            // Partition 32-bit data and distribute to new PVs as needed
             switch(*type){
                 case uint2:
                     // Extract the 2-bit block
-                    bitWidth = 2;
-                    mask = 0x00000003;
-                    val = (unsigned)_rawChannelData[wordIndex]->mean;
+                    bitWidth = BLOCK_WIDTH_2;
+                    mask = KEEP_LSB_2;
+                    val = (uint32_t)_rawChannelData[wordIndex]->mean;
                     val >> bitSum;  
                     val &= mask;
                     bitSum += bitWidth;
-                break;
+                    break;
                 case int16:
                 case uint16:
                     // Extract the 16-bit block
-                    bitWidth = 16;
-                    mask = 0x0000ffff;
-                    val = (unsigned)_rawChannelData[wordIndex]->mean;
+                    bitWidth = BLOCK_WIDTH_16;
+                    mask = KEEP_LSB_16;
+                    val = (uint32_t)_rawChannelData[wordIndex]->mean;
                     val >> bitSum; 
                     val &= mask;
                     bitSum += bitWidth;
                     break;
+                case int32:
+                case uint32:
                 default:
                     // Send data as is (no partition required)
-                    val = (unsigned)_rawChannelData[wordIndex  ]->mean;
+                    val = (uint32_t)_rawChannelData[wordIndex  ]->mean;
                     bitSum += wordWidth;
-                    break;
             }
+            // Append the value to the corresponding PV history
+            pv->append(_rawChannelData[wordIndex  ]->n, 
+                       (double)val, 
+                       _rawChannelData[wordIndex]->rms2);
+
             // Check if the 32-bit boundary has been violated
-            if (bitSum == 32)
+            if (bitSum == wordWidth)
             {
                 // All good, move on to the next 32-bit word
                 bitSum = 0;
                 wordIndex++;
             }
-            else if (bitSum > 32)
-                faultBB = true;
-            
-            // Append the value to the corresponding PV history
-            pv->append(_rawChannelData[wordIndex  ]->n, 
-                       (double)val, 
-                       _rawChannelData[wordIndex++]->rms2);
+            else if (bitSum > wordWidth)
+                fault = true;
+            else
+                continue;
+
+            // Maybe throw an exception in here later
+            if (fault) {}
         }
         //Empty Storage vector, resize to 0
         _rawChannelData.clear ( );
