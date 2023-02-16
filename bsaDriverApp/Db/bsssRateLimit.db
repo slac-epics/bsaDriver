@@ -1,4 +1,4 @@
-record(mbbo, "$(DEVICE):$(SERVICE):RATELIMIT")
+record(mbbo, "$(DEVICE):$(SERVICE)_RATELIMIT")
 {
     field(DESC, "$(SERVICE) Rate Limit")
     field(PINI, "YES")

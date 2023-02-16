@@ -4,18 +4,7 @@
 #
 
 
-record(longout, "$(DEVICE):$(SERVICE):PKSZ")
-{
-    field(DESC, "$(SERVICE) Packet Size")
-#    field(PINI, "YES")
-    field(DTYP, "asynInt32")
-    field(OUT, "@asyn($(PORT), 0) $(SERVICE)_packetSize")
-    field(OMSL, "supervisory")
-    field(SCAN, "Passive")
-    info(autosaveFields, "VAL")
-}
-
-record(bo, "$(DEVICE):$(SERVICE):ENB")
+record(bo, "$(DEVICE):$(SERVICE)_LOCALCTRL")
 {
     field(DESC, "Enable $(SERVICE)")
     field(PINI, "YES")
