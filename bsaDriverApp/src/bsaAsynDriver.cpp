@@ -314,7 +314,7 @@ void BsaPv::append(unsigned n, double mean, double rms2)
             __mean = (double) u.u32;
             break;
         case int16:
-            __mean = (double) u.i32;
+            __mean = (double) u.u32;
             break;
         case uint16:
             __mean = (double) u.u32;
@@ -438,46 +438,42 @@ void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done
         unsigned bitSum = 0;
 
         // Fault flag for bit boundaries
-        bool fault = false;
+        bool userFault = false;
 
-        // Useful varibales for splitting the data
-        uint32_t val      = 0;
-        unsigned bitWidth = wordWidth;
-        unsigned mask     = DEFAULT_MASK;
+        // Useful variables for splitting the data
+        uint32_t val  = 0;
+        unsigned mask = DEFAULT_MASK;
 
         // Loop through the channel data and split if necessary
         for (Bsa::Pv* pv:_pvs)
         {
             // Get the data type of the next PV (32-bit or less)
             bsaDataType_t *type  = pv->get_p_type();
-
             // Partition 32-bit data and distribute to new PVs as needed
             switch(*type){
                 case uint2:
                     // Extract the 2-bit block
-                    bitWidth = BLOCK_WIDTH_2;
                     mask = KEEP_LSB_2;
                     val = (uint32_t)_rawChannelData[wordIndex]->mean;
-                    val >> bitSum;  
+                    val >>= bitSum;  
                     val &= mask;
-                    bitSum += bitWidth;
-                    break;
+                    bitSum += BLOCK_WIDTH_2;
+                    break; 
                 case int16:
                 case uint16:
                     // Extract the 16-bit block
-                    bitWidth = BLOCK_WIDTH_16;
                     mask = KEEP_LSB_16;
                     val = (uint32_t)_rawChannelData[wordIndex]->mean;
-                    val >> bitSum; 
+                    val >>= bitSum; 
                     val &= mask;
-                    bitSum += bitWidth;
+                    bitSum += BLOCK_WIDTH_16;
                     break;
                 case int32:
                 case uint32:
                 default:
                     // Send data as is (no partition required)
                     val = (uint32_t)_rawChannelData[wordIndex  ]->mean;
-                    bitSum += wordWidth;
+                    bitSum += BLOCK_WIDTH_32;
             }
             // Append the value to the corresponding PV history
             pv->append(_rawChannelData[wordIndex  ]->n, 
@@ -492,14 +488,14 @@ void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done
                 wordIndex++;
             }
             else if (bitSum > wordWidth)
-                fault = true;
+                userFault = true;
             else
                 continue;
 
             // Maybe throw an exception in here later
-            if (fault) {}
+            if (userFault) {}
         }
-        //Empty Storage vector, resize to 0
+        // Empty temporary vector, resize to 0
         _rawChannelData.clear ( );
         _rawChannelData.resize(0);
     }
@@ -1012,7 +1008,7 @@ bsaDataType_t getBsaDataType(const char *bsaType)
 {
     bsaDataType_t type;
 
-    if(!strcmp(UINT2STRING,         bsaType)) type = uint2;
+    if(!strcmp(UINT2STRING,        bsaType)) type = uint2;
     else if(!strcmp(INT16STRING,   bsaType)) type = int16;
     else if(!strcmp(UINT16STRING,  bsaType)) type = uint16;
     else if(!strcmp(INT32STRING,   bsaType)) type = int32;
