@@ -705,30 +705,96 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
      _ts.secPastEpoch  = buf[IDX_SEC];
      // setTimeStamp(&_ts);    // timestamp update for asyn port and related PVs
 
-
+     // Loop over data channels (i.e. PVs)
      channelList_t *plist = (channelList_t *) ellFirst(pChannelEllList);
      int data_chn = 0;     // data channel number
      int index = 0;        // indicate the data location
-     while(plist) {
-         if(!(channel_mask & (uint32_t(0x1) << data_chn))) goto skip;   // skipping the channel, if the channel is not in the mask
 
-         for(unsigned int i = 0, svc_mask = 0x1; i < this->pService[mod]->getEdefNum(); i++, svc_mask <<= 1) {
+     while(plist) {
+         // Initialize some useful variables below to aid with data splitting whenever required
+         bool lastEdef = false;
+
+         // Incoming data are 32-bit
+         const unsigned wordWidth = BLOCK_WIDTH_32;
+
+         // Keep track of bit boundaries
+         unsigned bitSum = 0;
+
+         // Fault flag for bit boundaries
+         bool userFault = false;
+
+         // Useful variables for splitting the data
+         unsigned mask = DEFAULT_MASK;
+
+         // Skipping the channel, if the channel is not in the mask
+         while(!(channel_mask & (uint32_t(0x1) << data_chn)))
+         {
+             data_chn++; // evolve data channel number to next channel
+             if (data_chn >= BLOCK_WIDTH_32)
+                 return;
+         }
+
+         // Now loop over all EDEFs
+         for (unsigned int i = 0, svc_mask = 0x1; i < this->pService[mod]->getEdefNum(); i++, svc_mask <<= 1) {
              int edef = i + mod * BSSS0_NUM_EDEF;    // calculate edef number
              if(service_mask & svc_mask) {
                  plist->pidPv[edef].pid = pulse_id;
                  plist->pidPv[edef].time = _ts;
                  process_pidPv(&plist->pidPv[edef]);
 
+                 // See if this is the last EDEF iteration for the current PV 
+                 lastEdef = false;
+                 if (i == this->pService[mod]->getEdefNum() - 1)
+                     lastEdef = true;
+
                  if(int((sevr_mask >> (data_chn*2)) & 0x3) <= GetChannelSevr(data_chn) ) {  // data update for valid mask
                      switch(plist->type){
+                         case uint2_service:
+                         {
+                             // Read channel data
+                             uint32_t tmpVal = p_uint32[index];
+                             // Bit-shift, extract with mask and assign result to val
+                             mask = KEEP_LSB_2;
+                             tmpVal >>= bitSum;  
+                             tmpVal &= mask;
+                             val = (double) (tmpVal);
+                             // Increment bitSum counter only in the last iteration 
+                             if (lastEdef)
+                                 bitSum += BLOCK_WIDTH_2;
+                             break;
+                         }
+                         case int16_service:
+                         case uint16_service:
+                         {
+                             // Read channel data
+                             uint32_t tmpVal = p_uint32[index];
+                             // Bit-shift, extract with mask and assign result to val
+                             mask = KEEP_LSB_16;
+                             tmpVal >>= bitSum;  
+                             tmpVal &= mask;
+                             val = (double) (tmpVal);
+                             // Increment bitSum counter only in the last iteration
+                             if (lastEdef)
+                                 bitSum += BLOCK_WIDTH_16;
+                             break;
+                         }
                          case int32_service:
+                             // Read channel data
                              val = (double) (p_int32[index]);
+                             if (lastEdef)
+                                 bitSum += BLOCK_WIDTH_32;
                              break;
                          case uint32_service:
+                             // Read channel data
                              val = (double) (p_uint32[index]);
+                             if (lastEdef)
+                                 bitSum += BLOCK_WIDTH_32;
                              break;
                          case float32_service:
+                             // Read channel data
                              val = (double) (p_float32[index]);
+                             if (lastEdef)
+                                 bitSum += BLOCK_WIDTH_32;
                              break;
                          case uint64_service:
                          default:
@@ -741,16 +807,29 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
                  plist->vPv[edef].v = val;
                  plist->vPv[edef].time = _ts;
                  process_vPv(&plist->vPv[edef]);
-             }
-         }
-         index++;
+             } // end of (service_mask & svc_mask)
+         } // end of for-loop for all EDEFs
 
          skip:
 
+         // Increment index only if done reading current channel 
+         // (i.e. may take a few repetitions if reading a single 
+         // 2-bit block at a time).
+         if (bitSum == wordWidth)
+         {
+             // All good, move on to the next 32-bit word
+             bitSum = 0;
+             index++;         // point to next 32-bit word in memory buffer
+             data_chn++;      // evolve data channel number to next channel
+         }
+         else if (bitSum > wordWidth)
+             userFault = true;
+
+         // Maybe throw an exception in here? 
+         if (userFault) {}
+
          plist = (channelList_t *) ellNext(&plist->node);  // evolve to next data channel
-         data_chn++;      // evolve data channel number to next channel
-     }
-     
+     } // end of while(pList)
 }
 
 serviceType_t serviceAsynDriver::getServiceType()

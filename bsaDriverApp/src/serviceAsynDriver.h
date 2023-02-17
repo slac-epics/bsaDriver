@@ -66,7 +66,18 @@
 #define FIXED_SLOPE  1
 #define FIXED_OFFSET 0
 
+#define BLOCK_WIDTH_2   2
+#define BLOCK_WIDTH_16  16
+#define BLOCK_WIDTH_32  32
+
+#define KEEP_LSB_2    0x00000003 
+#define KEEP_LSB_16   0x0000ffff 
+#define DEFAULT_MASK  0xffffffff
+
 typedef enum {
+    uint2_service,
+    int16_service,
+    uint16_service,
     int32_service,
     uint32_service,
     uint64_service,

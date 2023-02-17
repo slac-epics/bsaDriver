@@ -470,6 +470,7 @@ void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done
                     break;
                 case int32:
                 case uint32:
+                case float32:
                 default:
                     // Send data as is (no partition required)
                     val = (uint32_t)_rawChannelData[wordIndex  ]->mean;
