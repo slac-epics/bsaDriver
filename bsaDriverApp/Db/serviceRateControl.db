@@ -1,10 +1,10 @@
-record(bo, "$(DEVICE):$(SERVICE)$(BUFF_NUM)_ACQENB_STAT")
+record(bo, "$(DEVICE):$(SERVICE)$(BUFF_NUM)_ACQ")
 {
     field(DESC, "enable/disable for $(SERVICE) BSA BUFF $(BUFF_NUM)")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
     field(OUT, "@asyn($(PORT),0) $(SERVICE)_edefEnable_$(BUFF_NUM)")
-    field(DOL, "$(GLOBAL):$(BUFF_NUM):ENB CPP NMS")
+    field(DOL, "$(GLOBAL):$(BUFF_NUM):ACQCTRL CPP NMS")
     field(OMSL, "closed_loop")
     field(ZNAM, "Disable")
     field(ONAM, "Enable")

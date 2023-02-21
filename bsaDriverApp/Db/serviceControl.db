@@ -4,9 +4,9 @@
 #
 
 
-record(bo, "$(DEVICE):$(SERVICE)_LOCALCTRL")
+record(bo, "$(DEVICE):$(SERVICE)_OVERRIDE_CTRL")
 {
-    field(DESC, "Enable $(SERVICE)")
+    field(DESC, "Enable or Disable $(SERVICE) locally in IOC")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
     field(OUT, "@asyn($(PORT),0) $(SERVICE)_enable")
