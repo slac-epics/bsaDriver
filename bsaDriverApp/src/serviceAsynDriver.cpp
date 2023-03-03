@@ -332,7 +332,7 @@ void serviceAsynDriver::addBldChannelName(const char * key, const char * name)
 void serviceAsynDriver::updatePVA()
 {
     std::string pvaName(pvaBaseName);
-    pvaName = pvaName + ":BLD:PAYLOAD";
+    pvaName = pvaName + ":BLD_PAYLOAD";
 
     server.removePV(pvaName);
     pv.close();
@@ -352,7 +352,7 @@ void serviceAsynDriver::initPVA()
     char * name;
 
     std::string pvaName(pvaBaseName);
-    pvaName = pvaName + ":BLD:PAYLOAD";
+    pvaName = pvaName + ":BLD_PAYLOAD";
 
     server = pvxs::ioc::server();
 
