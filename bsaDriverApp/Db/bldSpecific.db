@@ -15,7 +15,7 @@ record(stringout, "$(DEVICE):BLD$(BLD_BUFF)_MULT_ADDR")
 
 record(longout, "$(DEVICE):BLD$(BLD_BUFF)_MULT_PORT")
 {
-    field(DESC, "BLD $(BLD_RATEID) multicast port")
+    field(DESC, "BLD $(BLD_BUFF) multicast port")
     field(DTYP, "asynInt32")
     field(DESC, "$(DESC)")
     field(PINI, "YES")
