@@ -134,7 +134,8 @@ static int channelAdd(const char *channelKey, serviceDataType_t type, double *sl
 
     channelList_t *p = (channelList_t *) mallocMustSucceed(sizeof(channelList_t), "serviceAsynDriver (channelAdd)");
     strcpy(p->channel_key, channelKey);
-    p->index = 0;
+    p->swChIndex = 0;
+    p->hwChIndex = 0;
     p->p_channelMask = -1;
     p->p_channelSevr = -1;
     for(unsigned int i = 0; i < NUM_EDEF_MAX; i++) {
@@ -231,8 +232,6 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
                                          channelMask(0)
 
 {
-    
-
     if(!pChannelEllList || !ellCount(pChannelEllList)) return;   /* if there is no service data channels in the list, nothing to do */
     this->pChannelEllList = pChannelEllList;
 
@@ -273,17 +272,24 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
     
     channelSevr = 0;
 
+    // Initialize hardware/software channel map
+    for (int i = 0; i < HW_CHANNELS; i++)
+        hwChannelUsage[i] = {};
+
     int i = 0;
+    int bitSum = 0;
     channelList_t *p = (channelList_t *) ellFirst(pChannelEllList);
     while(p) {
-        p->index = i++;
+        // Assign the channel index
+        p->swChIndex = i++;
+        // Assign the hardware channel index
+        bitSum += channelBitMap[p->type];
+        p->hwChIndex = std::floor((bitSum - 1)/BLOCK_WIDTH_32);
+        hwChannelUsage[p->hwChIndex].push_back(p->swChIndex);
         p = (channelList_t *) ellNext(&p->node);
     }
 
-
-
     SetupAsynParams(type);
-
 
     switch (type) {
         case bld:      
@@ -607,24 +613,81 @@ asynStatus serviceAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
     status = (asynStatus) setIntegerParam(function, value);
 
     channelList_t *p = (channelList_t *) ellFirst(pChannelEllList);
-    while(p) {
-       if(function == p->p_channelMask) {
-           if (serviceType == bld) {    // handling channel mask for BLD
+    while(p) 
+    {
+        if(function == p->p_channelMask) 
+        {
+            // If the hardware channel is being disabled, 
+            // check first if it is used by other software channels.
+            // If it is used, then ignore the user request to disable
+            //
+            if (serviceType == bld) // handling channel mask for BLD
+            {    
                 if (value == 0)
-                    channelMask = channelMask & ~(0x1U << p->index);
+                    channelMask = channelMask & ~(0x1U << p->hwChIndex);
                 else
-                    channelMask = channelMask | (0x1U << p->index);
-                pService[0]->setChannelMask(p->index, uint32_t(value));
+                    channelMask = channelMask | (0x1U << p->hwChIndex);
+                pService[0]->setChannelMask(p->hwChIndex, uint32_t(value));
                 updatePVA();
-           } else {    // handling channel mask for BSSS
-                pService[0]->setChannelMask(p->index, uint32_t(value));
-                pService[1]->setChannelMask(p->index, uint32_t(value));
-           }
+            } 
+            else // handling channel mask for BSSS 
+            {    
+                if (value) // enable hardware channel
+                {
+                    //printf("Before enabling channel:\n");
+                    //printMap();
+                    
+                    // Search for software channel in the channel map
+                    auto vec = hwChannelUsage[p->hwChIndex];
+                    if (std::find(vec.begin(),vec.end(),p->swChIndex) == vec.end())
+                    {
+                        //printf("Resetting the channel mask...\n");
+                        //printf("SetChannelMask(%d, 0)\n",p->hwChIndex);
+                        // Only set the hardware channel bit if not set before
+                        if (hwChannelUsage[p->hwChIndex].size() == 0)
+                        {
+                            pService[0]->setChannelMask(p->hwChIndex, uint32_t(value));
+                            pService[1]->setChannelMask(p->hwChIndex, uint32_t(value));
+                        }
+                    
+                        //printf("Software channel in not in the usage list. Adding...\n");
+                        // Add software channel to the usage list
+                        hwChannelUsage[p->hwChIndex].push_back(p->swChIndex);
+                    }
+                    //printf("After enabling channel:");
+                    //printMap();
+                }
+                else // disable hardware channel
+                {
+                    //printf("Before disabling channel:\n");
+                    //printMap();
+                    
+                    // Search for software channel in the channel map
+                    auto pos = std::find(hwChannelUsage[p->hwChIndex].begin(),hwChannelUsage[p->hwChIndex].end(),p->swChIndex);
+                    if (pos != hwChannelUsage[p->hwChIndex].end())
+                    {
+                        //printf("Found software channel in the usage list. Erasing...\n");
+                        // Remove software channel from the usage list
+                        hwChannelUsage[p->hwChIndex].erase(pos);
+                        
+                        //printf("Resetting the channel mask...\n");
+                        //printf("SetChannelMask(%d, 0)\n",p->hwChIndex);
+                        // Disable hardware channel only if not used by any other software channels
+                        if (hwChannelUsage[p->hwChIndex].size() == 0)
+                        {
+                            pService[0]->setChannelMask(p->hwChIndex, uint32_t(value));
+                            pService[1]->setChannelMask(p->hwChIndex, uint32_t(value));
+                        }
+                    }
+                    //printf("After disabling channel:");
+                    //printMap();
+                }
+           } 
            goto done;
        }
  
        if(function == p->p_channelSevr) {
-           SetChannelSevr(p->index, value);
+           SetChannelSevr(p->hwChIndex, value);
            goto done;
        }
         p = (channelList_t *) ellNext(&p->node);
@@ -685,6 +748,18 @@ asynStatus serviceAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
     return status;
 }
 
+void serviceAsynDriver::printMap()
+{
+    for(int i=0;i<HW_CHANNELS;i++)
+    {
+        printf("| %d | -> ",i);
+        for(auto x:hwChannelUsage[i])
+        {
+            printf("%d, ",x);
+        }
+        printf("\n");
+    }
+}
 
 void serviceAsynDriver::bsssCallback(void *p, unsigned size)
 {
@@ -698,6 +773,8 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
      uint64_t sevr_mask    = *(uint64_t*) (buf+IDX_SEVR_MASK(size));
      uint64_t pulse_id     = ((uint64_t)(buf[IDX_PIDU])) << 32 | buf[IDX_PIDL];
 
+     uint32_t tmpVal, mask;
+
      int mod = (service_mask & ((uint32_t) 0x1 << BSSS1_BIT))?1:0;   // decide BSSS0 or BSSS1
 
      epicsTimeStamp _ts;
@@ -707,32 +784,29 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
 
      // Loop over data channels (i.e. PVs)
      channelList_t *plist = (channelList_t *) ellFirst(pChannelEllList);
-     int data_chn = 0;     // data channel number
-     int index = 0;        // indicate the data location
+     int hwChIndex = 0;     // data/firmware channel number
+     int dataIndex = 0;        // indicate the data location
+
+     // Variable to keep track of bit boundaries as we read in channel data
+     unsigned bitSum = 0;
+
+     // Fault flag to indicate violation of bit boundaries in the channel data
+     bool userFault = false;
+
+     // Incoming data are 32-bit words
+     const unsigned wordWidth = BLOCK_WIDTH_32;
 
      while(plist) {
-         // Initialize some useful variables below to aid with data splitting whenever required
-         bool lastEdef = false;
-
-         // Incoming data are 32-bit
-         const unsigned wordWidth = BLOCK_WIDTH_32;
-
-         // Keep track of bit boundaries
-         unsigned bitSum = 0;
-
-         // Fault flag for bit boundaries
-         bool userFault = false;
-
-         // Useful variables for splitting the data
-         unsigned mask = DEFAULT_MASK;
-
-         // Skipping the channel, if the channel is not in the mask
-         while(!(channel_mask & (uint32_t(0x1) << data_chn)))
+         // Skipping the (firmware) channel, if the channel is not enabled in the mask
+         while(!(channel_mask & (uint32_t(0x1) << hwChIndex)))
          {
-             data_chn++; // evolve data channel number to next channel
-             if (data_chn >= BLOCK_WIDTH_32)
+             hwChIndex++; // evolve data channel number to next channel
+             if (hwChIndex >= BLOCK_WIDTH_32)
                  return;
          }
+        
+         // Count newly extracted bits only once below, regardless of multiple EDEFs
+         unsigned newBitsExtracted = 0;
 
          // Now loop over all EDEFs
          for (unsigned int i = 0, svc_mask = 0x1; i < this->pService[mod]->getEdefNum(); i++, svc_mask <<= 1) {
@@ -742,59 +816,44 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
                  plist->pidPv[edef].time = _ts;
                  process_pidPv(&plist->pidPv[edef]);
 
-                 // See if this is the last EDEF iteration for the current PV 
-                 lastEdef = false;
-                 if (i == this->pService[mod]->getEdefNum() - 1)
-                     lastEdef = true;
-
-                 if(int((sevr_mask >> (data_chn*2)) & 0x3) <= GetChannelSevr(data_chn) ) {  // data update for valid mask
+                 if(int((sevr_mask >> (hwChIndex*2)) & 0x3) <= GetChannelSevr(hwChIndex) ) {  // data update for valid mask
                      switch(plist->type){
                          case uint2_service:
-                         {
                              // Read channel data
-                             uint32_t tmpVal = p_uint32[index];
+                             tmpVal = p_uint32[dataIndex];
                              // Bit-shift, extract with mask and assign result to val
-                             mask = KEEP_LSB_2;
-                             tmpVal >>= bitSum;  
-                             tmpVal &= mask;
-                             val = (double) (tmpVal);
-                             // Increment bitSum counter only in the last iteration 
-                             if (lastEdef)
-                                 bitSum += BLOCK_WIDTH_2;
+                             mask = KEEP_LSB_2; tmpVal >>= bitSum; tmpVal &= mask;
+                             val  = (double) (tmpVal);
+                             // Increment bitSum counter once and only after done with all EDEFs  
+                             newBitsExtracted = BLOCK_WIDTH_2;
                              break;
-                         }
                          case int16_service:
                          case uint16_service:
-                         {
                              // Read channel data
-                             uint32_t tmpVal = p_uint32[index];
+                             tmpVal = p_uint32[dataIndex];
                              // Bit-shift, extract with mask and assign result to val
-                             mask = KEEP_LSB_16;
-                             tmpVal >>= bitSum;  
-                             tmpVal &= mask;
-                             val = (double) (tmpVal);
-                             // Increment bitSum counter only in the last iteration
-                             if (lastEdef)
-                                 bitSum += BLOCK_WIDTH_16;
+                             mask = KEEP_LSB_16; tmpVal >>= bitSum; tmpVal &= mask;
+                             val  = (double) (tmpVal);
+                             // Increment bitSum counter once and only after done with all EDEFs  
+                             newBitsExtracted = BLOCK_WIDTH_16;
                              break;
-                         }
                          case int32_service:
                              // Read channel data
-                             val = (double) (p_int32[index]);
-                             if (lastEdef)
-                                 bitSum += BLOCK_WIDTH_32;
+                             val = (double) (p_int32[dataIndex]);
+                             // Increment bitSum counter once and only after done with all EDEFs  
+                             newBitsExtracted = BLOCK_WIDTH_32;
                              break;
                          case uint32_service:
                              // Read channel data
-                             val = (double) (p_uint32[index]);
-                             if (lastEdef)
-                                 bitSum += BLOCK_WIDTH_32;
+                             val = (double) (p_uint32[dataIndex]);
+                             // Increment bitSum counter once and only after done with all EDEFs  
+                             newBitsExtracted = BLOCK_WIDTH_32;
                              break;
                          case float32_service:
                              // Read channel data
-                             val = (double) (p_float32[index]);
-                             if (lastEdef)
-                                 bitSum += BLOCK_WIDTH_32;
+                             val = (double) (p_float32[dataIndex]);
+                             // Increment bitSum counter once and only after done with all EDEFs  
+                             newBitsExtracted = BLOCK_WIDTH_32;
                              break;
                          case uint64_service:
                          default:
@@ -810,25 +869,31 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
              } // end of (service_mask & svc_mask)
          } // end of for-loop for all EDEFs
 
-         skip:
+         // Update bitSum counter
+         bitSum += newBitsExtracted;
 
-         // Increment index only if done reading current channel 
-         // (i.e. may take a few repetitions if reading a single 
-         // 2-bit block at a time).
+         // Increment data index only if done reading current (firmware) channel 
+         // (i.e. may take a few repetitions if reading <32-bit blocks at a time) 
          if (bitSum == wordWidth)
          {
              // All good, move on to the next 32-bit word
-             bitSum = 0;
-             index++;         // point to next 32-bit word in memory buffer
-             data_chn++;      // evolve data channel number to next channel
+             bitSum = 0;      // reset bitSum counter
+             ++dataIndex;     // point to next 32-bit word in memory buffer
+             ++hwChIndex;      // evolve data channel number to next firmware channel
          }
          else if (bitSum > wordWidth)
              userFault = true;
 
-         // Maybe throw an exception in here? 
-         if (userFault) {}
+         // Maybe throw an exception in here instead of exiting? 
+         if (userFault) 
+         {
+             printf("ERROR - Please ensure BSA/BSSS channels do not violate 32-bit boundaries!!");
+             printf("ERROR - Exiting ...");
+             exit(EXIT_FAILURE);
+         }
 
-         plist = (channelList_t *) ellNext(&plist->node);  // evolve to next data channel
+         // Evolve to next BSA channel/PV
+         plist = (channelList_t *) ellNext(&plist->node);
      } // end of while(pList)
 }
 

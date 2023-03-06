@@ -11,6 +11,7 @@
 #include <arpa/inet.h>
 #include <sstream>
 #include <vector>
+#include <map>
 
 #include <asynPortDriver.h>
 #include <epicsEvent.h>
@@ -23,7 +24,7 @@
 
 #define PVNAME_LEN              128
 
-#define NUM_BSAS_DATA_MAX       31
+#define HW_CHANNELS             31
 #define NUM_BSAS_MODULES        4
 #define NUM_BSAS_CTRL           3    // acquire, rowAdvance, tableReset
 
@@ -42,8 +43,19 @@
 #define MIN_STR                 "pv%d_min"
 #define MAX_STR                 "pv%d_max"
 
+#define BLOCK_WIDTH_2   2
+#define BLOCK_WIDTH_16  16
+#define BLOCK_WIDTH_32  32
+#define BLOCK_WIDTH_64  64 
+
+#define KEEP_LSB_2    0x00000003 
+#define KEEP_LSB_16   0x0000ffff 
+#define DEFAULT_MASK  0xffffffff
 
 typedef enum {
+    uint2_bsas,
+    int16_bsas,
+    uint16_bsas,
     int32_bsas,
     uint32_bsas,
     uint64_bsas,
@@ -51,19 +63,29 @@ typedef enum {
     fault_bsas
 } bsasDataType_t;
 
+static std::map<bsasDataType_t, int> bsasBitMap = {{uint2_bsas,   BLOCK_WIDTH_2 },
+                                                   {int16_bsas,   BLOCK_WIDTH_16},
+                                                   {uint16_bsas,  BLOCK_WIDTH_16},
+                                                   {int32_bsas,   BLOCK_WIDTH_32},
+                                                   {uint32_bsas,  BLOCK_WIDTH_32},
+                                                   {uint64_bsas,  BLOCK_WIDTH_64},
+                                                   {float32_bsas, BLOCK_WIDTH_32}};
+
+static std::map<int, std::vector<int>> bsasHwChannelUsage;
+
 typedef enum {
     acquire_idx, 
     rowAdvance_idx,
     tableReset_idx
 } ctrlIdx_t;
 
-
 typedef struct {
     ELLNODE               node;
     char                  bsas_name[PVNAME_LEN];
     char                  pv_name[PVNAME_LEN];
 
-    int                   index;
+    int                   swChIndex;
+    int                   hwChIndex;
     int                   p_firstParam;
     int                   p_channelMask;
     int                   p_channelSevr;
@@ -249,7 +271,7 @@ class bsasAsynDriver: asynPortDriver {
         void              SetChannelSevr(int chn, uint64_t sevr);
         void              SetChannelSevr(uint64_t sevr);
 
-
+        void printMap();
 
     protected:
 #if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 | 32)

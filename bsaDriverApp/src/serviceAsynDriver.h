@@ -9,6 +9,7 @@
 #include <new>
 #include <arpa/inet.h>
 #include <sstream>
+#include <map>
 
 #include <asynPortDriver.h>
 #include <epicsEvent.h>
@@ -37,8 +38,7 @@
 #define BSSS0_NUM_EDEF       28   // BSSS0 module covers 28 EDEFs
 #define BSSS1_NUM_EDEF       16   // BSSS1 module covers 16 EDEFs
 
-#define NUM_BSSS_DATA_MAX    31
-#define NUM_CHANNELS_MAX     31
+#define HW_CHANNELS          31
 #define NUM_EDEF_MAX         64
 #define MAX_BUFF_SIZE        9000
 #define CHNMASK_INVALID      0xFFFFFFFF
@@ -69,6 +69,7 @@
 #define BLOCK_WIDTH_2   2
 #define BLOCK_WIDTH_16  16
 #define BLOCK_WIDTH_32  32
+#define BLOCK_WIDTH_64  32
 
 #define KEEP_LSB_2    0x00000003 
 #define KEEP_LSB_16   0x0000ffff 
@@ -85,6 +86,16 @@ typedef enum {
     fault_service
 } serviceDataType_t;
 
+static std::map<serviceDataType_t, int> channelBitMap = {{uint2_service,   BLOCK_WIDTH_2 },
+                                                         {int16_service,   BLOCK_WIDTH_16},
+                                                         {uint16_service,  BLOCK_WIDTH_16},
+                                                         {int32_service,   BLOCK_WIDTH_32},
+                                                         {uint32_service,  BLOCK_WIDTH_32},
+                                                         {uint64_service,  BLOCK_WIDTH_64},
+                                                         {float32_service, BLOCK_WIDTH_32}};
+
+static std::map<int, std::vector<int>> hwChannelUsage;
+
 typedef enum {
     bld,
     bsss
@@ -95,7 +106,8 @@ typedef struct {
     char    channel_key[STR_SIZE];
     char    channel_name[STR_SIZE];
 
-    int     index;
+    int     hwChIndex;
+    int     swChIndex;
 
     int     p_firstParam;
     int     p_channelMask;
@@ -193,6 +205,8 @@ class serviceAsynDriver: asynPortDriver {
         void SetDest(int chn);
         void SetChannelSevr(int chn, int sevr);
         int  GetChannelSevr(int chn);
+
+        void printMap();
 
         serviceType_t serviceType;
         int           numMod;

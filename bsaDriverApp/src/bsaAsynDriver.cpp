@@ -422,6 +422,9 @@ void BsaPvArray::set(unsigned sec, unsigned nsec)
 
 void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done)
 {
+    uint32_t val  = 0;
+    uint32_t mask = DEFAULT_MASK;
+
     // Add channel data for the current BSA buffer to a vector
     _rawChannelData.push_back(new ChannelDataStruct(n,mean,rms2));
 
@@ -439,10 +442,6 @@ void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done
 
         // Fault flag for bit boundaries
         bool userFault = false;
-
-        // Useful variables for splitting the data
-        uint32_t val  = 0;
-        unsigned mask = DEFAULT_MASK;
 
         // Loop through the channel data and split if necessary
         for (Bsa::Pv* pv:_pvs)
@@ -494,7 +493,12 @@ void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done
                 continue;
 
             // Maybe throw an exception in here later
-            if (userFault) {}
+            if (userFault) 
+            {
+                printf("ERROR - Please ensure BSA channels do not violate 32-bit boundaries!!");
+                printf("ERROR - Exiting ...");
+                exit(EXIT_FAILURE);
+            }
         }
         // Empty temporary vector, resize to 0
         _rawChannelData.clear ( );
