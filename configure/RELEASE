@@ -37,7 +37,8 @@ BLDCLIENT_MODULE_VERSION=R2.18.0
 
 YAMLLOADER=$(EPICS_MODULES)/yamlLoader/$(YAMLLOADER_MODULE_VERSION)
 ASYN=$(EPICS_MODULES)/asyn/$(ASYN_MODULE_VERSION)
-PVXS=$(EPICS_MODULES)/pvxs/$(PVXS_MODULE_VERSION)
+#PVXS=$(EPICS_MODULES)/pvxs/$(PVXS_MODULE_VERSION)
+PVXS=/afs/slac/g/controls/development/users/jesseb/sandbox/pvxs
 
 # =====================================================================
 # Set EPICS_BASE last so it appears last in the DB, DBD, INCLUDE, and LIB search paths
