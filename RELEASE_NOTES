@@ -1,3 +1,9 @@
+R2.5.0-3.1.0 Mar 9, 2023 Kukhee Kim
+             - build against timing/bsa R2.2.0-1.0
+             - bug fixing for double free
+             - work with new bsa firmware (bug fixing for fault buffer)
+             - support syslog for the debugging messsage (need to move to other place to support global)
+
 R2.5.0-3.0.3 Feb 8, 2023  Kukhee Kim
              - introduce $(GLOBAL) macro for pv refix for the global PVs, (default is TPG:SYS0:1)
              - global PV names and local PV names change for recommendations of naming Czars
