@@ -1,7 +1,8 @@
-file serviceControl.db {
-    pattern {   DEVICE,   SERVICE }
-            { "$(DEV)",   "BSAS" }
+file disableGlobalPVs.db {
+    pattern {   DEVICE,  SERVICE }
+            { "$(DEV)",  "BSAS" }
 }
+
 
 file bsasRateControl.db {
     pattern {   BSAS_BUFF, DRV_NUM,   CTRL_PV,       CTRL,    DEVICE,            GLOBAL            }

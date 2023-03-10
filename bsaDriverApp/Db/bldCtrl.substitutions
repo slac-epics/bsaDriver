@@ -9,6 +9,12 @@ file serviceStatus.db {
 }
 
 
+file disableGlobalPVs.db {
+    pattern {   DEVICE,  SERVICE }
+            { "$(DEV)",  "BLD" }
+}
+
+
 file serviceRateControl.db {
     pattern {  BUFF_NUM, DRV_NUM,    DESC,    DEVICE,        GLOBAL,             SERVICE       }
             {  "1",      "0",      "SCSBR",  "$(DEV)", "\$\(GLOBAL=BLD:SYS0:1\)", "BLD"        }
