@@ -9,7 +9,7 @@ record(stringout, "$(DEVICE):BLD$(BLD_BUFF)_MULT_ADDR")
     field(DTYP, "asynOctetWrite")
     field(DESC, "$(DESC)")
     field(PINI, "YES")
-    field(OUT,  "@asyn($(PORT), 0) bldMulticastAddress_$(BLD_BUFF)")
+    field(OUT,  "@asyn($(PORT), 0) bldMulticastAddress_$(DRV_NUM)")
     info(autosaveFields, "VAL")
 }
 
@@ -19,6 +19,6 @@ record(longout, "$(DEVICE):BLD$(BLD_BUFF)_MULT_PORT")
     field(DTYP, "asynInt32")
     field(DESC, "$(DESC)")
     field(PINI, "YES")
-    field(OUT,  "@asyn($(PORT),0) bldMulticastPort_$(BLD_BUFF)")
+    field(OUT,  "@asyn($(PORT),0) bldMulticastPort_$(DRV_NUM)")
     info(autosaveFields, "VAL")
 }
