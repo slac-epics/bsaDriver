@@ -2,10 +2,6 @@
 file bsasRateControl.db {
     pattern {   BSAS_BUFF,  CTRL_PV, CTRL,    DEVICE,   GLOBAL        }
 #
-            {   "0",   "ACQ",       "acq",   "$(DEV)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  }
-            {   "0",   "ADV",    "rowAdv",   "$(DEV)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  } 
-            {   "0",   "TRST",  "tblReset",   "$(DEV)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  }
-#
             {   "1",   "ACQ",       "acq",   "$(DEV)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  }
             {   "1",   "ADV",    "rowAdv",   "$(DEV)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  } 
             {   "1",   "TRST",  "tblReset",   "$(DEV)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  }
@@ -17,4 +13,8 @@ file bsasRateControl.db {
             {   "3",   "ACQ",       "acq",   "$(DEV)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  }
             {   "3",   "ADV",    "rowAdv",   "$(DEV)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  } 
             {   "3",   "TRST",  "tblReset",   "$(DEV)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  }
+#
+            {   "4",   "ACQ",       "acq",   "$(DEV)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  }
+            {   "4",   "ADV",    "rowAdv",   "$(DEV)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  } 
+            {   "4",   "TRST",  "tblReset",   "$(DEV)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  }
 }  

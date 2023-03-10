@@ -11,17 +11,17 @@ file serviceStatus.db {
 
 file serviceRateControl.db {
     pattern {  BUFF_NUM,  DESC,          DEVICE,  GLOBAL,       SERVICE       }
-            {  "0",       "SCSBR",  "$(DEV)", "\$\(GLOBAL=BLD:SYS0:1\)", "BLD"        }
-            {  "1",       "SCHBR",  "$(DEV)", "\$\(GLOBAL=BLD:SYS0:1\)", "BLD"        } 
-            {  "2",       "Spare1", "$(DEV)", "\$\(GLOBAL=BLD:SYS0:1\)", "BLD"        }
-            {  "3",       "Spare2", "$(DEV)", "\$\(GLOBAL=BLD:SYS0:1\)", "BLD"        }
+            {  "1",       "SCSBR",  "$(DEV)", "\$\(GLOBAL=BLD:SYS0:1\)", "BLD"        }
+            {  "2",       "SCHBR",  "$(DEV)", "\$\(GLOBAL=BLD:SYS0:1\)", "BLD"        } 
+            {  "3",       "Spare1", "$(DEV)", "\$\(GLOBAL=BLD:SYS0:1\)", "BLD"        }
+            {  "4",       "Spare2", "$(DEV)", "\$\(GLOBAL=BLD:SYS0:1\)", "BLD"        }
 }
 
 
 file bldSpecific.db {
     pattern {   BLD_BUFF,  DEVICE,       DESC }
-            {   "0",      "$(DEV)",      "SCSBR"  }
-            {   "1",      "$(DEV)",      "SCHBR"  }
-            {   "2",      "$(DEV)",      "Spare1"  }
-            {   "3",      "$(DEV)",      "Spare2"  }
+            {   "1",      "$(DEV)",      "SCSBR"  }
+            {   "2",      "$(DEV)",      "SCHBR"  }
+            {   "3",      "$(DEV)",      "Spare1"  }
+            {   "4",      "$(DEV)",      "Spare2"  }
 }
