@@ -9,19 +9,6 @@ record(longin, "$(DEVICE):$(SERVICE)_CURPKTSZ")
     field(SCAN, "I/O Intr")
 }
 
-record(longout, "$(DEVICE):$(SERVICE)_PKTSZ")
-{
-    field(DESC, "Set $(SERVICE) Packet Size")
-    field(PINI, "YES")
-    field(VAL, "9216")
-    field(DRVH, "9216")
-    field(DTYP, "asynInt32")
-    field(OUT, "@asyn($(PORT), 0) $(SERVICE)_packetSize")
-    field(OMSL, "supervisory")
-    field(SCAN, "Passive")
-    info(autosaveFields, "VAL")
-}
-
 record(mbbi, "$(DEVICE):$(SERVICE)_CURPKTST")
 {
     field(DESC, "$(SERVICE) Current Packet Status")
