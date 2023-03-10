@@ -1,3 +1,7 @@
+file serviceControl.db {
+    pattern {   DEVICE,   SERVICE }
+            { "$(DEV)",   "BSAS" }
+}
 
 file bsasRateControl.db {
     pattern {   BSAS_BUFF,  CTRL_PV, CTRL,    DEVICE,   GLOBAL        }
