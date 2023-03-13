@@ -17,13 +17,10 @@ include $(TOP)/configure/CONFIG
 DB += bsa.db
 DB += bsss.db
 DB += bsssCtrl.db
-DB += bsssCtrl_localTest.db
 DB += bld.db
 DB += bldCtrl.db
-DB += bldCtrl_localTest.db
 DB += bsas.db
 DB += bsasCtrl.db
-DB += bsasCtrl_localTest.db
 
 
 # =======================================================================
