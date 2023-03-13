@@ -31,6 +31,8 @@ ifeq ($(T_A),linuxRT-x86_64)
 LIBRARY_IOC = bsaDriver
 
 bsaDriver_DBD += bsaAsynDriver.dbd
+#bsaDrivee_DBD += syslog.dbd
+#bsaDriver_SRCS += syslog.cpp
 bsaDriver_SRCS += bldStream.cpp
 bsaDriver_SRCS += bsaAsynDriver.cpp
 bsaDriver_SRCS += serviceAsynDriver.cpp
