@@ -1,23 +1,49 @@
-record(bo, "$(DEVICE):$(SERVICE)$(SERVICE_INST):ENB")
+# Change the OMSL fields of the timing filters according to the local PV that
+# allows or blocks the global PV access.
+record(dfanout, "$(DEVICE):$(SERVICE)$(BUFF_NUM)_FANOUTNOGLOBAL1")
 {
-    field(DESC, "enable/disable for $(SERVICE) EDEF $(IDX)")
+    field(DESC, "Fanouts OMSL to PVs")
+    field(DOL, "$(DEVICE):$(SERVICE)_NOGLOBAL CP")
+    field(OUTA, "$(DEVICE):$(SERVICE)$(BUFF_NUM)_ACQ.OMSL")
+    field(OUTB, "$(DEVICE):$(SERVICE)$(BUFF_NUM)_RATEMODE.OMSL")
+    field(OUTC, "$(DEVICE):$(SERVICE)$(BUFF_NUM)_EXPSEQ.OMSL")
+    field(OUTD, "$(DEVICE):$(SERVICE)$(BUFF_NUM)_FIXEDRATE.OMSL")
+    field(OUTE, "$(DEVICE):$(SERVICE)$(BUFF_NUM)_ACRATE.OMSL")
+    field(OUTF, "$(DEVICE):$(SERVICE)$(BUFF_NUM)_TSLOTMASK.OMSL")
+    field(OUTG, "$(DEVICE):$(SERVICE)$(BUFF_NUM)_EXPSEQBIT.OMSL")
+    field(OUTH, "$(DEVICE):$(SERVICE)$(BUFF_NUM)_DESTMODE.OMSL")
+    field(OMSL, "closed_loop")
+}
+
+record(dfanout, "$(DEVICE):$(SERVICE)$(BUFF_NUM)_FANOUTNOGLOBAL2")
+{
+    field(DESC, "Fanouts OMSL to PVs")
+    field(DOL, "$(DEVICE):$(SERVICE)_NOGLOBAL CP")
+    field(OUTA, "$(DEVICE):$(SERVICE)$(BUFF_NUM)_DESTMASK.OMSL")
+    field(OUTB, "$(DEVICE):$(SERVICE)$(BUFF_NUM)_RATELIMIT.OMSL")
+    field(OMSL, "closed_loop")
+}
+
+record(bo, "$(DEVICE):$(SERVICE)$(BUFF_NUM)_ACQ")
+{
+    field(DESC, "enable/disable for $(SERVICE) BUFF $(BUFF_NUM)")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
-    field(OUT, "@asyn($(PORT),0) $(SERVICE)_edefEnable_$(IDX)")
-    field(DOL, "$(GLOBAL):$(SERVICE)$(SERVICE_INST):ENB_SP CPP NMS")
+    field(OUT, "@asyn($(PORT),0) $(SERVICE)_edefEnable_$(DRV_NUM)")
+    field(DOL, "$(GLOBAL):$(BUFF_NUM):ACQCTRL CPP NMS")
     field(OMSL, "closed_loop")
     field(ZNAM, "Disable")
     field(ONAM, "Enable")
     info(autosaveFields, "VAL")
 }
 
-record(mbbo, "$(DEVICE):$(SERVICE)$(SERVICE_INST):RATEMODE")
+record(mbbo, "$(DEVICE):$(SERVICE)$(BUFF_NUM)_RATEMODE")
 {
     field(DESC, "$(SERVICE) Rate Mode")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
-    field(OUT, "@asyn($(PORT),0) $(SERVICE)_rateMode_$(IDX)")
-    field(DOL, "$(GLOBAL):$(SERVICE)$(SERVICE_INST):RATEMODE_SP CPP NMS")
+    field(OUT, "@asyn($(PORT),0) $(SERVICE)_rateMode_$(DRV_NUM)")
+    field(DOL, "$(GLOBAL):$(BUFF_NUM):RATEMODE_SET CPP NMS")
     field(OMSL, "closed_loop")
     field(SCAN, "Passive")
     field(ZRVL, "0")
@@ -29,25 +55,25 @@ record(mbbo, "$(DEVICE):$(SERVICE)$(SERVICE_INST):RATEMODE")
     info(autosaveFields, "VAL")
 }
 
-record(longout, "$(DEVICE):$(SERVICE)$(SERVICE_INST):EXPSEQ")
+record(longout, "$(DEVICE):$(SERVICE)$(BUFF_NUM)_EXPSEQ")
 {
     field(DESC, "$(SERVICE) Exp Sequence Mode")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
-    field(OUT,  "@asyn($(PORT),0) $(SERVICE)_expSeqNum_$(IDX)")
-    field(DOL, "$(GLOBAL):$(SERVICE)$(SERVICE_INST):EXPSEQ_SP CPP NMS")
+    field(OUT,  "@asyn($(PORT),0) $(SERVICE)_expSeqNum_$(DRV_NUM)")
+    field(DOL, "$(GLOBAL):$(BUFF_NUM):EXPSEQ_SET CPP NMS")
     field(OMSL, "closed_loop")
     field(SCAN, "Passive")
     info(autosaveFields, "VAL")
 }
 
-record(mbbo, "$(DEVICE):$(SERVICE)$(SERVICE_INST):FIXEDRATE")
+record(mbbo, "$(DEVICE):$(SERVICE)$(BUFF_NUM)_FIXEDRATE")
 {
     field(DESC, "$(SERVICE) Fixed Rate Controls")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
-    field(OUT, "@asyn($(PORT),0) $(SERVICE)_fixedRate_$(IDX)")
-    field(DOL, "$(GLOBAL):$(SERVICE)$(SERVICE_INST):FIXEDRATE_SP CPP NMS")
+    field(OUT, "@asyn($(PORT),0) $(SERVICE)_fixedRate_$(DRV_NUM)")
+    field(DOL, "$(GLOBAL):$(BUFF_NUM):FIXEDRATE_SET CPP NMS")
     field(SCAN, "Passive")
     field(OMSL, "closed_loop")
     field(ZRVL, "0")
@@ -67,13 +93,13 @@ record(mbbo, "$(DEVICE):$(SERVICE)$(SERVICE_INST):FIXEDRATE")
     info(autosaveFields, "VAL")
 }
 
-record(mbbo, "$(DEVICE):$(SERVICE)$(SERVICE_INST):ACRATE")
+record(mbbo, "$(DEVICE):$(SERVICE)$(BUFF_NUM)_ACRATE")
 {
     field(DESC, "$(SERVICE) AC Rate Controls")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
-    field(OUT, "@asyn($(PORT),0) $(SERVICE)_acRate_$(IDX)")
-    field(DOL, "$(GLOBAL):$(SERVICE)$(SERVICE_INST):ACRATE_SP CPP NMS")
+    field(OUT, "@asyn($(PORT),0) $(SERVICE)_acRate_$(DRV_NUM)")
+    field(DOL, "$(GLOBAL):$(BUFF_NUM):ACRATE_SET CPP NMS")
     field(SCAN, "Passive")
     field(OMSL, "closed_loop")
     field(ZRVL, "0")
@@ -91,37 +117,37 @@ record(mbbo, "$(DEVICE):$(SERVICE)$(SERVICE_INST):ACRATE")
     info(autosaveFields, "VAL")
 }
 
-record(longout, "$(DEVICE):$(SERVICE)$(SERVICE_INST):TSLOTMASK")
+record(longout, "$(DEVICE):$(SERVICE)$(BUFF_NUM)_TSLOTMASK")
 {
     field(DESC, "$(SERVICE) Timeslot Mask")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
-    field(OUT,  "@asyn($(PORT),0) $(SERVICE)_tSlotMask_$(IDX)")
-    field(DOL, "$(GLOBAL):$(SERVICE)$(SERVICE_INST):TSLOTMASK_SP CPP NMS")
+    field(OUT,  "@asyn($(PORT),0) $(SERVICE)_tSlotMask_$(DRV_NUM)")
+    field(DOL, "$(GLOBAL):$(BUFF_NUM):TSLOTMASK_SET CPP NMS")
     field(SCAN, "Passive")
     field(OMSL, "closed_loop")
     info(autosaveFields, "VAL")
 }
 
-record(longout, "$(DEVICE):$(SERVICE)$(SERVICE_INST):EXPSEQBIT")
+record(longout, "$(DEVICE):$(SERVICE)$(BUFF_NUM)_EXPSEQBIT")
 {
     field(DESC, "$(SERVICE) Exp Sequence Bit")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
-    field(OUT, "@asyn($(PORT),0) $(SERVICE)_expSeqBit_$(IDX)")
-    field(DOL, "$(GLOBAL):$(SERVICE)$(SERVICE_INST):EXPSEQBIT_SP CPP NMS")
+    field(OUT, "@asyn($(PORT),0) $(SERVICE)_expSeqBit_$(DRV_NUM)")
+    field(DOL, "$(GLOBAL):$(BUFF_NUM):EXPSEQBIT_SET CPP NMS")
     field(OMSL, "closed_loop")
     field(SCAN, "Passive")
     info(autosaveFields, "VAL")
 }
 
-record(mbbo, "$(DEVICE):$(SERVICE)$(SERVICE_INST):DESTMODE")
+record(mbbo, "$(DEVICE):$(SERVICE)$(BUFF_NUM)_DESTMODE")
 {
     field(DESC, "$(SERVICE) Destination Mode")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
-    field(OUT, "@asyn($(PORT),0) $(SERVICE)_destMode_$(IDX)")
-    field(DOL, "$(GLOBAL):$(SERVICE)$(SERVICE_INST):DESTMODE_SP CPP NMS")
+    field(OUT, "@asyn($(PORT),0) $(SERVICE)_destMode_$(DRV_NUM)")
+    field(DOL, "$(GLOBAL):$(BUFF_NUM):DESTMODE_SET CPP NMS")
     field(OMSL, "closed_loop")
     field(SCAN, "Passive")
     field(ZRVL, "0")
@@ -133,26 +159,26 @@ record(mbbo, "$(DEVICE):$(SERVICE)$(SERVICE_INST):DESTMODE")
     info(autosaveFields, "VAL")
 }
 
-record(longout, "$(DEVICE):$(SERVICE)$(SERVICE_INST):DESTMASK")
+record(longout, "$(DEVICE):$(SERVICE)$(BUFF_NUM)_DESTMASK")
 {
     field(DESC, "$(SERVICE) Destinatin Mask")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
-    field(OUT, "@asyn($(PORT),0) $(SERVICE)_destMask_$(IDX)")
-    field(DOL, "$(GLOBAL):$(SERVICE)$(SERVICE_INST):DESTMASK_SP CPP NMS")
+    field(OUT, "@asyn($(PORT),0) $(SERVICE)_destMask_$(DRV_NUM)")
+    field(DOL, "$(GLOBAL):$(BUFF_NUM):DESTMASK_SET CPP NMS")
     field(OMSL, "closed_loop")
     field(SCAN, "Passive")
     info(autosaveFields, "VAL")
 }
 
 
-record(mbbo, "$(DEVICE):$(SERVICE)$(SERVICE_INST):RATELIMIT")
+record(mbbo, "$(DEVICE):$(SERVICE)$(BUFF_NUM)_RATELIMIT")
 {
     field(DESC, "$(SERVICE) Rate Limit")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
-    field(OUT, "@asyn($(PORT), 0) $(SERVICE)_rateLimit_$(IDX)")
-    field(DOL, "$(GLOBAL):$(SERVICE)$(SERVICE_INST):RATELIMIT_SP CPP NMS")
+    field(OUT, "@asyn($(PORT), 0) $(SERVICE)_rateLimit_$(DRV_NUM)")
+    field(DOL, "$(GLOBAL):$(BUFF_NUM):RATELIMIT_SET CPP NMS")
     field(OMSL, "closed_loop")
     field(SCAN, "Passive")
     field(ZRVL, "31")

@@ -724,13 +724,13 @@ Now you should be able to capture the outgoing BLD packets using tcpdump
 To see the contents of the packet, run
 >>  /usr/sbin/tcpdump -X -i <interface> port 50000
 
-The channel types in the packets are reflected by the pv access PV <payload pva basename>:BLD:PAYLOAD
+The channel types in the packets are reflected by the pv access PV <payload pva basename>:BLD_PAYLOAD
 To uncover the correct full name, use the following command from the IOC terminal
 IOCSHELL> pvxsl
-<payload pva basename>:BLD:PAYLOAD
+<payload pva basename>:BLD_PAYLOAD
 
 To examine its content, you can run from a linux terminal
-pvinfo <payload pva basename>:BLD:PAYLOAD
+pvinfo <payload pva basename>:BLD_PAYLOAD
 
 remark) BLD PV names and descriptions in the following link:
 https://confluence.slac.stanford.edu/pages/viewpage.action?spaceKey=~carolina&title=BLD+PVs

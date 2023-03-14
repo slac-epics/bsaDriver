@@ -4,20 +4,9 @@
 #
 
 
-record(longout, "$(DEVICE):$(SERVICE):PKSZ")
+record(bo, "$(DEVICE):$(SERVICE)_OVERRIDE_CTRL")
 {
-    field(DESC, "$(SERVICE) Packet Size")
-#    field(PINI, "YES")
-    field(DTYP, "asynInt32")
-    field(OUT, "@asyn($(PORT), 0) $(SERVICE)_packetSize")
-    field(OMSL, "supervisory")
-    field(SCAN, "Passive")
-    info(autosaveFields, "VAL")
-}
-
-record(bo, "$(DEVICE):$(SERVICE):ENB")
-{
-    field(DESC, "Enable $(SERVICE)")
+    field(DESC, "Enable or Disable $(SERVICE) locally in IOC")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
     field(OUT, "@asyn($(PORT),0) $(SERVICE)_enable")
@@ -29,4 +18,15 @@ record(bo, "$(DEVICE):$(SERVICE):ENB")
     info(autosaveFields, "VAL")
 }
 
-
+record(longout, "$(DEVICE):$(SERVICE)_PKTSZ")
+{
+    field(DESC, "Set $(SERVICE) Packet Size")
+    field(PINI, "YES")
+    field(VAL, "9216")
+    field(DRVH, "9216")
+    field(DTYP, "asynInt32")
+    field(OUT, "@asyn($(PORT), 0) $(SERVICE)_packetSize")
+    field(OMSL, "supervisory")
+    field(SCAN, "Passive")
+    info(autosaveFields, "VAL")
+}

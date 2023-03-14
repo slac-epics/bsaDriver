@@ -3,20 +3,22 @@
 #    macros: $(DEVICE)
 
 
-record(stringout, "$(DEVICE):$(SERVICE)$(BLD_RATEID):MULT_ADDR")
+record(stringout, "$(DEVICE):BLD$(BLD_BUFF)_MULT_ADDR")
 {
-    field(DESC, "BLD $(BLD_RATEID) multicast address")
+    field(DESC, "BLD $(BLD_BUFF) multicast address")
     field(DTYP, "asynOctetWrite")
+    field(DESC, "$(DESC)")
     field(PINI, "YES")
-    field(OUT,  "@asyn($(PORT), 0) bldMulticastAddress_$(IDX)")
+    field(OUT,  "@asyn($(PORT), 0) bldMulticastAddress_$(DRV_NUM)")
     info(autosaveFields, "VAL")
 }
 
-record(longout, "$(DEVICE):$(SERVICE)$(BLD_RATEID):MULT_PORT")
+record(longout, "$(DEVICE):BLD$(BLD_BUFF)_MULT_PORT")
 {
-    field(DESC, "BLD $(BLD_RATEID) multicast port")
+    field(DESC, "BLD $(BLD_BUFF) multicast port")
     field(DTYP, "asynInt32")
+    field(DESC, "$(DESC)")
     field(PINI, "YES")
-    field(OUT,  "@asyn($(PORT),0) bldMulticastPort_$(IDX)")
+    field(OUT,  "@asyn($(PORT),0) bldMulticastPort_$(DRV_NUM)")
     info(autosaveFields, "VAL")
 }
