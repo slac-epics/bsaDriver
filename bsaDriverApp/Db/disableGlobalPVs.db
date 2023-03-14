@@ -1,6 +1,6 @@
 # Break the connection with the global PVs, so one can set BLD and BSAS
 # timing filtering locally
-record(bo, "$(DEVICE):$(SERVICE)_NOGLOBAL")
+record(bo, "$(DEVICE):$(SERVICE)_LOCAL")
 {
     field(DESC, "Disable Global PVs")
     field(ONAM, "Use Global Ctrl")
