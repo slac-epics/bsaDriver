@@ -1,9 +1,9 @@
 # Change the OMSL fields of the timing filters according to the local PV that
 # allows or blocks the global PV access.
-record(dfanout, "$(DEVICE):BSAS$(BSAS_BUFF)_$(CTRL_PV)FANOUTNOGLOBAL1")
+record(dfanout, "$(DEVICE):BSAS$(BSAS_BUFF)_$(CTRL_PV)LOCALFANOUTA")
 {
     field(DESC, "Fanouts OMSL to PVs")
-    field(DOL, "$(DEVICE):BSAS_NOGLOBAL CP")
+    field(DOL, "$(DEVICE):BSAS_LOCAL CP")
     field(OUTA, "$(DEVICE):BSAS$(BSAS_BUFF)_$(CTRL_PV)CTRL.OMSL")
     field(OUTB, "$(DEVICE):BSAS$(BSAS_BUFF)_$(CTRL_PV)RATEMODE.OMSL")
     field(OUTC, "$(DEVICE):BSAS$(BSAS_BUFF)_$(CTRL_PV)EXPSEQ.OMSL")
@@ -15,10 +15,10 @@ record(dfanout, "$(DEVICE):BSAS$(BSAS_BUFF)_$(CTRL_PV)FANOUTNOGLOBAL1")
     field(OMSL, "closed_loop")
 }
 
-record(dfanout, "$(DEVICE):BSAS$(BSAS_BUFF)_$(CTRL_PV)FANOUTNOGLOBAL2")
+record(dfanout, "$(DEVICE):BSAS$(BSAS_BUFF)_$(CTRL_PV)LOCALFANOUTB")
 {
     field(DESC, "Fanouts OMSL to PVs")
-    field(DOL, "$(DEVICE):BSAS_NOGLOBAL CP")
+    field(DOL, "$(DEVICE):BSAS_LOCAL CP")
     field(OUTA, "$(DEVICE):BSAS$(BSAS_BUFF)_$(CTRL_PV)DESTMASK.OMSL")
     field(OMSL, "closed_loop")
 }
