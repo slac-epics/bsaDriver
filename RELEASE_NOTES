@@ -1,7 +1,39 @@
+R3.0.0    Mar 14, 2023    Kukhee Kim
+             - merge R2.5.0-3.0-BSSS_BSA_upgrade bracnh to the master
+             - merge NamingConvention branch to the master
+             - support BSA/BSSS/BSAS/BLD
+             - bug fixing 
+               . double free issue (makeing ioc crash)
+               . corrupted data in fault buffer (upgrade firmware amc-carrier-core v4.1.0 or later)
+             - add control PVs for service configuration (switch local and global mdoe)
+
+             - Huge change in record names after analysis from the naming Czars. 
+               As the global PVs will also change in the TPG IOC, 
+               this version is not backwards compatible with previous ones 
+               from the point of view of PV names. The upgrade of IOC apps 
+               need to follow the upgrade of the TPG IOC app with this same version of bsaDriver. 
+               GUIs in IOC apps may need changes as the record names in bsaDriver changed.
+             - Addition of a new PV $(SERVICE)_LOCAL that can be used to turn on/off the connection 
+               with global PVs for BLD and BSAS. This way, someone can make local tests 
+               with different timing filters, independently of how this was configured in the TPG IOC app. 
+               All bsaDriver localTest database files were deleted due to this change. 
+               If you use them in the IOC app, make sure to remove from Db/Makefile and st.cmd.
+
+              -required firmware (submodule) version
+                  amc-carrier-core v4.10.0
+                  ruckus v4.7.0
+                  surf v2.37.2
+                  lcls-timing-core v3.7.0
+
+              - required software version
+                  timing/bsa R2.4.0
+                (Please, check up more information in the README file)
+
+
 
 merging NamingConvention branch to the master,            Mar 14, 2023 Kukhee Kim
-merging R2.5.0-3.0-BSSS_BSA_upgrade branch to the master, Mar 14, 2023 Kukhee Kim
 
+merging R2.5.0-3.0-BSSS_BSA_upgrade branch to the master, Mar 14, 2023 Kukhee Kim
 
 R2.5.0-3.1.0 Mar 13, 2023 Kukhee Kim
              - build against timing/bsa R2.2.0-1.1
