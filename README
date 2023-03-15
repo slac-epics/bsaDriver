@@ -105,14 +105,10 @@ Requirements:
 DB_INSTALLS += $(BSADRIVER)/db/bsa.db
 DB_INSTALLS += $(BSADRIVER)/db/bsss.db
 DB_INSTALLS += $(BSADRIVER)/db/bsssCtrl.db
-(optional)
-DB_INSTALLS += $(BSADRIVER)/db/bsssCtrl_localTest.db
 
 - bsa.db  ;  BSA database template for each BSA data channel
 - bsss.db ;  BSSS database template for each BSSS data channel
 - bsssCtrl.db  ; BSSS controls database template 
-- bsssCtrl_localTest.db ;  BSSS controls databse template for local test (it doesn't have CA_LINK to the global PVs)
-
 
 
 - The yamlLoader driver should provide register hierarchy and path information.
@@ -397,20 +393,15 @@ bldstream: &bldstream
 
 DB_INSTALLS += $(BSADRIVER)/db/bsss.db
 DB_INSTALLS += $(BSADRIVER)/db/bsssCtrl.db
-(oprtional)
-DB_INSTALLS += $(BSADRIVER)/db/bsssCtrl_localTest.db
 
 - bsss.db ;  BSSS database template for each BSSS data channel
 - bsssCtrl.db  ; BSSS controls database template 
-- bsssCtrl_localTest.db ;  BSSS controls databse template for local test (it doesn't have CA_LINK to the global PVs)
 
 
 2. load up BSSS control data base template in st.cmd
 example)
 # BSSS Control/Monintoring PVs
 dbLoadRecords("db/bsssCtrl.db", "DEV=${SYS_PV},PORT=bsssPort")
-
-remarks) use bsssCtrl_localTest.db for BSSS test without global PVs
 
 
 
@@ -547,12 +538,9 @@ bldstream: &bldstream
 
 DB_INSTALLS += $(BSADRIVER)/db/bld.db
 DB_INSTALLS += $(BSADRIVER)/db/bldCtrl.db
-(optional)
-DB_INSTALLS += $(BSADRIVER)/db/bldCtrl_localTest.db
 
 - bld.db ;  BLD database template for each BLD data channel
 - bldCtrl.db  ; BLD controls database template 
-- bldCtrl_localTest.db ;  BLD controls databse template for local test (it doesn't have CA_LINK to the global PVs)
 
 
 2. load up BLD control data base template in st.cmd
@@ -561,8 +549,6 @@ DB_INSTALLS += $(BSADRIVER)/db/bldCtrl_localTest.db
 example)
 # BLD Control/Monintoring PVs
 dbLoadRecords("db/bldCtrl.db", "DEV=${SYS_PV},PORT=bldPort")
-
-remarks) use bldCtrl_localTest.db for BLD test without global PVs
 
 
 
@@ -803,8 +789,6 @@ Put the followings into the Db/Makefile
 
 DB_INSTALLS += $(BSADRIVER)/db/bsas.db         # channel control tempalte (enable/disable channel, severity filtering for channel), need to load up for each data channels
 DB_INSTALLS += $(BSADRIVER)/db/bsasCtrl.db     # rate control template, work with global PVs
-DB_INSTALLS += $(BSADRIVER)/db/bsasCtrl_localTest.db 
-                                               # rate control template, work without global PVs, just for a standalone test
 
 
 2. load BSAS rate control template in st.cmd
@@ -813,7 +797,6 @@ DB_INSTALLS += $(BSADRIVER)/db/bsasCtrl_localTest.db
 # BSAS Destination/Rates Control PVs
 dbLoadRecords("db/bsasCtrl.db", "DEV=${SYS_PV},PORT=bsasPort")
 
-remarks) for the standalone test without global PV, we can use "bsasCtrl_localTest.db" instead of "bsasCtrl.db"
 
 
 3. load BSAS channel control (enable/disable, channel filtering) template in st.cmd
