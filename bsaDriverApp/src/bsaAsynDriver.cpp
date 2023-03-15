@@ -452,8 +452,8 @@ void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done
             switch(*type){
                 case uint2:
                     // Extract the 2-bit block
-                    mask = KEEP_LSB_2;
                     val = (uint32_t)_rawChannelData[wordIndex]->mean;
+                    mask = KEEP_LSB_2;
                     val >>= bitSum;  
                     val &= mask;
                     bitSum += BLOCK_WIDTH_2;
@@ -461,8 +461,8 @@ void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done
                 case int16:
                 case uint16:
                     // Extract the 16-bit block
-                    mask = KEEP_LSB_16;
                     val = (uint32_t)_rawChannelData[wordIndex]->mean;
+                    mask = KEEP_LSB_16;
                     val >>= bitSum; 
                     val &= mask;
                     bitSum += BLOCK_WIDTH_16;
@@ -489,14 +489,13 @@ void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done
             }
             else if (bitSum > wordWidth)
                 userFault = true;
-            else
-                continue;
 
             // Maybe throw an exception in here later
             if (userFault) 
             {
-                printf("ERROR - Please ensure BSA channels do not violate 32-bit boundaries!!");
-                printf("ERROR - Exiting ...");
+                printf("BsaPvArray::procChannelData(): ERROR - Please ensure BSA channels do not violate 32-bit boundaries!!\n");
+                printf("BsaPvArray::procChannelData(): ERROR - Check BSA channel type!!\n");
+                printf("BsaPvArray::procChannelData(): ERROR - Exiting ...\n");
                 exit(EXIT_FAILURE);
             }
         }

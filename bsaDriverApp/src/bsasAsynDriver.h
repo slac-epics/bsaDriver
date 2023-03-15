@@ -43,6 +43,9 @@
 #define MIN_STR                 "pv%d_min"
 #define MAX_STR                 "pv%d_max"
 
+#define ENABLE  1
+#define DISABLE 0
+
 #define BLOCK_WIDTH_2   2
 #define BLOCK_WIDTH_16  16
 #define BLOCK_WIDTH_32  32

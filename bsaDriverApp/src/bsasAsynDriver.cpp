@@ -508,7 +508,6 @@ bsasAsynDriver::bsasAsynDriver(const char *portName, const char *reg_path, const
 
     SetupAsynParams();
     registerBsasCallback(named_root, bsas_callback, (void *) this);
-
     SetChannelMask(this->channelMask);
 }
 
@@ -569,47 +568,31 @@ asynStatus bsasAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
         {
             if (value) // enable hardware channel
             {
-                //printf("Before enabling channel:\n");
-                //printMap();
-                
                 // Search for software channel in the channel map
                 auto vec = bsasHwChannelUsage[p->hwChIndex];
                 if (std::find(vec.begin(),vec.end(),p->swChIndex) == vec.end())
                 {
-                    //printf("Resetting the channel mask...\n");
-                    //printf("SetChannelMask(%d, 0)\n",p->hwChIndex);
                     // Only set the hardware channel bit if not set before
                     if (bsasHwChannelUsage[p->hwChIndex].size() == 0)
-                        SetChannelMask(p->hwChIndex, 1);
+                        SetChannelMask(p->hwChIndex, ENABLE);
                     
-                    //printf("Software channel in not in the usage list. Adding...\n");
                     // Add software channel to the usage list
                     bsasHwChannelUsage[p->hwChIndex].push_back(p->swChIndex);
                 }
-                //printf("After enabling");
-                //printMap();
             }
             else // disable hardware channel
             {
-                //printf("Before disabling channel:\n");
-                //printMap();
-                
                 // Search for software channel in the channel map
                 auto pos = std::find(bsasHwChannelUsage[p->hwChIndex].begin(),bsasHwChannelUsage[p->hwChIndex].end(),p->swChIndex);
                 if (pos != bsasHwChannelUsage[p->hwChIndex].end())
                 {
-                    //printf("Found software channel in the usage list. Erasing...\n");
                     // Remove software channel from the usage list
                     bsasHwChannelUsage[p->hwChIndex].erase(pos);
                     
-                    //printf("Resetting the channel mask...\n");
-                    //printf("SetChannelMask(%d, 0)\n",p->hwChIndex);
                     // Disable hardware channel only if not used by any other software channels
                     if (bsasHwChannelUsage[p->hwChIndex].size() == 0)
-                        SetChannelMask(p->hwChIndex, 0);
+                        SetChannelMask(p->hwChIndex, DISABLE);
                 }
-                //printf("After disabling");
-                //printMap();
             }
             goto done;
         }
@@ -841,7 +824,7 @@ void bsasAsynDriver::bsasCallback(void *p, unsigned size)
 
     int i   = 0;
     int col = 0;
-
+    
     uint32_t cnt, tmpVal, mask;
     double   val, avg, rms, min, max, sq;
     union {
@@ -868,8 +851,8 @@ void bsasAsynDriver::bsasCallback(void *p, unsigned size)
 
      // Incoming payload data are 32-bit words
      const unsigned wordWidth = BLOCK_WIDTH_32;
-    
-    for(std::vector<void*>::iterator it = activeChannels->begin(); it != activeChannels->end(); it++, col++) {
+
+     for(std::vector<void*>::iterator it = activeChannels->begin(); it != activeChannels->end(); it++, col++) {
         bsasList_t *plist = (bsasList_t *)(*it);
         _val.u32        = (pl+i)->val;
         _sum.u32        = (pl+i)->sum;
@@ -878,7 +861,7 @@ void bsasAsynDriver::bsasCallback(void *p, unsigned size)
         _max.u32        = (pl+i)->max;
 
         // If the corresponding hardare channel is disabled, continue to next iteration
-        if (this->channelMask & (uint32_t(0x1) << plist->hwChIndex))
+        if (!(this->channelMask & (uint32_t(0x1) << plist->hwChIndex)))
             continue;
 
         switch(plist->type) {
@@ -895,7 +878,6 @@ void bsasAsynDriver::bsasCallback(void *p, unsigned size)
                 max = double(_max.u32);
                 // Increment bitSum counter
                 bitSum += BLOCK_WIDTH_2;
-                //printf("uint2_bsas,bsas_name=%s,pv_name=%s,value=%f,slope=%f,offset=%f,bitSum=%d,rindex=%d,cindex=%d\n",plist->bsas_name,plist->pv_name,val,*plist->pslope,*plist->poffset,bitSum,i,col);
                 break;
             case int16_bsas:
             case uint16_bsas:
@@ -911,7 +893,6 @@ void bsasAsynDriver::bsasCallback(void *p, unsigned size)
                 max = double(_max.u32);
                 // Increment bitSum counter
                 bitSum += BLOCK_WIDTH_16;
-                //printf("uint16_bsas,bsas_name=%s,pv_name=%s,value=%f,slope=%f,offset=%f,bitSum=%d,rindex=%d,cindex=%d\n",plist->bsas_name,plist->pv_name,val,*plist->pslope,*plist->poffset,bitSum,i,col);
                 break;
             case int32_bsas:
                 // Assign extracted channel/PV value and statistics
@@ -922,7 +903,6 @@ void bsasAsynDriver::bsasCallback(void *p, unsigned size)
                 max = double(_max.i32);
                 // Increment bitSum counter
                 bitSum += BLOCK_WIDTH_32;
-                //printf("int32_bsas,bsas_name=%s,pv_name=%s,value=%f,slope=%f,offset=%f,bitSum=%d,rindex=%d,cindex=%d\n",plist->bsas_name,plist->pv_name,val,*plist->pslope,*plist->poffset,bitSum,i,col);
                 break;
             case uint32_bsas:
                 // Assign extracted channel/PV value and statistics
@@ -933,7 +913,6 @@ void bsasAsynDriver::bsasCallback(void *p, unsigned size)
                 max = double(_max.u32);
                 // Increment bitSum counter
                 bitSum += BLOCK_WIDTH_32;
-                //printf("uint32_bsas,bsas_name=%s,pv_name=%s,value=%f,slope=%f,offset=%f,bitSum=%d,rindex=%d,cindex=%d\n",plist->bsas_name,plist->pv_name,val,*plist->pslope,*plist->poffset,bitSum,i,col);
                 break;
             case float32_bsas:
                 // Assign extracted channel/PV value and statistics
@@ -998,8 +977,9 @@ void bsasAsynDriver::bsasCallback(void *p, unsigned size)
        // Maybe throw an exception in here instead of exiting? 
        if (userFault) 
        {
-           printf("ERROR - Please ensure BSAS channels do not violate 32-bit boundaries!!");
-           printf("ERROR - Exiting ...");
+           printf("serviceAsynDriver::bsasCallback(): ERROR - Please ensure BSAS channels do not violate 32-bit boundaries!!\n");
+           printf("serviceAsynDriver::bsasCallback(): ERROR - Check type for channel %s\n", plist->bsas_name); 
+           printf("serviceAsynDriver::bsasCallback(): ERROR - Exiting ...\n");
            exit(EXIT_FAILURE);
        }
     } // end of the all activeChannels for-loop

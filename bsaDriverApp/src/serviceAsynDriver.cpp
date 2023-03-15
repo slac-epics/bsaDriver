@@ -134,8 +134,8 @@ static int channelAdd(const char *channelKey, serviceDataType_t type, double *sl
 
     channelList_t *p = (channelList_t *) mallocMustSucceed(sizeof(channelList_t), "serviceAsynDriver (channelAdd)");
     strcpy(p->channel_key, channelKey);
-    p->swChIndex = 0;
-    p->hwChIndex = 0;
+    p->swChIndex = -1;
+    p->hwChIndex = -1;
     p->p_channelMask = -1;
     p->p_channelSevr = -1;
     for(unsigned int i = 0; i < NUM_EDEF_MAX; i++) {
@@ -245,6 +245,13 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
 
     switch (type) {
         case bld:
+             // Disable BLD for this tag until data splitting is implemented
+             {
+                 printf("serviceAsynDriver::serviceAsynDriver(): ERROR - The BLD acquisition service is disabled!\n");
+                 printf("serviceAsynDriver::serviceAsynDriver(): ERROR - Please use BSA, BSSS or BSAS instead.\n"); 
+                 printf("serviceAsynDriver::serviceAsynDriver(): ERROR - Exiting ...\n");
+                 exit(EXIT_FAILURE);
+             }
             reg_ = root_->findByName(reg_path);
             if(!reg_) {
                 printf("BLD driver: could not find regisers at path %s\n", reg_path);
@@ -310,8 +317,18 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
 
             registerBldCallback(named_root, bld_callback, (void *) this); 
             break;
-        case bsss: 
+        case bsss:
+            // Register BSSS callback
             registerBsssCallback(named_root, bsss_callback, (void *) this); 
+            // Set channel mask for BSSS
+            for (const auto &kv:hwChannelUsage)
+            {
+                if (kv.second.size() != 0) // if hardware channel is used, set the mask bit
+                {
+                    pService[0]->setChannelMask(kv.first,ENABLE);
+                    pService[1]->setChannelMask(kv.first,ENABLE);
+                }
+            }
             break;
     }        
 }
@@ -634,15 +651,10 @@ asynStatus serviceAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
             {    
                 if (value) // enable hardware channel
                 {
-                    //printf("Before enabling channel:\n");
-                    //printMap();
-                    
                     // Search for software channel in the channel map
                     auto vec = hwChannelUsage[p->hwChIndex];
                     if (std::find(vec.begin(),vec.end(),p->swChIndex) == vec.end())
                     {
-                        //printf("Resetting the channel mask...\n");
-                        //printf("SetChannelMask(%d, 0)\n",p->hwChIndex);
                         // Only set the hardware channel bit if not set before
                         if (hwChannelUsage[p->hwChIndex].size() == 0)
                         {
@@ -650,28 +662,19 @@ asynStatus serviceAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
                             pService[1]->setChannelMask(p->hwChIndex, uint32_t(value));
                         }
                     
-                        //printf("Software channel in not in the usage list. Adding...\n");
                         // Add software channel to the usage list
                         hwChannelUsage[p->hwChIndex].push_back(p->swChIndex);
                     }
-                    //printf("After enabling channel:");
-                    //printMap();
                 }
                 else // disable hardware channel
                 {
-                    //printf("Before disabling channel:\n");
-                    //printMap();
-                    
                     // Search for software channel in the channel map
                     auto pos = std::find(hwChannelUsage[p->hwChIndex].begin(),hwChannelUsage[p->hwChIndex].end(),p->swChIndex);
                     if (pos != hwChannelUsage[p->hwChIndex].end())
                     {
-                        //printf("Found software channel in the usage list. Erasing...\n");
                         // Remove software channel from the usage list
                         hwChannelUsage[p->hwChIndex].erase(pos);
                         
-                        //printf("Resetting the channel mask...\n");
-                        //printf("SetChannelMask(%d, 0)\n",p->hwChIndex);
                         // Disable hardware channel only if not used by any other software channels
                         if (hwChannelUsage[p->hwChIndex].size() == 0)
                         {
@@ -679,8 +682,6 @@ asynStatus serviceAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
                             pService[1]->setChannelMask(p->hwChIndex, uint32_t(value));
                         }
                     }
-                    //printf("After disabling channel:");
-                    //printMap();
                 }
            } 
            goto done;
@@ -887,8 +888,9 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
          // Maybe throw an exception in here instead of exiting? 
          if (userFault) 
          {
-             printf("ERROR - Please ensure BSA/BSSS channels do not violate 32-bit boundaries!!");
-             printf("ERROR - Exiting ...");
+             printf("serviceAsynDriver::bsssCallback(): ERROR - Please ensure BSSS channels do not violate 32-bit boundaries!!\n");
+             printf("serviceAsynDriver::bsssCallback(): ERROR - Check type for channel %s\n", plist->channel_name); 
+             printf("serviceAsynDriver::bsssCallback(): ERROR - Exiting ...\n");
              exit(EXIT_FAILURE);
          }
 
