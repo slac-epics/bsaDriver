@@ -4,7 +4,7 @@
 #
 
 
-record(bo, "$(DEVICE):$(SERVICE)_OVERRIDE_CTRL")
+record(bo, "$(DEVICE):$(SERVICE)_CTRL")
 {
     field(DESC, "Enable or Disable $(SERVICE) locally in IOC")
     field(PINI, "YES")
@@ -14,6 +14,8 @@ record(bo, "$(DEVICE):$(SERVICE)_OVERRIDE_CTRL")
     field(SCAN, "Passive")
     field(ZNAM, "Disable")
     field(ONAM, "Enable")
+    # We want to alert the world if $(SERVICE) is disabled locally
+    field(ZSV, "MAJOR")
     field(VAL, "1")
     info(autosaveFields, "VAL")
 }
