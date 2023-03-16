@@ -41,6 +41,8 @@
 #define  UINT64STRING    "uint64"
 #define  FLOAT32STRING   "float32"
 
+#define HW_CHANNELS     31
+
 #define BLOCK_WIDTH_2   2
 #define BLOCK_WIDTH_16  16
 #define BLOCK_WIDTH_32  32
@@ -53,6 +55,7 @@ extern "C" {
 // interface for BSSS driver
 ELLLIST * find_bsaChannelList(const char *port_name);
 }
+
 struct ChannelDataStruct {
     unsigned n;
     double mean;
@@ -177,7 +180,7 @@ class BsaPvArray : public Bsa::PvArray {
         devBsaPvt_t *_ppvt_pid;
         std::vector <uint64_t> _pid;
 
-        std::vector <ChannelDataStruct*> _rawChannelData; 
+        ChannelDataStruct* _rawChannelData[HW_CHANNELS]; 
 
         unsigned size, loc, max_size;
 

@@ -282,9 +282,9 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
     while(p) {
         // First check to see if the current BSA/software channel is less than 32-bits.
         // For the time being, we don't allow BLD to run if any of these is less than 32-bits.
-        if (channelBitMap[p->type] < BLOCK_WIDTH_32)
+        if (serviceType == bld && channelBitMap[p->type] < BLOCK_WIDTH_32)
         {
-            printf("serviceAsynDriver::serviceAsynDriver(): ERROR - The BLD acquisition service is disabled for types less then 32 bits!!\n");
+            printf("serviceAsynDriver::serviceAsynDriver(): ERROR - The BLD acquisition service is disabled for types less than 32 bits!!\n");
             printf("serviceAsynDriver::serviceAsynDriver(): ERROR - Please use BSA, BSSS or BSAS instead!!\n"); 
             printf("serviceAsynDriver::serviceAsynDriver(): ERROR - Exiting ...\n");
             exit(EXIT_FAILURE);

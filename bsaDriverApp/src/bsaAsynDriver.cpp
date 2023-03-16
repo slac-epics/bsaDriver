@@ -425,8 +425,9 @@ void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done
     uint32_t val  = 0;
     uint32_t mask = DEFAULT_MASK;
 
-    // Add channel data for the current BSA buffer to a vector
-    _rawChannelData.push_back(new ChannelDataStruct(n,mean,rms2));
+    // Add channel data for the current BSA buffer to an array 
+    static int storeIndex = 0;
+    _rawChannelData[storeIndex++] = new ChannelDataStruct(n,mean,rms2);
 
     // When all channel data is stored, partition if and as needed
     if (done)
@@ -488,6 +489,7 @@ void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done
 
                 // Free memory
                 delete _rawChannelData[wordIndex];
+                _rawChannelData[wordIndex] = nullptr;
 
                 // Incremenent index to next channel
                 wordIndex++;
@@ -504,9 +506,8 @@ void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done
                 exit(EXIT_FAILURE);
             }
         }
-        // Empty temporary vector, resize to 0
-        _rawChannelData.clear ( );
-        _rawChannelData.resize(0);
+        // Reset store index
+        storeIndex = 0;
     }
 }
 
