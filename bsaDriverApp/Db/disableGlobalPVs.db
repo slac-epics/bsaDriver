@@ -5,6 +5,8 @@ record(bo, "$(DEVICE):$(SERVICE)_LOCAL")
     field(DESC, "Disable Global PVs")
     field(ONAM, "Use Global Ctrl")
     field(ZNAM, "No Global")
+    # We want to alert the world if $(SERVICE) is disconnected from GLOBAL PVs
+    field(ZSV, "MAJOR")
     field(VAL,  "1")
     field(PINI, "YES")
     info(autosaveFields, "VAL")
