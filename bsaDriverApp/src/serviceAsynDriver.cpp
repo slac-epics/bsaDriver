@@ -245,13 +245,6 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
 
     switch (type) {
         case bld:
-             // Disable BLD for this tag until data splitting is implemented
-             {
-                 printf("serviceAsynDriver::serviceAsynDriver(): ERROR - The BLD acquisition service is disabled!\n");
-                 printf("serviceAsynDriver::serviceAsynDriver(): ERROR - Please use BSA, BSSS or BSAS instead.\n"); 
-                 printf("serviceAsynDriver::serviceAsynDriver(): ERROR - Exiting ...\n");
-                 exit(EXIT_FAILURE);
-             }
             reg_ = root_->findByName(reg_path);
             if(!reg_) {
                 printf("BLD driver: could not find regisers at path %s\n", reg_path);
@@ -287,6 +280,15 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
     int bitSum = 0;
     channelList_t *p = (channelList_t *) ellFirst(pChannelEllList);
     while(p) {
+        // First check to see if the current BSA/software channel is less than 32-bits.
+        // For the time being, we don't allow BLD to run if any of these is less than 32-bits.
+        if (serviceType == bld && channelBitMap[p->type] < BLOCK_WIDTH_32)
+        {
+            printf("serviceAsynDriver::serviceAsynDriver(): ERROR - The BLD acquisition service is disabled for types less than 32 bits!!\n");
+            printf("serviceAsynDriver::serviceAsynDriver(): ERROR - Please use BSA, BSSS or BSAS instead!!\n"); 
+            printf("serviceAsynDriver::serviceAsynDriver(): ERROR - Exiting ...\n");
+            exit(EXIT_FAILURE);
+        }
         // Assign the channel index
         p->swChIndex = i++;
         // Assign the hardware channel index
