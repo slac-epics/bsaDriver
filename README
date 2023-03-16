@@ -413,6 +413,9 @@ example)
 # BSSS Control/Monitoring PVs
 # ${TPR_PREFIX} can be, for example:
 # TPR:LI24:123
+# There's a hidden ${GLOBAL} macro that defaults to TPG:SYS0:1. This matches the
+# dev TPG in B34 and also in production. If you are using a different TPG, you
+# need to redefine ${GLOBAL} with the correct prefix of the TPG.
 dbLoadRecords("db/bsssCtrl.db", "DEV=${TPR_PREFIX},PORT=bsssPort")
 
 
@@ -564,6 +567,9 @@ example)
 # BLD Control/Monintoring PVs
 # TPR_PREFIX can be, for example:
 # TPR:LI24:123 
+# There's a hidden ${GLOBAL} macro that defaults to TPG:SYS0:1. This matches the
+# dev TPG in B34 and also in production. If you are using a different TPG, you
+# need to redefine ${GLOBAL} with the correct prefix of the TPG.
 dbLoadRecords("db/bldCtrl.db", "DEV=${TPR_PREFIX},PORT=bldPort")
 
 
@@ -815,6 +821,9 @@ DB_INSTALLS += $(BSADRIVER)/db/bsasCtrl.db     # rate control template, work wit
 # BSAS Destination/Rates Control PVs
 # TPR_PREFIX can be, for example:
 # TPR:LI24:123 
+# There's a hidden ${GLOBAL} macro that defaults to TPG:SYS0:1. This matches the
+# dev TPG in B34 and also in production. If you are using a different TPG, you
+# need to redefine ${GLOBAL} with the correct prefix of the TPG.
 dbLoadRecords("db/bsasCtrl.db", "DEV=${TPR_PREFIX},PORT=bsasPort")
 
 
