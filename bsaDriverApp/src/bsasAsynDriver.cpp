@@ -978,7 +978,7 @@ void bsasAsynDriver::bsasCallback(void *p, unsigned size)
        if (userFault) 
        {
            printf("serviceAsynDriver::bsasCallback(): ERROR - Please ensure BSAS channels do not violate 32-bit boundaries!!\n");
-           printf("serviceAsynDriver::bsasCallback(): ERROR - Check type for channel %s\n", plist->bsas_name); 
+           printf("serviceAsynDriver::bsasCallback(): ERROR - Check type for channel %s!!\n", plist->bsas_name); 
            printf("serviceAsynDriver::bsasCallback(): ERROR - Exiting ...\n");
            exit(EXIT_FAILURE);
        }
