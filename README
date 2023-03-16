@@ -129,12 +129,27 @@ ex)  cpswLoadYamlFile("000TopLevel.yaml", "NetIODev", "", "10.0.3.105")
 
 Adding BSA names for the driver:
 
-- before the driver intialization, ioc application engineer should make BSA name list.
-- the order of the name should be matched with the BSA data order in application firmware.
-- the driver provides ioc shell command "addBsa(<BSA name string>, <BSA data type string>"),
-   ioc engineer can use the command to add up bsa name into the list
-- the driver proides ioc shell command "listBsa()" to print out the BSA name list,
-   ioc engineer could verify the bsa name list with the command
+- before the driver intialization, the ioc application engineer should create the BSA name list.
+- the order of the names should be matched with the BSA data order in the application firmware.
+- the driver provides the ioc shell command "addBsa(<BSA name string>, <BSA data type string>"),
+   the ioc engineer can use the command to add up the bsa name into the list
+- Various datatypes are supported and hence the user should ensure that 32-bit boundaries are not violated:
+  e.g. addBsa --> name string, 32-bit data type
+       addBsa --> name string, 16-bit data type
+       addBsa --> name string,  2-bit data type
+       addBSa --> name string, 16-bit data type
+       ...
+
+       The above example is INCORRECT because the consecutive bitwidths that are lower than 32 bits don't add up to exactly 32.
+
+       Below, see an example of a BSA name list that is CORRECT:
+       addBsa --> name string, 32-bit data type
+       addBsa --> name string, 16-bit data type
+       addBSa --> name string, 16-bit data type
+       addBsa --> name string, 32-bit data type
+       ...
+- the driver provides the ioc shell command "listBsa()" to print out the BSA name list,
+   the ioc engineer could verify the bsa name list with the command
 - Should the data channel stay untouched (not scaled using slope/offset or casted to another type),
   a third optional parameter is passed to the addBsa function. This parameter is only taken into
   consideration for BLD (not BSA/BSAS/BSSS).
@@ -209,12 +224,56 @@ ex)
 
   listBsa() command shows master node and its slave nodes
 
+ex)
+  addBsa("SIGNAL00_I",    "uint16")
+  addBsa("SIGNAL00_Q",    "uint16")
+  addBsa("SIGNAL01_I",    "uint16")
+  addBsa("SIGNAL01_Q",    "uint16")
+  addBsa("SIGNAL02_I",    "uint16")
+  addBsa("SIGNAL02_Q",    "uint16")
+  addBsa("SIGNAL03_I",    "uint16")
+  addBsa("SIGNAL03_Q",    "uint16")
+  addBsa("SIGNAL04_I",    "uint16")
+  addBsa("SIGNAL04_Q",    "uint16")
+  ...
+  addBsa("SIGNAL23_I",    "uint16")
+  addBsa("SIGNAL23_Q",    "uint16")
+  addBsa("SIGNAL24",      "uint32")
+  addBsa("SIGNAL25",      "uint32")
+  addBsa("SIGNAL26",      "uint32")
+  addBsa("SIGNAL27",      "uint32")
+  addBsa("SIGNAL28",      "uint32")
+  addBsa("SIGNAL29",      "uint32")
+  addBsa("SIGNAL30",      "uint32")
+
+sioc-b15-ts02>listBsa
+  Bsa Driver (named_root: MyRoot0, port: bsaPort)
+  Total 55 BSA(s) has(have) been registered
+  0       SIGNAL00_I, uint16
+  1       SIGNAL00_Q, uint16
+  2       SIGNAL01_I, uint16
+  3       SIGNAL01_Q, uint16
+  4       SIGNAL02_I, uint16
+  5       SIGNAL02_Q, uint16
+  6       SIGNAL03_I, uint16
+  7       SIGNAL03_Q, uint16
+  8       SIGNAL04_I, uint16
+  9       SIGNAL04_Q, uint16
+  ...
+  47      SIGNAL23_Q, uint16
+  48      SIGNAL24, uint32
+  49      SIGNAL25, uint32
+  50      SIGNAL26, uint32
+  51      SIGNAL27, uint32
+  52      SIGNAL28, uint32
+  53      SIGNAL29, uint32
+  54      SIGNAL30, uint32
 
 
-BSA Data Tytpe
+BSA Data Type
 
-BSA driver and firmware allow {"int32", "uint32", "float32"} type of data.
-If firmware doesn't calculate statistics (mean and rms) all 3 types are allowed.
+BSA driver and firmware allow {"uint2", "int16", "uint16", "int32", "uint32", "float32"} type of data.
+If firmware doesn't calculate statistics (mean and rms) all types are allowed.
 If firmware calculate statstics, only "int32" type is allowed.
 
 
