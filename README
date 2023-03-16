@@ -105,10 +105,18 @@ Requirements:
 DB_INSTALLS += $(BSADRIVER)/db/bsa.db
 DB_INSTALLS += $(BSADRIVER)/db/bsss.db
 DB_INSTALLS += $(BSADRIVER)/db/bsssCtrl.db
+DB_INSTALLS += $(BSADRIVER)/db/bsas.db
+DB_INSTALLS += $(BSADRIVER)/db/bsasCtrl.db
+DB_INSTALLS += $(BSADRIVER)/db/bld.db
+DB_INSTALLS += $(BSADRIVER)/db/bldCtrl.db
 
 - bsa.db  ;  BSA database template for each BSA data channel
 - bsss.db ;  BSSS database template for each BSSS data channel
+- bsas.db  ;  BSAS database template for each BSA data channel
+- bld.db ;  BLD database template for each BSSS data channel
 - bsssCtrl.db  ; BSSS controls database template 
+- bsasCtrl.db  ; BSAS controls database template 
+- bldCtrl.db  ; BLD controls database template 
 
 
 - The yamlLoader driver should provide register hierarchy and path information.
@@ -279,27 +287,29 @@ EPICS database template loading:
 ex)
 
 # BSA driver DB
-dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,BSAKEY=PIDU,SECN=PIDU")
-dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,BSAKEY=PIDL,SECN=PIDL")
-dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,BSAKEY=TSU,SECN=TSU")
-dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,BSAKEY=TSL,SECN=TSL")
-dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,BSAKEY=RATES,SECN=RATES")
-dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,BSAKEY=BEAMREQ,SECN=BEAMREQ")
-dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,BSAKEY=BEAMNRG01,SECN=BEAMNRG01")
-dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,BSAKEY=BEAMNRG23,SECN=BEAMNRG23")
-dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,BSAKEY=MPSSTAT,SECN=MPSSTAT")
-dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,BSAKEY=MPSCLASS01,SECN=MPSCLASS01")
+# DEVICE_PREFIX can be, for example:
+# BPM:LI24:123 
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=PIDU,SECN=PIDU")
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=PIDL,SECN=PIDL")
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=TSU,SECN=TSU")
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=TSL,SECN=TSL")
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=RATES,SECN=RATES")
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=BEAMREQ,SECN=BEAMREQ")
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=BEAMNRG01,SECN=BEAMNRG01")
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=BEAMNRG23,SECN=BEAMNRG23")
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=MPSSTAT,SECN=MPSSTAT")
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=MPSCLASS01,SECN=MPSCLASS01")
 
 # PIDL has Slave BSAs
 #
 #   Test Slave Bsa Node
 #
-dbLoadRecords("db/bsa.db", "DEV=TPG:SYS2:1,PORT=bsaPort,BSAKEY=pidlSlave0,SECN=PIDLSL0")
-dbLoadRecords("db/bsa.db", "DEV=TPG:SYS2:1,PORT=bsaPort,BSAKEY=pidlSlave1,SECN=PIDLSL1")
-dbLoadRecords("db/bsa.db", "DEV=TPG:SYS2:1,PORT=bsaPort,BSAKEY=pidlSlave2,SECN=PIDLSL2")
-dbLoadRecords("db/bsa.db", "DEV=TPG:SYS2:1,PORT=bsaPort,BSAKEY=pidlSlave3,SECN=PIDLSL3")
-dbLoadRecords("db/bsa.db", "DEV=TPG:SYS2:1,PORT=bsaPort,BSAKEY=pidlSlave4,SECN=PIDLSL4")
-dbLoadRecords("db/bsa.db", "DEV=TPG:SYS2:1,PORT=bsaPort,BSAKEY=pidlSlave5,SECN=PIDLSL5")
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=pidlSlave0,SECN=PIDLSL0")
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=pidlSlave1,SECN=PIDLSL1")
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=pidlSlave2,SECN=PIDLSL2")
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=pidlSlave3,SECN=PIDLSL3")
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=pidlSlave4,SECN=PIDLSL4")
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=pidlSlave5,SECN=PIDLSL5")
 
 
 
@@ -322,7 +332,7 @@ example)
     epics>var fltb_length
     fltb_length = 100000
 
-You cna change the variable with "var" command, but you should make change prior than any of BSA driver related command.
+You can change the variable with "var" command, but you should make change prior than any of BSA driver related command.
 
 example) we are going to make double length for both buffer.
 
@@ -400,19 +410,23 @@ DB_INSTALLS += $(BSADRIVER)/db/bsssCtrl.db
 
 2. load up BSSS control data base template in st.cmd
 example)
-# BSSS Control/Monintoring PVs
-dbLoadRecords("db/bsssCtrl.db", "DEV=${SYS_PV},PORT=bsssPort")
+# BSSS Control/Monitoring PVs
+# ${TPR_PREFIX} can be, for example:
+# TPR:LI24:123
+dbLoadRecords("db/bsssCtrl.db", "DEV=${TPR_PREFIX},PORT=bsssPort")
 
 
 
 3. load up BSSS Scalar PVs (for each channel data)
 example)
 # BSSS Scalar PVs
-dbLoadRecords("db/bsss.db", "DEV=${SYS_PV},PORT=bsssPort,BSAKEY=PIDL,SECN=PIDL")
-dbLoadRecords("db/bsss.db", "DEV=${SYS_PV},PORT=bsssPort,BSAKEY=PIDU,SECN=PIDU")
-dbLoadRecords("db/bsss.db", "DEV=${SYS_PV},PORT=bsssPort,BSAKEY=TSL,SECN=TSL")
-dbLoadRecords("db/bsss.db", "DEV=${SYS_PV},PORT=bsssPort,BSAKEY=TSU,SECN=TSU")
-dbLoadRecords("db/bsss.db", "DEV=${SYS_PV},PORT=bsssPort,BSAKEY=RATES,SECN=RATES")
+# DEVICE_PREFIX can be, for example:
+# BPM:LI24:123 
+dbLoadRecords("db/bsss.db", "DEV=${DEVICE_PREFIX},PORT=bsssPort,BSAKEY=PIDL,SECN=PIDL")
+dbLoadRecords("db/bsss.db", "DEV=${DEVICE_PREFIX},PORT=bsssPort,BSAKEY=PIDU,SECN=PIDU")
+dbLoadRecords("db/bsss.db", "DEV=${DEVICE_PREFIX},PORT=bsssPort,BSAKEY=TSL,SECN=TSL")
+dbLoadRecords("db/bsss.db", "DEV=${DEVICE_PREFIX},PORT=bsssPort,BSAKEY=TSU,SECN=TSU")
+dbLoadRecords("db/bsss.db", "DEV=${DEVICE_PREFIX},PORT=bsssPort,BSAKEY=RATES,SECN=RATES")
 ......
 remark) use the same macros what we have used for BSA template. new macro, IDX macro should have a sequencial number from 0
 
@@ -548,7 +562,9 @@ DB_INSTALLS += $(BSADRIVER)/db/bldCtrl.db
 
 example)
 # BLD Control/Monintoring PVs
-dbLoadRecords("db/bldCtrl.db", "DEV=${SYS_PV},PORT=bldPort")
+# TPR_PREFIX can be, for example:
+# TPR:LI24:123 
+dbLoadRecords("db/bldCtrl.db", "DEV=${TPR_PREFIX},PORT=bldPort")
 
 
 
@@ -557,11 +573,13 @@ dbLoadRecords("db/bldCtrl.db", "DEV=${SYS_PV},PORT=bldPort")
 
 example)
 # BLD Scalar PVs
-dbLoadRecords("db/bld.db", "DEV=${SYS_PV},PORT=bldPort,BSAKEY=PIDL,SECN=PIDL")
-dbLoadRecords("db/bld.db", "DEV=${SYS_PV},PORT=bldPort,BSAKEY=PIDU,SECN=PIDU")
-dbLoadRecords("db/bld.db", "DEV=${SYS_PV},PORT=bldPort,BSAKEY=TSL,SECN=TSL")
-dbLoadRecords("db/bld.db", "DEV=${SYS_PV},PORT=bldPort,BSAKEY=TSU,SECN=TSU")
-dbLoadRecords("db/bld.db", "DEV=${SYS_PV},PORT=bldPort,BSAKEY=RATES,SECN=RATES")
+# DEVICE_PREFIX can be, for example:
+# BPM:LI24:123 
+dbLoadRecords("db/bld.db", "DEV=${DEVICE_PREFIX},PORT=bldPort,BSAKEY=PIDL,SECN=PIDL")
+dbLoadRecords("db/bld.db", "DEV=${DEVICE_PREFIX},PORT=bldPort,BSAKEY=PIDU,SECN=PIDU")
+dbLoadRecords("db/bld.db", "DEV=${DEVICE_PREFIX},PORT=bldPort,BSAKEY=TSL,SECN=TSL")
+dbLoadRecords("db/bld.db", "DEV=${DEVICE_PREFIX},PORT=bldPort,BSAKEY=TSU,SECN=TSU")
+dbLoadRecords("db/bld.db", "DEV=${DEVICE_PREFIX},PORT=bldPort,BSAKEY=RATES,SECN=RATES")
 ......
 remark) use the same macros what we have used for BSA template. 
 
@@ -795,7 +813,9 @@ DB_INSTALLS += $(BSADRIVER)/db/bsasCtrl.db     # rate control template, work wit
 ---------------------------------------------
 
 # BSAS Destination/Rates Control PVs
-dbLoadRecords("db/bsasCtrl.db", "DEV=${SYS_PV},PORT=bsasPort")
+# TPR_PREFIX can be, for example:
+# TPR:LI24:123 
+dbLoadRecords("db/bsasCtrl.db", "DEV=${TPR_PREFIX},PORT=bsasPort")
 
 
 
@@ -803,11 +823,13 @@ dbLoadRecords("db/bsasCtrl.db", "DEV=${SYS_PV},PORT=bsasPort")
 -----------------------------------------------------------------------------------
 
 # BSAS Severity Filtering for Each channel
-dbLoadRecords("db/bsas.db", "DEV=${SYS_PV},PORT=bsasPort,BSAKEY=PIDL,SECN=PIDL")
-dbLoadRecords("db/bsas.db", "DEV=${SYS_PV},PORT=bsasPort,BSAKEY=PIDU,SECN=PIDU")
-dbLoadRecords("db/bsas.db", "DEV=${SYS_PV},PORT=bsasPort,BSAKEY=TSL,SECN=TSL")
-dbLoadRecords("db/bsas.db", "DEV=${SYS_PV},PORT=bsasPort,BSAKEY=TSU,SECN=TSU")
-dbLoadRecords("db/bsas.db", "DEV=${SYS_PV},PORT=bsasPort,BSAKEY=RATES,SECN=RATES")
+# TPR_PREFIX can be, for example:
+# TPR:LI24:123 
+dbLoadRecords("db/bsas.db", "DEV=${DEVICE_PREFIX},PORT=bsasPort,BSAKEY=PIDL,SECN=PIDL")
+dbLoadRecords("db/bsas.db", "DEV=${DEVICE_PREFIX},PORT=bsasPort,BSAKEY=PIDU,SECN=PIDU")
+dbLoadRecords("db/bsas.db", "DEV=${DEVICE_PREFIX},PORT=bsasPort,BSAKEY=TSL,SECN=TSL")
+dbLoadRecords("db/bsas.db", "DEV=${DEVICE_PREFIX},PORT=bsasPort,BSAKEY=TSU,SECN=TSU")
+dbLoadRecords("db/bsas.db", "DEV=${DEVICE_PREFIX},PORT=bsasPort,BSAKEY=RATES,SECN=RATES")
 
 
 4. make association with BSA to inherit the BSA data channels
@@ -827,12 +849,14 @@ ex) column lable will be <base_name>.CNT, <base_name>.VAL, <base_name>.AVG, <bas
 
 
 #  base name assign for the BSAS channels
+# DEVICE_PREFIX can be, for example:
+# BPM:LI24:123 
 #  bsasBaseName(<BSAS data channel, BsaKey>, <base PV name>)
-bsasBaseName("PIDL",    "${SYS_PV}:PIDL")
-bsasBaseName("PIDU",    "${SYS_PV}:PIDLU")
-bsasBaseName("TSL",     "${SYS_PV}:TSL")
-bsasBaseName("TSU",     "${SYS_PV}:TSU")
-bsasBaseName("RATES",   "${SYS_PV}:RATES")
+bsasBaseName("PIDL",    "${DEVICE_PREFIX}:PIDL")
+bsasBaseName("PIDU",    "${DEVICE_PREFIX}:PIDLU")
+bsasBaseName("TSL",     "${DEVICE_PREFIX}:TSL")
+bsasBaseName("TSU",     "${DEVICE_PREFIX}:TSU")
+bsasBaseName("RATES",   "${DEVICE_PREFIX}:RATES")
 
 
 6. configure BSAS driver
@@ -840,7 +864,9 @@ bsasBaseName("RATES",   "${SYS_PV}:RATES")
 
 # configure BSAS driver: bsasAsynDriverConfigure(<bsas port>, <register path>, <NTTable PV1>, <NTTable PV2>, <NTTable PV3>, <NTTable PV4>, [named_root (optional)])
 # remarks) ioc shell does NOT allow multiple-line input for a command, thus, we need to list up all of the arguments in a sngle line
-bsasAsynDriverConfigure("bsasPort", "mmio/AmcCarrierCore/AmcCarrierBsa/Bsas", "${SYS_PV}:NTTBL1", "${SYS_PV}:NTTBL2", "${SYS_PV}:NTTBL3","${SYS_PV}:NTTBL4" )
+# DEVICE_PREFIX can be, for example:
+# BPM:LI24:123 
+bsasAsynDriverConfigure("bsasPort", "mmio/AmcCarrierCore/AmcCarrierBsa/Bsas", "${DEVICE_PREFIX}:NTTBL1", "${DEVICE_PREFIX}:NTTBL2", "${DEVICE_PREFIX}:NTTBL3","${DEVICE_PREFIX}:NTTBL4" )
 
 
 
