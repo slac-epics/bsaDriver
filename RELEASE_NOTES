@@ -50,6 +50,10 @@ R2.5.0-3.1.0 Mar 13, 2023 Kukhee Kim
                 - current version PVXS has an issue to support multiple iocs (PVXS servs) in a CPU,
                   we can only access epics 7 PVs in the 1st server,  and could not acces epics 7 PVs in 2nd and 3rd
 
+R2.5.0-3.0.4 Mar 15, 2023  Michael Skoufis
+             - Add functionality to define BSA channels less than 32 bits in the IOC. 
+             - Currently support 2-bit and 16-bit channels. Can easily extend to other types.
+             - Acquisition services BSA/BSAS/BSSS are supported by these updates (BLD excluded).
 
 R2.5.0-3.0.3 Feb 8, 2023  Kukhee Kim
              - introduce $(GLOBAL) macro for pv refix for the global PVs, (default is TPG:SYS0:1)

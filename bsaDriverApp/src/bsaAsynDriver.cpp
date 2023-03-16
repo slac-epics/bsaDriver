@@ -39,12 +39,13 @@
 
 #include "devScBsa.h"
 
+using namespace Bsa;
+
 static const  char *driverName = "bsaAsynDriver";
 static char port_name[32];
 static char ip_string[32];
 static char reg_path_string[256];
 static char ram_path_string[256];
-
 
 // static class bsaAsynDriver *pBsaDrv = NULL;  /* will be removed */
 
@@ -303,13 +304,21 @@ void BsaPv::append(unsigned n, double mean, double rms2)
         int32_t  i32;
         float    f32;
     } u;
+
     double __mean;
 
     u.u32 = (uint32_t) mean;
 
-
-
     switch(*_p_type) {
+        case uint2:
+            __mean = (double) u.u32;
+            break;
+        case int16:
+            __mean = (double) u.u32;
+            break;
+        case uint16:
+            __mean = (double) u.u32;
+            break;
         case int32:
             __mean = (double) u.i32;
             break;
@@ -410,6 +419,92 @@ void BsaPvArray::set(unsigned sec, unsigned nsec)
         _pvs[i]->setTimestamp(_ts_sec, _ts_nsec);
     }
 }
+
+void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done)
+{
+    uint32_t val  = 0;
+    uint32_t mask = DEFAULT_MASK;
+
+    // Add channel data for the current BSA buffer to a vector
+    _rawChannelData.push_back(new ChannelDataStruct(n,mean,rms2));
+
+    // When all channel data is stored, partition if and as needed
+    if (done)
+    {
+        // Define useful indices
+        unsigned wordIndex = 0;
+
+        // Incoming data are 32-bits
+        const unsigned wordWidth = BLOCK_WIDTH_32;
+
+        // Keep track of bit boundaries
+        unsigned bitSum = 0;
+
+        // Fault flag for bit boundaries
+        bool userFault = false;
+
+        // Loop through the channel data and split if necessary
+        for (Bsa::Pv* pv:_pvs)
+        {
+            // Get the data type of the next PV (32-bit or less)
+            bsaDataType_t *type  = pv->get_p_type();
+            // Partition 32-bit data and distribute to new PVs as needed
+            switch(*type){
+                case uint2:
+                    // Extract the 2-bit block
+                    val = (uint32_t)_rawChannelData[wordIndex]->mean;
+                    mask = KEEP_LSB_2;
+                    val >>= bitSum;  
+                    val &= mask;
+                    bitSum += BLOCK_WIDTH_2;
+                    break; 
+                case int16:
+                case uint16:
+                    // Extract the 16-bit block
+                    val = (uint32_t)_rawChannelData[wordIndex]->mean;
+                    mask = KEEP_LSB_16;
+                    val >>= bitSum; 
+                    val &= mask;
+                    bitSum += BLOCK_WIDTH_16;
+                    break;
+                case int32:
+                case uint32:
+                case float32:
+                default:
+                    // Send data as is (no partition required)
+                    val = (uint32_t)_rawChannelData[wordIndex  ]->mean;
+                    bitSum += BLOCK_WIDTH_32;
+            }
+            // Append the value to the corresponding PV history
+            pv->append(_rawChannelData[wordIndex  ]->n, 
+                       (double)val, 
+                       _rawChannelData[wordIndex]->rms2);
+
+            // Check if the 32-bit boundary has been violated
+            if (bitSum == wordWidth)
+            {
+                // All good, move on to the next 32-bit word
+                bitSum = 0;
+                wordIndex++;
+            }
+            else if (bitSum > wordWidth)
+                userFault = true;
+
+            // Maybe throw an exception in here later
+            if (userFault) 
+            {
+                printf("BsaPvArray::procChannelData(): ERROR - Please ensure BSA channels do not violate 32-bit boundaries!!\n");
+                printf("BsaPvArray::procChannelData(): ERROR - Check BSA channel type!!\n");
+                printf("BsaPvArray::procChannelData(): ERROR - Exiting ...\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+        // Empty temporary vector, resize to 0
+        _rawChannelData.clear ( );
+        _rawChannelData.resize(0);
+    }
+}
+
 
 
 void BsaPvArray::append(uint64_t pulseId)
@@ -917,7 +1012,10 @@ bsaDataType_t getBsaDataType(const char *bsaType)
 {
     bsaDataType_t type;
 
-    if(!strcmp(INT32STRING,        bsaType)) type = int32;
+    if(!strcmp(UINT2STRING,        bsaType)) type = uint2;
+    else if(!strcmp(INT16STRING,   bsaType)) type = int16;
+    else if(!strcmp(UINT16STRING,  bsaType)) type = uint16;
+    else if(!strcmp(INT32STRING,   bsaType)) type = int32;
     else if(!strcmp(UINT32STRING,  bsaType)) type = uint32;
     else if(!strcmp(UINT64STRING,  bsaType)) type = uint64;
     else if(!strcmp(FLOAT32STRING, bsaType)) type = float32;
