@@ -479,12 +479,17 @@ void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done
             pv->append(_rawChannelData[wordIndex  ]->n, 
                        (double)val, 
                        _rawChannelData[wordIndex]->rms2);
-
+            
             // Check if the 32-bit boundary has been violated
             if (bitSum == wordWidth)
             {
                 // All good, move on to the next 32-bit word
                 bitSum = 0;
+
+                // Free memory
+                delete _rawChannelData[wordIndex];
+
+                // Incremenent index to next channel
                 wordIndex++;
             }
             else if (bitSum > wordWidth)
