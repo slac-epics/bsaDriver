@@ -416,6 +416,7 @@ example)
 # There's a hidden ${GLOBAL} macro that defaults to TPG:SYS0:1. This matches the
 # dev TPG in B34 and also in production. If you are using a different TPG, you
 # need to redefine ${GLOBAL} with the correct prefix of the TPG.
+# Example: GLOBAL=TPG:B15:1
 dbLoadRecords("db/bsssCtrl.db", "DEV=${TPR_PREFIX},PORT=bsssPort")
 
 
@@ -570,6 +571,7 @@ example)
 # There's a hidden ${GLOBAL} macro that defaults to TPG:SYS0:1. This matches the
 # dev TPG in B34 and also in production. If you are using a different TPG, you
 # need to redefine ${GLOBAL} with the correct prefix of the TPG.
+# Example: GLOBAL=TPG:B15:1
 dbLoadRecords("db/bldCtrl.db", "DEV=${TPR_PREFIX},PORT=bldPort")
 
 
@@ -824,6 +826,7 @@ DB_INSTALLS += $(BSADRIVER)/db/bsasCtrl.db     # rate control template, work wit
 # There's a hidden ${GLOBAL} macro that defaults to TPG:SYS0:1. This matches the
 # dev TPG in B34 and also in production. If you are using a different TPG, you
 # need to redefine ${GLOBAL} with the correct prefix of the TPG.
+# Example: GLOBAL=TPG:B15:1
 dbLoadRecords("db/bsasCtrl.db", "DEV=${TPR_PREFIX},PORT=bsasPort")
 
 
