@@ -1,3 +1,9 @@
+Branch out to R3.0.0-addNewMacro,      Mar 21, 2023,       Kukhee Kim
+             - branch out to improve bsa "per channel" template to allow multiple $(DEV) names
+               in a single ioc, allow multi-device iocs
+
+
+
 R3.0.0    Mar 14, 2023    Kukhee Kim
              - merge R2.5.0-3.0-BSSS_BSA_upgrade bracnh to the master
              - merge NamingConvention branch to the master
