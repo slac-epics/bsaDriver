@@ -55,19 +55,21 @@
 #define KEEP_LSB_16   0x0000ffff 
 #define DEFAULT_MASK  0xffffffff
 
+#define M_PI_DEGREES 180.0
+
 typedef enum {
     uint2_bsas,
-    int16_bsas,
     uint16_bsas,
     int32_bsas,
     uint32_bsas,
     uint64_bsas,
     float32_bsas,
-    fault_bsas
+    fault_bsas,
+    llrfAmp_bsas,
+    llrfPhase_bsas
 } bsasDataType_t;
 
 static std::map<bsasDataType_t, int> bsasBitMap = {{uint2_bsas,   BLOCK_WIDTH_2 },
-                                                   {int16_bsas,   BLOCK_WIDTH_16},
                                                    {uint16_bsas,  BLOCK_WIDTH_16},
                                                    {int32_bsas,   BLOCK_WIDTH_32},
                                                    {uint32_bsas,  BLOCK_WIDTH_32},
@@ -275,6 +277,8 @@ class bsasAsynDriver: asynPortDriver {
         void              SetChannelSevr(uint64_t sevr);
 
         void printMap();
+        void llrfPerformChecks (const bsasList_t*, const bsasList_t*, int);
+        void llrfCalcPhaseAmp  (signed short, signed short, double&, double&);
 
     protected:
 #if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 | 32)
