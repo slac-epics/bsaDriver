@@ -270,6 +270,8 @@ EPICS database template loading:
   $(DEV)         ; macro
   $(SECN)        ; macro, bsa PV name
   $(BSAKEY)      ; macro, bsa key, it should be matched with the bsa name string in addBsa()
+  $(TPR)         ; an optional macro, if ioc uses multiple different device name for $(DEV),
+                   we need to add up $(TPR) which has a single name in the ioc
 
   $(PORT)        ; macro, asyn port name for bsa driver, should be matched with the port name in the driver initialization
 
@@ -284,7 +286,7 @@ EPICS database template loading:
         FLTB2     reserved BSA slot for fault buffer
         FLTB3     reserved BSA slot for fault buffer
 
-ex)
+ex1) using the smae $(DEV) for all of channel in the ioc.
 
 # BSA driver DB
 # DEVICE_PREFIX can be, for example:
@@ -311,6 +313,19 @@ dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=pidlSlave3,
 dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=pidlSlave4,SECN=PIDLSL4")
 dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=pidlSlave5,SECN=PIDLSL5")
 
+
+ex2) using different names of $(DEV) for channels in the ioc,
+     need to add TPR macro
+
+file bsa.db {
+{DEV,              SECN,      TPR,             PORT    }
+{CBLM:UNDH:4575,   I0_LOSS,   TPR:UNDH:MP06:1, bsaPort }
+{CBLM:UNDH:4676,   I0_LOSS,   TPR:UNDH:MP06:1, bsaPort }
+{BEND:DMPH:395,    I0_BACT,   TPR:UNDH:MP06:1, bsaPort }
+{PBLM:DMO0:846:AH, I0_LOSS,   TPR:UNDH:MP06:1, bsaPort }
+{PBLM:LTUS:846:AH, I0_LOSS,   TPR:UNDH:MP06:1, bsaPort }
+{PBLM:LTUH:846:AH, I0_LOSS,   TPR:UNDH:MP06:1, bsaPort }
+}
 
 
 
