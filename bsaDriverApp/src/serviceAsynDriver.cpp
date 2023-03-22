@@ -797,9 +797,9 @@ void serviceAsynDriver::llrfPerformChecks(const channelList_t * pv, const channe
 
 void serviceAsynDriver::llrfCalcPhaseAmp(signed short i, signed short q, double& amp, double& phase)
 {
-    // Calculate phase
+    // Calculate amplitude 
     amp = (!isnan(i) && !isnan(q))?sqrt(pow(i,2) + pow(q,2)):0.0;
-    // Calculate amplitude
+    // Calculate phase
     phase = (!isnan(i) && !isnan(q) && i != 0)?atan2((double)q, (double)i) * M_PI_DEGREES / M_PI:0.0;
 }
 
@@ -843,7 +843,7 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
      while(plist) {
          // Skipping the (firmware) channel, if the channel is not enabled in the mask
          while(!(channel_mask & (uint32_t(0x1) << hwChIndex)))
-        {
+         {
              hwChIndex++; // evolve data channel number to next channel
              if (hwChIndex >= BLOCK_WIDTH_32)
                  return;

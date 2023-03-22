@@ -455,20 +455,21 @@ void BsaPvArray::llrfPerformChecks(const Bsa::Pv* pv, const Bsa::Pv* pvN, int bi
 
 void BsaPvArray::llrfCalcPhaseAmp(signed short i, signed short q, double& amp, double& phase)
 {
-    // Calculate phase
+    // Calculate amplitude 
     amp = (!isnan(i) && !isnan(q))?sqrt(pow(i,2) + pow(q,2)):0.0;
-    // Calculate amplitude
+    // Calculate phase
     phase = (!isnan(i) && !isnan(q) && i != 0)?atan2((double)q, (double)i) * M_PI_DEGREES / M_PI:0.0;
 }
 
 void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done)
 {
-    uint32_t val = 0, iVal = 0, qVal = 0;
     uint32_t mask = DEFAULT_MASK;
-    double amp = 0.0, phase = 0.0, quant1 = 0.0, quant2 = 0.0;
+    uint32_t val = 0, iVal = 0, qVal = 0;
+    float    quant1float = 0.0, quant2float = 0.0;
+    double   amp = 0.0, phase = 0.0, quant1 = 0.0, quant2 = 0.0;
 
     // Add channel data for the current BSA buffer to an array 
-    static int storeIndex = 0;
+    static unsigned int storeIndex = 0;
     _rawChannelData[storeIndex++] = new ChannelDataStruct(n,mean,rms2);
 
     // When all channel data is stored, partition if and as needed
@@ -490,9 +491,9 @@ void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done
         for (unsigned int pvIndex = 0; pvIndex < pvs().size(); pvIndex++)
         {
             // Get pointers to current and next PVs
-            Bsa::Pv* pv  = pvs()[pvIndex  ];
+            Bsa::Pv* pv  = pvs()[pvIndex];
             Bsa::Pv* pvN = (pvIndex+1 < pvs().size())?pvs()[pvIndex+1]:nullptr;
-
+            
             // Get the data type of the PV (32-bit or less)
             bsaDataType_t *type  = pv->get_p_type();
             
@@ -523,13 +524,13 @@ void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done
                     // Compute phase & amplitude
                     llrfCalcPhaseAmp(static_cast<signed short>(iVal),static_cast<signed short>(qVal),amp,phase);                
                     // Append computed values to PVs
-                    quant1 = (*type == llrfAmp)?amp:phase;
-                    quant2 = (quant1 == amp   )?phase:amp;
+                    quant1 = (*type == llrfAmp)?amp:phase; quant1float = (float)quant1;
+                    quant2 = (quant1 == amp   )?phase:amp; quant2float = (float)quant2;
                     pv->append  (_rawChannelData[wordIndex]->n, 
-                                 quant1,
+                                  quant1float,
                                  _rawChannelData[wordIndex]->rms2);
                     pvN->append (_rawChannelData[wordIndex]->n, 
-                                 quant2,
+                                  quant2float,
                                  _rawChannelData[wordIndex]->rms2);
                     pvIndex++;
                     bitSum += 2 * BLOCK_WIDTH_16;
@@ -539,12 +540,12 @@ void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done
                 case float32:
                 default:
                     // Send data as is (no partition required)
-                    val = (uint32_t)_rawChannelData[wordIndex  ]->mean;
+                    val = (uint32_t)_rawChannelData[wordIndex]->mean;
                     bitSum += BLOCK_WIDTH_32;
             }
             // Append the value to the corresponding PV history
             if (*type != llrfAmp && *type != llrfPhase)
-                pv->append(_rawChannelData[wordIndex  ]->n, 
+                pv->append(_rawChannelData[wordIndex]->n, 
                            (double)val, 
                            _rawChannelData[wordIndex]->rms2);
             
@@ -553,10 +554,6 @@ void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done
             {
                 // All good, move on to the next 32-bit word
                 bitSum = 0;
-
-                // Free memory
-                delete _rawChannelData[wordIndex];
-                _rawChannelData[wordIndex] = nullptr;
 
                 // Incremenent index to next channel
                 wordIndex++;
@@ -573,6 +570,14 @@ void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done
                 exit(EXIT_FAILURE);
             }
         } // end of all-PVs for loop  
+
+        // Deallocate memory
+        for (unsigned int i = 0; i < storeIndex; i++)
+        {
+            delete _rawChannelData[i];
+            _rawChannelData[i] = nullptr;
+        }
+
         // Reset store index
         storeIndex = 0;
     } // end of if (done)
