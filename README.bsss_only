@@ -10,11 +10,14 @@ will also affect BSSS. For example, if you configure BSA buffer 30 to collect
 data at 100 Hz, once you hit the button to start the BSA acquisition, the BSSS
 correspondent PV will update, too.
 
-1. Automatically copy list of BSA signals made previously with addBsa() and
-addSlaveBsa() to BSSS.
+Instructions for configuring BSSS:
 
-Use the following command to make association with BSA channels after 
-the bsaAsynDriverConfigure() command.
+1. Automatically copy the list of BSA signals made previously with addBsa() and
+addSlaveBsa() to BSSS:
+
+Use the bsssAssociateBsaChannels to make the association with BSA channels.
+This command needs to be called anywhere after the bsaAsynDriverConfigure()
+command, already explained in the main README file.
 
 #  Initialize BSSS driver
 #  make assoication with BSA channels: bsssAssociateBsaChannels(<BSA port name>)
@@ -29,8 +32,10 @@ bsaASynDriverConfigure()
 # confiugre BSSS driver: bsssAsynDriverConfigure(<bsss port>, <register path>)
 bsssAsynDriverConfigure("bsssPort", "mmio/AmcCarrierCore/AmcCarrierBsa/Bsss")
 
+<bsss port> can be any string you see fit.
+
 *Remark*: the register path may be different from the example above. It depends
-on the application.
+on the application. The example, though, will probably fit most applications.
 
 
 3. Load up BSSS control database template in st.cmd
@@ -56,33 +61,29 @@ dbLoadRecords("db/bsssCtrl.db", "DEV=${TPR_PREFIX},PORT=bsssPort")
 
 Here is the structure of the template:
 
-  $(DEV):$(SECN)<n>          ; BSSS instantaneous scalar for average value
-  $(DEV):$(SECN)CNT<n>       ; number of samples for an average value
-  $(DEV):$(SECN)RMS<n>       ; RMS value
+  $(DEV):$(SECN)<n>          ; BSSS instantaneous scalar
   $(DEV):$(SECN)PID<n>       ; pulse id 
 
 Macros:
 
   $(DEV)         ; device PV name
   $(SECN)        ; signal name as part of the PV name
-  $(BSAKEY)      ; bsa key. It must match the bsa name string in addBsa() or
-                   addSlaveBsa()
-  $(TPR)         ; an optional macro. If the IOC uses multiple different device
-                   names for $(DEV), we need to add up $(TPR) which has a
-                   single name in the ioc.
-
-  $(PORT)        ; asyn port name for bsa driver. Must match the port name used
-                   in the function bsaAsynDriverConfigure.
+  $(BSAKEY)      ; BSA key. It must match the bsa key string in addBsa() or
+                   addSlaveBsa() explained in the README file. This macro is
+                   used in INP and OUT fields to connect with the device
+                   support code.
+  $(PORT)        ; asyn port name for the *BSSS* driver. Must match the port
+                   name used in the function bsssAsynDriverConfigure.
 
   <n>            ; given instance number / name
-        - For BSA buffer numbers for general use:
+        - For BSSS buffer numbers for general use:
         <n> = [21..49]
 
         - For system buffers, it has two components:
         <n> = <dest><freq>
             <dest>
                 SCD = Diag0
-                SCL = Linac (BSY, HXR, SXR)
+                SCL = Linac. This includes all bunches to BSY, HXR, and SXR.
                 SCB = BSYD
                 SCH = HXR
                 SCS = SXR
@@ -95,651 +96,92 @@ Macros:
             <n> will be the combination of all <dest> with all <freq>.
             Examples: SCD1H, SCLTH, SCSHH, etc.
 
-        - For fault buffers:
-        <n> = FLTB0     reserved BSA slot for fault buffer
-        <n> = FLTB1     reserved BSA slot for fault buffer
-        <n> = FLTB2     reserved BSA slot for fault buffer
-        <n> = FLTB3     reserved BSA slot for fault buffer
-
 Observe that the record names are almost identical to the BSA ones (check
 README.bsa_only). The only difference is that in BSA there's an additional
 HST string in the name.
 
 The BSA PVs are directly connected with the BSSS ones. For example:
-BPM:GUNB:123:TMITHST28 => BPM:GUNB:123:TMIT28
+BPM:GUNB:123:TMITHST28 (BSA) => BPM:GUNB:123:TMIT28 (BSSS)
 
+You must use dbLoadRecords for bsss.db the same number of times you did with
+bsa.db (see README.bsa_only). Users of the BSA system expect to see a waveform
+from BSA and, also, the correspondent scalar from BSSS. If you provide less
+BSSS signals than BSA, this imbalance will be perceived as an error by the
+end user.
 
-Example 1: using the same $(DEV) for some of the signals in the ioc.
-
-You don't need to load database records for all signals created with addBsa()
-or addSlaveBsa(). You can safely select only the set that makes sense for the
-IOC.
-
-Examples of prefix:
-DEVICE_PREFIX = BPM:LI24:123 
-
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=TMITAMC0,SECN=TMIT")
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=XFIXEDPAMC0,SECN=X")
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=YFIXEDPAMC0,SECN=Y")
-
-# TMITAMC0 as the parent signal with 6 dependent children BSAs
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=TMIT0C0,SECN=TMITC0")
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=TMIT0C1,SECN=TMITC1")
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=TMIT0C2,SECN=TMITC2")
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=TMIT0C3,SECN=TMITC3")
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=TMIT0C4,SECN=TMITC4")
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=TMIT0C5,SECN=TMITC5")
-
-Example 2: using different names of $(DEV) for signals in the IOC. In this case
-           we need to add the TPR macro. 
+Example: 
 
 Examples of prefixes:
-TPR_PREFIX = TPR:GUNB:BP01:1
 DEVICE1_PREFIX = BPM:GUNB:123
 DEVICE2_PREFIX = BPM:GUNB:345
 
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE1_PREFIX},TPR=${TPR_PREFIX},PORT=bsaPort,BSAKEY=TMITAMC0,SECN=TMIT")
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE1_PREFIX},TPR=${TPR_PREFIX},PORT=bsaPort,BSAKEY=XFIXEDPAMC0,SECN=X")
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE1_PREFIX},TPR=${TPR_PREFIX},PORT=bsaPort,BSAKEY=YFIXEDPAMC0,SECN=Y")
+dbLoadRecords("db/bsss.db", "DEV=${DEVICE1_PREFIX},PORT=bsssPort,BSAKEY=TMITAMC0,SECN=TMIT")
+dbLoadRecords("db/bsss.db", "DEV=${DEVICE1_PREFIX},PORT=bsssPort,BSAKEY=XFIXEDPAMC0,SECN=X")
+dbLoadRecords("db/bsss.db", "DEV=${DEVICE1_PREFIX},PORT=bsssPort,BSAKEY=YFIXEDPAMC0,SECN=Y")
 
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE2_PREFIX},TPR=${TPR_PREFIX},PORT=bsaPort,BSAKEY=TMITAMC1,SECN=TMIT")
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE2_PREFIX},TPR=${TPR_PREFIX},PORT=bsaPort,BSAKEY=XFIXEDPAMC1,SECN=X")
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE2_PREFIX},TPR=${TPR_PREFIX},PORT=bsaPort,BSAKEY=YFIXEDPAMC1,SECN=Y")
+dbLoadRecords("db/bsss.db", "DEV=${DEVICE2_PREFIX},PORT=bsssPort,BSAKEY=TMITAMC1,SECN=TMIT")
+dbLoadRecords("db/bsss.db", "DEV=${DEVICE2_PREFIX},PORT=bsssPort,BSAKEY=XFIXEDPAMC1,SECN=X")
+dbLoadRecords("db/bsss.db", "DEV=${DEVICE2_PREFIX},PORT=bsssPort,BSAKEY=YFIXEDPAMC1,SECN=Y")
+
+
+This is the result for the example above with BSA user buffer 31:
+BPM:GUNB:123:TMIT31    -> scalar data
+BPM:GUNB:123:TMITPID31 -> PID
+BPM:GUNB:123:X31    -> scalar data
+BPM:GUNB:123:XPID31 -> PID
+BPM:GUNB:123:Y31    -> scalar data
+BPM:GUNB:123:YPID31 -> PID
+BPM:GUNB:345:TMIT31    -> scalar data
+BPM:GUNB:345:TMITPID31 -> PID
+BPM:GUNB:345:X31    -> scalar data
+BPM:GUNB:345:XPID31 -> PID
+BPM:GUNB:345:Y31    -> scalar data
+BPM:GUNB:345:YPID31 -> PID
+
+This is the result for the example above with BSA system buffer SCL at 1 Hz:
+BPM:GUNB:123:TMITSCL1H    -> scalar data
+BPM:GUNB:123:TMITPIDSCL1H -> PID
+BPM:GUNB:123:XSCL1H    -> scalar data
+BPM:GUNB:123:XPIDSCL1H -> PID
+BPM:GUNB:123:YSCL1H    -> scalar data
+BPM:GUNB:123:YPIDSCL1H -> PID
+BPM:GUNB:345:TMITSCL1H    -> scalar data
+BPM:GUNB:345:TMITPIDSCL1H -> PID
+BPM:GUNB:345:XSCL1H    -> scalar data
+BPM:GUNB:345:XPIDSCL1H -> PID
+BPM:GUNB:345:YSCL1H    -> scalar data
+BPM:GUNB:345:YPIDSCL1H -> PID
 
 
 The database template loading can be located either before or after the driver 
 initialization.
-# BSSS Scalar PVs
-# DEVICE_PREFIX can be, for example:
-# BPM:LI24:123 
-dbLoadRecords("db/bsss.db", "DEV=${DEVICE_PREFIX},PORT=bsssPort,BSAKEY=PIDL,SECN=PIDL")
-dbLoadRecords("db/bsss.db", "DEV=${DEVICE_PREFIX},PORT=bsssPort,BSAKEY=PIDU,SECN=PIDU")
-dbLoadRecords("db/bsss.db", "DEV=${DEVICE_PREFIX},PORT=bsssPort,BSAKEY=TSL,SECN=TSL")
-dbLoadRecords("db/bsss.db", "DEV=${DEVICE_PREFIX},PORT=bsssPort,BSAKEY=TSU,SECN=TSU")
-dbLoadRecords("db/bsss.db", "DEV=${DEVICE_PREFIX},PORT=bsssPort,BSAKEY=RATES,SECN=RATES")
-......
-remark) use the same macros what we have used for BSA template. new macro, IDX macro should have a sequencial number from 0
 
 
-6. report function
-
-- bldStream
-epics> dbior bldStreamDriver 5
-Driver: bldStreamDriver
-        BLD Stream for root_0
-          read size  : 152
-          read count : 959035
-          bld count  : 0
-          bsss count : 959035
-          bld callback : (nil)
-          bld_usr      : (nil)
-          bsss_callback: 0x695970
-          bsss_usr     : 0x275ef50
-          free list    : 0x28a0b70
-                 >>>>valid mask<<<: 7fffffff
-                 timestamp, nsec  : 24b14a1e
-                 timestamp, sec   : 3c48c4ce
-                 pulse id, lower  : 6b18ebbe
-                 pulse id, upper  :     eb11
-                 channel mask     : 7fffffff
-                 service mask     :        3
-
-- serviceAsynDriver
-epics> dbior serviceAsynDriver 1
-Driver: serviceAsynDriver
-named_root: MyRoot0, port: bsssPort, driver instace: 0x14e4b80, number of channels: 31
-named_root: MyRoot0, port: bldPort, driver instace: 0x187f310, number of channels: 31
-
-7. Simple Test
-
-Set up 10Hz fixed rate for SCUD1 (one of user defined rate) and monitor BSSS data and pulse id
-suppose) IOC name                  TPG:SYS2:2      (B84 TPG)
-         BSSS data channel name    ACVADCA         (AC voltage ADC phase A)
-
-
-caput TPG:SYS2:2:SCUD1:RATELIMIT "119Hz"           # set up rate limit to 119Hz
-caput TPG:SYS2:2:SCUD1:RATEMODE  "Fixed Rate"      # choose fixed rate mode
-caput TPG:SYS2:2:SCUD1:FIXEDRATE "10Hz"            # select 10Hz rate
-caput TPG:SYS2:2:SCUD1:DESTMODE  "Disable"         # disable destination, do not care about destination
-caput TPG:SYS2:2:ACVADCABSSSCHNSEVR "Invalid"      # setup max severity to Invalid (no severity filtering) for ACVADCA
-caput TPG:SYS2:2:SCUD1:ENB "Enable"                # Enable SCUD1
-
-# monitor ACVADCA and its pulse id for SCUD1
-
-camonitor -g 16 TPG:SYS2:2:ACVADCASCUD1   TPG:SYS2:2:ACVADCAPIDSCUD1
-TPG:SYS2:2:ACVADCAPIDSCUD1     2022-01-18 17:33:27.608926 258461968689718  
-TPG:SYS2:2:ACVADCASCUD1        2022-01-18 17:33:27.608926 53357  
-TPG:SYS2:2:ACVADCAPIDSCUD1     2022-01-18 17:33:27.706926 258461968780718  
-TPG:SYS2:2:ACVADCASCUD1        2022-01-18 17:33:27.706926 53359  
-TPG:SYS2:2:ACVADCAPIDSCUD1     2022-01-18 17:33:27.804926 258461968871718  
-TPG:SYS2:2:ACVADCASCUD1        2022-01-18 17:33:27.804926 53358  
-TPG:SYS2:2:ACVADCAPIDSCUD1     2022-01-18 17:33:27.902926 258461968962718  
-TPG:SYS2:2:ACVADCASCUD1        2022-01-18 17:33:27.902926 53358  
-TPG:SYS2:2:ACVADCAPIDSCUD1     2022-01-18 17:33:28.000926 258461969053718  
-TPG:SYS2:2:ACVADCASCUD1        2022-01-18 17:33:28.000926 53358  
-TPG:SYS2:2:ACVADCAPIDSCUD1     2022-01-18 17:33:28.098926 258461969144718  
-TPG:SYS2:2:ACVADCASCUD1        2022-01-18 17:33:28.098926 53360  
-TPG:SYS2:2:ACVADCAPIDSCUD1     2022-01-18 17:33:28.196926 258461969235718  
-TPG:SYS2:2:ACVADCASCUD1        2022-01-18 17:33:28.196926 53355  
-TPG:SYS2:2:ACVADCAPIDSCUD1     2022-01-18 17:33:28.294926 258461969326718  
-TPG:SYS2:2:ACVADCASCUD1        2022-01-18 17:33:28.294926 53357  
-
-Timestamp should be aligned between data and PID
-PID interval should be 91000 at 10Hz rate
-
-
-remark) BSSS PV names and descriptions in the following link:
-https://confluence.slac.stanford.edu/display/~khkim/BSSS+PV+Name+List
-
-
-
--------------------------------------
-Beamline data acquisition (BLD)
---------------------------------------
-
-BLD is implemented as a part of BSA driver in R2.5.0 or later.
-Thus ioc engineer does not need to add up ".dbd" file and library file if the ioc already had BSA.
-
-0. need to define BLD stream in 000TopLevel.yaml
---------------------------------------------------
-
-# BLD Stream
-bldstream: &bldstream
-  SRP:
-    protocolVersion: SRP_UDP_NONE
-  UDP:
-    port: 8198
-    numRxThreads: *udpThreads
-    threadPriority:  *udpPri
-    pollSecs: 1
-
-#  Inside NetIoDev session
-     bldstream:
-       class: Field
-       at:
-         <<: *bldstream
-
-
-1. need to install database template (add folowings in Db/Makefile)
---------------------------------------------------
-
-DB_INSTALLS += $(BSADRIVER)/db/bld.db
-DB_INSTALLS += $(BSADRIVER)/db/bldCtrl.db
-
-- bld.db ;  BLD database template for each BLD data channel
-- bldCtrl.db  ; BLD controls database template 
-
-
-2. load up BLD control data base template in st.cmd
---------------------------------------------------
-
-example)
-# BLD Control/Monintoring PVs
-# TPR_PREFIX can be, for example:
-# TPR:LI24:123 
-# There's a hidden ${GLOBAL} macro that defaults to TPG:SYS0:1. This matches the
-# dev TPG in B34 and also in production. If you are using a different TPG, you
-# need to redefine ${GLOBAL} with the correct prefix of the TPG.
-# Example: GLOBAL=TPG:B15:1
-dbLoadRecords("db/bldCtrl.db", "DEV=${TPR_PREFIX},PORT=bldPort")
-
-
-
-3. load up BLD Scalar PVs (for each channel data)
---------------------------------------------------
-
-example)
-# BLD Scalar PVs
-# DEVICE_PREFIX can be, for example:
-# BPM:LI24:123 
-dbLoadRecords("db/bld.db", "DEV=${DEVICE_PREFIX},PORT=bldPort,BSAKEY=PIDL,SECN=PIDL")
-dbLoadRecords("db/bld.db", "DEV=${DEVICE_PREFIX},PORT=bldPort,BSAKEY=PIDU,SECN=PIDU")
-dbLoadRecords("db/bld.db", "DEV=${DEVICE_PREFIX},PORT=bldPort,BSAKEY=TSL,SECN=TSL")
-dbLoadRecords("db/bld.db", "DEV=${DEVICE_PREFIX},PORT=bldPort,BSAKEY=TSU,SECN=TSU")
-dbLoadRecords("db/bld.db", "DEV=${DEVICE_PREFIX},PORT=bldPort,BSAKEY=RATES,SECN=RATES")
-......
-remark) use the same macros what we have used for BSA template. 
-
-4. make association with BSA channel 
---------------------------------------------------
-
-BLD can use BSA channel definitions. Use the following command to make association with BSA channels after bsaAsynDriverConfigure() command
-
-#
-#  Initialize BLD driver
-#  make assoication with BSA channels: bldAssociateBsaChannels(<BSA port name>)
-bldAssociateBsaChannels("bsaPort")
-
-remark) the <BSA port name> should be the smae string id which has been used for bsaASynDriverConfigure()
-
-5. configure BLD driver with the following command
---------------------------------------------------
-
-# configure BLD driver: bldAsynDriverConfigure(<bld port>, <register path>, <payload pva basename>)
-bldAsynDriverConfigure("bldPort", "mmio/AmcCarrierCore/AmcCarrierBsa/Bld", "TST:SYS2:04")
-
-remark) the register path should be different depending on the application
-
-In case the BSAKEY is not desired to be used in the name/type PVA, a name for the BLD channel can
-be created using the following function.
-
-bldChannelName(<BSAKEY>,   <NAME/ALIAS>)
-
-Example)
-bldChannelName("YFIXEDPAMC1",   "POSY")
-
-6. Report function
---------------------------------------------------
-
-- bldStream
-epics>dbior bldStreamDriver 5
-Driver: bldStreamDriver
-        BLD Stream for MyRoot0
-          read size  : 768
-          read count : 7960928
-          bld count  : 7695234
-          bsss count : 1131
-          bsas count : 193179
-          bld callback : 0x62e5c0
-          bld_usr      : 0x187f310
-          bsss_callback: 0x62e370
-          bsss_usr     : 0x14e4b80
-          bsas_callback: 0x631710
-          bsas_usr     : 0x18a3930
-          free list    : 0x16a8780
-          bld  callback processing (usec): snapshot   15.496, min   14.167, max   39.318
-          bsss callback processing (usec): snapshot 1074.218, min  968.287, max 4042.424
-          bsas callback processing (usec): snapshot    5.948, min    4.807, max 1241.223
-                 --------------------------------
-                 BSSS Packet: size(768)
-                 --------------------------------
-                 timestamp, nsec  : 13f39b57
-                 timestamp, sec   : 3d9550d1
-                 pulse id, lower  : 4e45bad3
-                 pulse id, upper  :     fded
-                 channel mask     : 7fffffff
-                 service mask     : 801e033d
-                 severity mask    :   b9098100b90981
-                 --------------------------------
-                 BSAS Packet: size(768)
-                 --------------------------------
-                 timestamp (64bit): 3d9550d114892497
-                 pulse id  (64bit):     fded4e45de5f
-                 channel mask     : 7fffffff
-                 row number       : 839
-                 table_count      : 14
-                 edef_index       : 0
-                 byte pad (0x80)  : 80
-                 PL CH    CNT EVL ESQ FIX     VAL       SUM       SQUARE      MIN      MAX
-                 -------------------------------------------------------------------------
-                  0  0      1   N   N   N    1de5f    1de5f    37de6e741    1de5f    1de5f
-                  1  1      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
-                  2  2      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
-                  3  3      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
-                  4  4      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
-                  5  5      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
-                  6  6      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
-                  7  7      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
-                  8  8      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
-                  9  9      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
-                 10 10      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
-                 11 11      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
-                 12 12      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
-                 13 13      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
-                 14 14      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
-                 15 15      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
-                 16 16      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
-                 17 17      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
-                 18 18      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
-                 19 19      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
-                 20 20      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
-                 21 21      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
-                 22 22      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
-                 23 23      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
-                 24 24      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
-                 25 25      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
-                 26 26      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
-                 27 27      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
-                 28 28      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
-                 29 29      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
-                 30 30      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
-                 --------------------------------
-                 BLD Packet: size(156)
-                 --------------------------------
-                 timestamp        : 3d9550d1149818b7
-                 pulse ID         :     fded4e45e1ed
-                 channel mask     :         7fffffff
-                 service mask     :          8000000
-                 Chan. data found :               31
-                 Severity mask    : 3faa5500ffaa5500
-
-
-- serviceAsynDriver
-epics> dbior serviceAsynDriver 1
-Driver: serviceAsynDriver
-named_root: MyRoot0, port: bsssPort, driver instace: 0x14e4b80, number of channels: 31
-named_root: MyRoot0, port: bldPort, driver instace: 0x187f310, number of channels: 31
-
-
-7. Slope and offset
---------------------------------------------------
-
-The slope and offset for BLD are those of the BSA as mentioned earlier.
-
-  $(DEV):$(SECN)_SLOPE
-  $(DEV):$(SECN)_OFFSET
-
-8. Simple Test
---------------------------------------------------
-
-All BLD EDEFs are system EDEFs. They should automatically get their configuration from the global PVs.
-
-Nonetheless, the user still need to perform the following settings
-
-caput TST:SYS2:04:SCHBR:MULT_PORT 50000
-caput TST:SYS2:04:SCHBR:MULT_ADDR 239.255.4.3
-caput TST:SYS2:04:BLD_CTRL:ENB "Enable"            # Enabling BLD functionality in IOC
-
-Now you should be able to capture the outgoing BLD packets using tcpdump
->>  /usr/sbin/tcpdump -i <interface> port 50000
-To see the contents of the packet, run
->>  /usr/sbin/tcpdump -X -i <interface> port 50000
-
-The channel types in the packets are reflected by the pv access PV <payload pva basename>:BLD_PAYLOAD
-To uncover the correct full name, use the following command from the IOC terminal
-IOCSHELL> pvxsl
-<payload pva basename>:BLD_PAYLOAD
-
-To examine its content, you can run from a linux terminal
-pvinfo <payload pva basename>:BLD_PAYLOAD
-
-remark) BLD PV names and descriptions in the following link:
-https://confluence.slac.stanford.edu/pages/viewpage.action?spaceKey=~carolina&title=BLD+PVs
-
--------------------------------------------
-Beam Synchronous Acquisition Service (BSAS)
--------------------------------------------
-
-BSAS (Beam Synchronous Acquisition Service) provides timestamp and pulse id aligned waveform data to the high-level application.
-The BSAS uses NTTable PV to make a structured data format:
-
-- There are multiple rows in the NTTable, all of data in a row aligned with a specific timestamp and pulse id
-- There are multiple columns in the NTTable PV: timestamp-seconds, timestamp-nonoseconds, pulse id and data column.
-  the number of data columns can be configurable and varies for different iocs.
-- Each data channel have 5 columns
-    .CNT: number of accumulated samples in the row
-          for statstical data      .CNT >= 2
-          for non-statistical data .CNT = 1
-    .VAL: delegate sample (very first sample in the row for the statistical data)
-    .AVG: arithmetic mean of the samples
-    .RMS: standard deviation of the samples
-    .MIN: minimum of the samples
-    .MAX: maximum of the samples
-- There are 4 of NTTable PVs which can be configured independently for different destinations and different rates
-- The acquisition rate, number of samples for statistical data in a row, number rows and update rate for NTTable can be configured by BSAS rate control PVs
-
-Remarks) please, check up the following slide deck for the BSAS design amd impelmentation details
-
-https://1drv.ms/p/s!AsH0Qpew48nUh7xfkO4-X_lMj48VmA?e=6Ea8FP
-
-Please, check up the following confluence page
-
-https://confluence.slac.stanford.edu/display/~khkim/BSAS+Driver+Configuration+and+Control+PVs
-
-
-0. Build application with PVXS and QSRV
-----------------------------------------
-
-BSAS uses NTTable to expose the strcutred data, it requires to build with PVXS and QSRV
-
-- configure/RELEASE.local
-PVXS_MODULE_VERSION  = R0.3.1-0.0.1
-PVXS                 =$(EPICS_MODULES)/pvxs/$(PVXS_MODULE_VERSION)
-
-- src/Makefile
-# ===========================================
-# EPICS 7 PVXS support
-# Order of the two libraries is important:
-# ===========================================
-<your application>_LIBS += pvxsIoc
-<your application>_LIBS += pvxs
-<your application>_DBD  += pvxsIoc.dbd
-# ===========================================
-
-# ===================================================
-# Include Support for EPICS version 7
-# Link QSRV (pvAccess Server) if available
-# ===================================================
-<your application>_LIBS += qsrv
-<your application>_LIBS += $(EPICS_BASE_PVA_CORE_LIBS)
-<your applicaiton>_DBD  += PVAServerRegister.dbd
-<your application>_DBD  += qsrv.dbd
-
-
-
-1. How to install BSAS database templates
------------------------------------------
-
-Put the followings into the Db/Makefile
-
-DB_INSTALLS += $(BSADRIVER)/db/bsas.db         # channel control tempalte (enable/disable channel, severity filtering for channel), need to load up for each data channels
-DB_INSTALLS += $(BSADRIVER)/db/bsasCtrl.db     # rate control template, work with global PVs
-
-
-2. load BSAS rate control template in st.cmd
----------------------------------------------
-
-# BSAS Destination/Rates Control PVs
-# TPR_PREFIX can be, for example:
-# TPR:LI24:123 
-# There's a hidden ${GLOBAL} macro that defaults to TPG:SYS0:1. This matches the
-# dev TPG in B34 and also in production. If you are using a different TPG, you
-# need to redefine ${GLOBAL} with the correct prefix of the TPG.
-# Example: GLOBAL=TPG:B15:1
-dbLoadRecords("db/bsasCtrl.db", "DEV=${TPR_PREFIX},PORT=bsasPort")
-
-
-
-3. load BSAS channel control (enable/disable, channel filtering) template in st.cmd
------------------------------------------------------------------------------------
-
-# BSAS Severity Filtering for Each channel
-# TPR_PREFIX can be, for example:
-# TPR:LI24:123 
-dbLoadRecords("db/bsas.db", "DEV=${DEVICE_PREFIX},PORT=bsasPort,BSAKEY=PIDL,SECN=PIDL")
-dbLoadRecords("db/bsas.db", "DEV=${DEVICE_PREFIX},PORT=bsasPort,BSAKEY=PIDU,SECN=PIDU")
-dbLoadRecords("db/bsas.db", "DEV=${DEVICE_PREFIX},PORT=bsasPort,BSAKEY=TSL,SECN=TSL")
-dbLoadRecords("db/bsas.db", "DEV=${DEVICE_PREFIX},PORT=bsasPort,BSAKEY=TSU,SECN=TSU")
-dbLoadRecords("db/bsas.db", "DEV=${DEVICE_PREFIX},PORT=bsasPort,BSAKEY=RATES,SECN=RATES")
-
-
-4. make association with BSA to inherit the BSA data channels
--------------------------------------------------------------
-
-#
-#  Initialize BSSS driver
-#  make assoication with BSA channels: bsssAssociateBsaChannels(<BSA port name>)
-bsssAssociateBsaChannels("bsaPort")
-
-
-5. make mapping between data channel and base name
---------------------------------------------------
-
-The base name will be used for the column lable in the NTTable
-ex) column lable will be <base_name>.CNT, <base_name>.VAL, <base_name>.AVG, <base_name>.RMS, <base_name>.MIN, <base_name>.MAX
-
-
-#  base name assign for the BSAS channels
-# DEVICE_PREFIX can be, for example:
-# BPM:LI24:123 
-#  bsasBaseName(<BSAS data channel, BsaKey>, <base PV name>)
-bsasBaseName("PIDL",    "${DEVICE_PREFIX}:PIDL")
-bsasBaseName("PIDU",    "${DEVICE_PREFIX}:PIDLU")
-bsasBaseName("TSL",     "${DEVICE_PREFIX}:TSL")
-bsasBaseName("TSU",     "${DEVICE_PREFIX}:TSU")
-bsasBaseName("RATES",   "${DEVICE_PREFIX}:RATES")
-
-
-6. configure BSAS driver
-------------------------
-
-# configure BSAS driver: bsasAsynDriverConfigure(<bsas port>, <register path>, <NTTable PV1>, <NTTable PV2>, <NTTable PV3>, <NTTable PV4>, [named_root (optional)])
-# remarks) ioc shell does NOT allow multiple-line input for a command, thus, we need to list up all of the arguments in a sngle line
-# DEVICE_PREFIX can be, for example:
-# BPM:LI24:123 
-bsasAsynDriverConfigure("bsasPort", "mmio/AmcCarrierCore/AmcCarrierBsa/Bsas", "${DEVICE_PREFIX}:NTTBL1", "${DEVICE_PREFIX}:NTTBL2", "${DEVICE_PREFIX}:NTTBL3","${DEVICE_PREFIX}:NTTBL4" )
-
-
-
-7. Programming NTTable rate
----------------------------
-Please, check up the slide deck above to understand the rate control operation
-
-8. checking up BSAS driver status
----------------------------------
-
-ex) use dbior() command on the ioc shell
-
-sioc-b084-ts02>dbior bldStreamDriver 1
-Driver: bldStreamDriver
-        BLD Stream for MyRoot0
-          read size  : 768
-          read count : 11785893
-          bld count  : 0
-          bsss count : 118033
-          bsas count : 11667845
-          bld callback : (nil)
-          bld_usr      : (nil)
-          bsss_callback: 0x8136a0
-          bsss_usr     : 0x13d9dd0
-          bsas_callback: 0x8165a0
-          bsas_usr     : 0x152bf60
-          free list    : 0x14b8660
-          bld  callback processing (usec): snapshot    0.000, min    0.000, max    0.000
-          bsss callback processing (usec): snapshot  553.818, min  444.024, max 1122.685
-          bsas callback processing (usec): snapshot    3.097, min    0.694, max 1461.080
-                 --------------------------------
-                 BSSSS Packet: size(156)
-                 --------------------------------
-                 timestamp, nsec  :  dff5c81
-                 timestamp, sec   : 3ce80602
-                 pulse id, lower  : 2f2da330
-                 pulse id, upper  :     f499
-                 channel mask     : 7fffffff
-                 service mask     :        1
-                 severity mask    : 3faa5500ffaa5500
-                 --------------------------------
-                 BSAS Packet: size(768)
-                 --------------------------------
-                 timestamp (64bit): 3ce806020f396321
-                 pulse id  (64bit):     f4992f2dedd6
-                 channel mask     : 7fffffff
-                 row number       : 821
-                 table_count      : 0
-                 edef_index       : 0
-                 byte pad (0x80)  : 80
-                 PL CH    CNT EVL ESQ FIX     VAL       SUM       SQUARE      MIN      MAX
-                 -------------------------------------------------------------------------
-                  0  0      1   N   E   N 2f2dedd6  f2dedd6    3b8a1eee4 2f2dedd6 2f2df163
-                  1  1      1   E   E   N 809359f4   9359f4     6bb39090 809359f4 80935d81
-                  2  2      1   N   E   N  11359f4  11359f4     6bb39090  11359f4  1135d81
-                  3  3      1   E   E   N 819359f4  19359f4     6bb39090 819359f4 81935d81
-                  4  4      1   N   E   N  21359f4  21359f4     6bb39090  21359f4  2135d81
-                  5  5      1   E   E   N 829359f4  29359f4     6bb39090 829359f4 82935d81
-                  6  6      1   N   E   N  31359f4  31359f4     6bb39090  31359f4  3135d81
-                  7  7      1   E   E   N 839359f4  39359f4     6bb39090 839359f4 83935d81
-                  8  8      1   N   E   N  41359f4  41359f4     6bb39090  41359f4  4135d81
-                  9  9      1   E   E   N 849359f4  49359f4     6bb39090 849359f4 84935d81
-                 10 10      1   N   E   N  51359f4  51359f4     6bb39090  51359f4  5135d81
-                 11 11      1   E   E   N 859359f4  59359f4     6bb39090 859359f4 85935d81
-                 12 12      1   N   E   N  61359f4  61359f4     6bb39090  61359f4  6135d81
-                 13 13      1   E   E   N 869359f4  69359f4     6bb39090 869359f4 86935d81
-                 14 14      1   N   E   N  71359f4  71359f4     6bb39090  71359f4  7135d81
-                 15 15      1   E   E   N 879359f4  79359f4     6bb39090 879359f4 87935d81
-                 16 16      0   N   E   F  81359f4        0            0  81359f4  8135d81
-                 17 17      0   E   E   F 889359f4        0            0 889359f4 88935d81
-                 18 18      0   N   E   F  91359f4        0            0  91359f4  9135d81
-                 19 19      0   E   E   F 899359f4        0            0 899359f4 89935d81
-                 20 20      0   N   E   F  a1359f4        0            0  a1359f4  a135d81
-                 21 21      0   E   E   F 8a9359f4        0            0 8a9359f4 8a935d81
-                 22 22      0   N   E   F  b1359f4        0            0  b1359f4  b135d81
-                 23 23      0   E   E   F 8b9359f4        0            0 8b9359f4 8b935d81
-                 24 24      0   N   E   F  c1359f4        0            0  c1359f4  c135d81
-                 25 25      0   E   E   F 8c9359f4        0            0 8c9359f4 8c935d81
-                 26 26      0   N   E   F  d1359f4        0            0  d1359f4  d135d81
-                 27 27      0   E   E   F 8d9359f4        0            0 8d9359f4 8d935d81
-                 28 28      0   N   E   F  e1359f4        0            0  e1359f4  e135d81
-                 29 29      0   E   E   F 8e9359f4        0            0 8e9359f4 8e935d81
-                 30 30      0   N   E   F  f1359f4        0            0  f1359f4  f135d81
-sioc-b084-ts02>
-
-
-9. read out NTTtable
---------------------
-
-- get pv list in a host
-  pvlist <host>
-
-ex)
-khkim@lcls-dev3 ~ $ pvlist cpu-b084-sp18
-TST:SYS2:4:NTTBL1
-TST:SYS2:4:NTTBL2
-TST:SYS2:4:NTTBL3
-TST:SYS2:4:NTTBL4
-
-
-- check up pv structure
-  pvinfo <pv name, NTTable PV name>
-ex)
-khkim@lcls-dev3 ~ $ pvinfo TST:SYS2:4:NTTBL1
-TST:SYS2:4:NTTBL1
-Server: 134.79.217.42:5075
-Type:
-    epics:nt/NTTable:1.0
-        string[] labels
-        structure value
-            uint[] secondsPastEpoch
-            uint[] nanoseconds
-            ulong[] pulseId
-            uint[] pv0_cnt
-            double[] pv0_val
-            double[] pv0_avg
-            double[] pv0_rms
-            double[] pv0_min
-            double[] pv0_max
-            uint[] pv1_cnt
-            double[] pv1_val
-            double[] pv1_avg
-            double[] pv1_rms
-            double[] pv1_min
-            double[] pv1_max
-            uint[] pv2_cnt
-            double[] pv2_val
-            double[] pv2_avg
-            double[] pv2_rms
-            double[] pv2_min
-            double[] pv2_max
-
-
-            uint[] pv30_cnt
-            double[] pv30_val
-            double[] pv30_avg
-            double[] pv30_rms
-            double[] pv30_min
-            double[] pv30_max
-
-
-- get data from the NTTable PV
-  pvget <pv name, NTTable PV name>
-
-ex)
-  pvget TST:SYS2:4:NTTBL1
-
-
-
-
-
-
-
-
-# End of file
+4. Simple Test
+
+Set up a BSA acquisition using the provided GUI from the TPG IOC application.
+The set would be fixed rate with 10 Hz, without filtering for destination.
+Configure it to collect 20,000 items.
+
+Let's say that your IOC has the PVs as described in the examples in item 3.
+
+$ camonitor -g 16  BPM:GUNB:123:TMIT31 BPM:GUNB:123:TMITPID31
+BPM:GUNB:123:TMITPID31     2022-01-18 17:33:27.608926 258461968689718  
+BPM:GUNB:123:TMIT31        2022-01-18 17:33:27.608926 53357  
+BPM:GUNB:123:TMITPID31     2022-01-18 17:33:27.706926 258461968780718  
+BPM:GUNB:123:TMIT31        2022-01-18 17:33:27.706926 53359  
+BPM:GUNB:123:TMITPID31     2022-01-18 17:33:27.804926 258461968871718  
+BPM:GUNB:123:TMIT31        2022-01-18 17:33:27.804926 53358  
+BPM:GUNB:123:TMITPID31     2022-01-18 17:33:27.902926 258461968962718  
+BPM:GUNB:123:TMIT31        2022-01-18 17:33:27.902926 53358  
+BPM:GUNB:123:TMITPID31     2022-01-18 17:33:28.000926 258461969053718  
+BPM:GUNB:123:TMIT31        2022-01-18 17:33:28.000926 53358  
+BPM:GUNB:123:TMITPID31     2022-01-18 17:33:28.098926 258461969144718  
+BPM:GUNB:123:TMIT31        2022-01-18 17:33:28.098926 53360  
+BPM:GUNB:123:TMITPID31     2022-01-18 17:33:28.196926 258461969235718  
+BPM:GUNB:123:TMIT31        2022-01-18 17:33:28.196926 53355  
+BPM:GUNB:123:TMITPID31     2022-01-18 17:33:28.294926 258461969326718  
+BPM:GUNB:123:TMIT31        2022-01-18 17:33:28.294926 53357  
+
+The timestamp must be aligned between data and PID.
+At 10 Hz rate, the PID interval between consecutive PID PVs must be 91,000.
