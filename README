@@ -143,7 +143,7 @@ endif
 <application>_DBD  += pvxsIoc.dbd
 
 
-1.4 - Db/Makefile:
+1.4 - Db/Makefile. Add the files only for the services that you need to use.
 
 DB_INSTALLS += $(BSADRIVER)/db/bsa.db
 DB_INSTALLS += $(BSADRIVER)/db/bsss.db
@@ -344,6 +344,28 @@ and the stream dram is located at NetIODev/strm/AmcCarrierDRAM/dram.
 
 Example:
 bsaAsynDriverConfigure("bsaPort", "mmio/AmcCarrierCore/AmcCarrierBsa","BsaRam/dram")
+
+
+2.4.1 Check 000TopLevel.yaml if bsaAsynDriverConfigure() fails to load
+
+bldstream needs to be defined in the top yaml file. Although it is called
+bldstream, it serves all acquisition services.
+
+# BLD Stream
+bldstream: &bldstream
+  SRP:
+    protocolVersion: SRP_UDP_NONE
+  UDP:
+    port: 8198
+    numRxThreads: *udpThreads
+    threadPriority:  *udpPri
+    pollSecs: 1
+
+#  Inside NetIoDev session
+     bldstream:
+       class: Field
+       at:
+         <<: *bldstream
 
 
 2.5 Enable/Disable BSA
