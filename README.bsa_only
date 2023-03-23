@@ -15,8 +15,10 @@ Macros:
 
   $(DEV)         ; device PV name
   $(SECN)        ; signal name as part of the PV name
-  $(BSAKEY)      ; bsa key. It must match the bsa name string in addBsa() or
-                   addSlaveBsa()
+  $(BSAKEY)      ; BSA key. It must match the bsa key string in addBsa() or
+                   addSlaveBsa() explained in the README file. This macro is
+                   used in INP and OUT fields to connect with the device
+                   support code.
   $(TPR)         ; an optional macro. If the IOC uses multiple different device
                    names for $(DEV), we need to add up $(TPR) which has a
                    single name in the ioc.
@@ -32,7 +34,7 @@ Macros:
         <n> = <dest><freq>
             <dest>
                 SCD = Diag0
-                SCL = Linac (BSY, HXR, SXR)
+                SCL = Linac. This includes all bunches to BSY, HXR, and SXR.
                 SCB = BSYD
                 SCH = HXR
                 SCS = SXR
@@ -72,6 +74,33 @@ dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=TMIT0C3,SEC
 dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=TMIT0C4,SECN=TMITC4")
 dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=TMIT0C5,SECN=TMITC5")
 
+This is the result for the example above with BSA user buffer 28:
+BPM:LI24:123:TMITHST28    -> data array
+BPM:LI24:123:TMITPIDHST28 -> PID array
+BPM:LI24:123:XHST28    -> data array
+BPM:LI24:123:XPIDHST28 -> PID array
+BPM:LI24:123:YHST28    -> data array
+BPM:LI24:123:YPIDHST28 -> PID array
+BPM:LI24:123:TMITC0HST28    -> data array
+BPM:LI24:123:TMITC0PIDHST28 -> PID array
+(...)
+BPM:LI24:123:TMITC5HST28    -> data array
+BPM:LI24:123:TMITC5PIDHST28 -> PID array
+
+This is the result for the example above with BSA system buffer SCS at 10 Hz:
+BPM:LI24:123:TMITHSTSCSTH    -> data array
+BPM:LI24:123:TMITPIDHSTSCSTH -> PID array
+BPM:LI24:123:XHSTSCSTH    -> data array
+BPM:LI24:123:XPIDHSTSCSTH -> PID array
+BPM:LI24:123:YHSTSCSTH    -> data array
+BPM:LI24:123:YPIDHSTSCSTH -> PID array
+BPM:LI24:123:TMITC0HSTSCSTH    -> data array
+BPM:LI24:123:TMITC0PIDHSTSCSTH -> PID array
+(...)
+BPM:LI24:123:TMITC5HSTSCSTH    -> data array
+BPM:LI24:123:TMITC5PIDHSTSCSTH -> PID array
+
+
 Example 2: using different names of $(DEV) for signals in the IOC. In this case
            we need to add the TPR macro. 
 
@@ -87,6 +116,39 @@ dbLoadRecords("db/bsa.db", "DEV=${DEVICE1_PREFIX},TPR=${TPR_PREFIX},PORT=bsaPort
 dbLoadRecords("db/bsa.db", "DEV=${DEVICE2_PREFIX},TPR=${TPR_PREFIX},PORT=bsaPort,BSAKEY=TMITAMC1,SECN=TMIT")
 dbLoadRecords("db/bsa.db", "DEV=${DEVICE2_PREFIX},TPR=${TPR_PREFIX},PORT=bsaPort,BSAKEY=XFIXEDPAMC1,SECN=X")
 dbLoadRecords("db/bsa.db", "DEV=${DEVICE2_PREFIX},TPR=${TPR_PREFIX},PORT=bsaPort,BSAKEY=YFIXEDPAMC1,SECN=Y")
+
+This is the result for the example above with BSA user buffer 25:
+BPM:GUNB:123:TMITHST25    -> data array
+BPM:GUNB:123:TMITPIDHST25 -> PID array
+BPM:GUNB:123:XHST25    -> data array
+BPM:GUNB:123:XPIDHST25 -> PID array
+BPM:GUNB:123:YHST25    -> data array
+BPM:GUNB:123:YPIDHST25 -> PID array
+BPM:GUNB:345:TMITHST25    -> data array
+BPM:GUNB:345:TMITPIDHST25 -> PID array
+BPM:GUNB:345:XHST25    -> data array
+BPM:GUNB:345:XPIDHST25 -> PID array
+BPM:GUNB:345:YHST25    -> data array
+BPM:GUNB:345:YPIDHST25 -> PID array
+
+This is the result for the example above with BSA system buffer SCH at 100 Hz:
+BPM:GUNB:123:TMITHSTSCHHH    -> data array
+BPM:GUNB:123:TMITPIDHSTSCHHH -> PID array
+BPM:GUNB:123:XHSTSCHHH    -> data array
+BPM:GUNB:123:XPIDHSTSCHHH -> PID array
+BPM:GUNB:123:YHSTSCHHH    -> data array
+BPM:GUNB:123:YPIDHSTSCHHH -> PID array
+BPM:GUNB:345:TMITHSTSCHHH    -> data array
+BPM:GUNB:345:TMITPIDHSTSCHHH -> PID array
+BPM:GUNB:345:XHSTSCHHH    -> data array
+BPM:GUNB:345:XPIDHSTSCHHH -> PID array
+BPM:GUNB:345:YHSTSCHHH    -> data array
+BPM:GUNB:345:YPIDHSTSCHHH -> PID array
+
+
+You see that the $(TPR) macro doesn't affect the final result for the list of
+PVs available for usage. This macro is used with internal PVs and is required
+in case you have different values for the $(DEV) macro.
 
 
 The database template loading can be located either before or after the driver 

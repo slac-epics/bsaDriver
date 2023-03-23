@@ -203,12 +203,12 @@ following jargon: "I need the ordered list of data that goes into the
 diagnostic bus, with the data type.
  
 bsaDriver provides the ioc shell command 
-addBsa(<BSA name string>, <BSA data type>)
+addBsa(<BSA key>, <BSA data type>)
 
 You need to use addBsa for each of the BSA signals from the list provided by
 the firmware engineer, in the same order as the list.
 
-<BSA name string> can be any string you want to describe the signal.
+<BSA key> can be any string you want to describe the signal.
 <BSA data type> can be: "int32", "uint32", "float32".
 
 Optionally, should the signal stay untouched (not scaled using slope/offset or
@@ -273,11 +273,12 @@ nano coulombs, or number of electrons.
 After creating the parent BSA node using addBsa, create the child BSA node as
 the following:
 
-addSlaveBsa(<BSA name for parent>, <BSA name for child>, <data type>)
+addSlaveBsa(<BSA key for parent>, <BSA key for child>, <data type>)
 
-- The "BSA name for parent" should exist before adding the child
-- The "BSA name for child" will be used as the BSAKEY for dbLoadRecords(). More
-about this later.
+- The "BSA key for parent" should exist before adding the child
+- The "BSA key for child" will be used as the BSAKEY database macro for
+dbLoadRecords(). More about this will be explained in other README specific
+files.
 
 Example:
 addSlaveBsa("TMITAMC0", "TMIT0C0", "int32")
