@@ -1,0 +1,133 @@
+bsa.db template:
+
+bsaDriver provides an epics database template for the BSA history buffer PVs.
+The template has a few macros to set up PV name, BSA name and BSA buffer length
+for the history buffer PVs.
+
+Here is the structure of the template:
+
+  $(DEV):$(SECN)HST<n>          ; BSA history for average value
+  $(DEV):$(SECN)CNTHST<n>       ; number of samples for an average value
+  $(DEV):$(SECN)RMSHST<n>       ; RMS value
+  $(DEV):$(SECN)PIDHST<n>       ; pulse id 
+
+Macros:
+
+  $(DEV)         ; device PV name
+  $(SECN)        ; signal name as part of the PV name
+  $(BSAKEY)      ; bsa key. It must match the bsa name string in addBsa() or
+                   addSlaveBsa()
+  $(TPR)         ; an optional macro. If the IOC uses multiple different device
+                   names for $(DEV), we need to add up $(TPR) which has a
+                   single name in the ioc.
+
+  $(PORT)        ; asyn port name for bsa driver. Must match the port name used
+                   in the function bsaAsynDriverConfigure.
+
+  <n>            ; given instance number / name
+        - For BSA buffer numbers for general use:
+        <n> = [21..49]
+
+        - For system buffers, it has two components:
+        <n> = <dest><freq>
+            <dest>
+                SCD = Diag0
+                SCL = Linac (BSY, HXR, SXR)
+                SCB = BSYD
+                SCH = HXR
+                SCS = SXR
+
+            <freq>
+                1H = pre-programmed with 1Hz continuous acquisition
+                TH = pre-programmed with 10Hz continuous acquisition
+                HH = pre-programmed with 100Hz continuous acquisition
+
+            <n> will be the combination of all <dest> with all <freq>.
+            Examples: SCD1H, SCLTH, SCSHH, etc.
+
+        - For fault buffers:
+        <n> = FLTB0     reserved BSA slot for fault buffer
+        <n> = FLTB1     reserved BSA slot for fault buffer
+        <n> = FLTB2     reserved BSA slot for fault buffer
+        <n> = FLTB3     reserved BSA slot for fault buffer
+
+Example 1: using the same $(DEV) for some of the signals in the ioc.
+
+You don't need to load database records for all signals created with addBsa()
+or addSlaveBsa(). You can safely select only the set that makes sense for the
+IOC.
+
+Examples of prefix:
+DEVICE_PREFIX = BPM:LI24:123 
+
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=TMITAMC0,SECN=TMIT")
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=XFIXEDPAMC0,SECN=X")
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=YFIXEDPAMC0,SECN=Y")
+
+# TMITAMC0 as the parent signal with 6 dependent children BSAs
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=TMIT0C0,SECN=TMITC0")
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=TMIT0C1,SECN=TMITC1")
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=TMIT0C2,SECN=TMITC2")
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=TMIT0C3,SECN=TMITC3")
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=TMIT0C4,SECN=TMITC4")
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=TMIT0C5,SECN=TMITC5")
+
+Example 2: using different names of $(DEV) for signals in the IOC. In this case
+           we need to add the TPR macro. 
+
+Examples of prefixes:
+TPR_PREFIX = TPR:GUNB:BP01:1
+DEVICE1_PREFIX = BPM:GUNB:123
+DEVICE2_PREFIX = BPM:GUNB:345
+
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE1_PREFIX},TPR=${TPR_PREFIX},PORT=bsaPort,BSAKEY=TMITAMC0,SECN=TMIT")
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE1_PREFIX},TPR=${TPR_PREFIX},PORT=bsaPort,BSAKEY=XFIXEDPAMC0,SECN=X")
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE1_PREFIX},TPR=${TPR_PREFIX},PORT=bsaPort,BSAKEY=YFIXEDPAMC0,SECN=Y")
+
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE2_PREFIX},TPR=${TPR_PREFIX},PORT=bsaPort,BSAKEY=TMITAMC1,SECN=TMIT")
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE2_PREFIX},TPR=${TPR_PREFIX},PORT=bsaPort,BSAKEY=XFIXEDPAMC1,SECN=X")
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE2_PREFIX},TPR=${TPR_PREFIX},PORT=bsaPort,BSAKEY=YFIXEDPAMC1,SECN=Y")
+
+
+The database template loading can be located either before or after the driver 
+initialization.
+
+
+
+
+=========== Instructions below are only for timing system engineers ===========
+
+BSA buffer length change and Fault buffer length change
+
+This is not supposed to be operated by IOC engineers. These are tools useful
+for timing system engineers that are available for changing parameters for the
+BSA system.
+
+The BSA buffer length and fault buffer length are fixed (BSA length: 20,000 and 
+Fault buffer length: 1,000,000). bsaDriver has a way to allow for changes in the
+lengths.
+
+The buffer lengths are defined in epics ioc shell variables. You can check up
+the values as in the following example:
+
+    epics>var bsa_length
+    bsa_length = 20000
+    epics>var fltb_length
+    fltb_length = 100000
+
+You can change the variable with "var" command, but you must make the change
+prior to any of the BSA driver related commands.
+
+For example, we are going to double the length of both buffers.
+
+    epics>var bsa_length 40000
+    epics>var fltb_length 2000000
+
+You must also change the waveform record length in bsa.db with two macros:
+BSA_LENGTH and FLTB_LENGTH. If you do not specify the macros, they will assume
+20,000 and 1,000,000 as default values.
+
+Example:
+
+dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,BSAKEY=PIDU,SECN=PIDU,BSA_LENGTH=40000,FLTB_LENGTH=2000000")
+dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,BSAKEY=PIDL,SECN=PIDL,BSA_LENGTH=40000,FLTB_LENGTH=2000000")
