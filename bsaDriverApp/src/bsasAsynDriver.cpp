@@ -959,7 +959,7 @@ void bsasAsynDriver::bsasCallback(void *p, unsigned size)
                 avg = (plist->type == llrfAmp_bsas)?double(_sum.u32):double(_sum.i32);
                 min = (plist->type == llrfAmp_bsas)?double(_min.u32):double(_min.i32);
                 max = (plist->type == llrfAmp_bsas)?double(_max.u32):double(_max.i32);
-                rms  = double(_sum_square.u64);
+                rms = (plist->type == llrfAmp_bsas)?double(_sum_square.u64):double(_sum_square.i64);
                 if(avg != NAN) avg = avg * (*plist->pslope) + (*plist->poffset);
                 if(rms != NAN) rms = rms * (*plist->pslope);
                 if(min != NAN) min = min * (*plist->pslope) + (*plist->poffset);
@@ -969,7 +969,7 @@ void bsasAsynDriver::bsasCallback(void *p, unsigned size)
                 avg = (plistN->type == llrfAmp_bsas)?double(_sum.u32):double(_sum.i32);
                 min = (plistN->type == llrfAmp_bsas)?double(_min.u32):double(_min.i32);
                 max = (plistN->type == llrfAmp_bsas)?double(_max.u32):double(_max.i32);
-                rms  = double(_sum_square.u64);
+                rms = (plist->type == llrfAmp_bsas)?double(_sum_square.u64):double(_sum_square.i64);
                 if(avg != NAN) avg = avg * (*plistN->pslope) + (*plistN->poffset);
                 if(rms != NAN) rms = rms * (*plistN->pslope);
                 if(min != NAN) min = min * (*plistN->pslope) + (*plistN->poffset);
