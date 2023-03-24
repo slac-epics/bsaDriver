@@ -131,7 +131,7 @@ This command needs to be called anywhere after the bsaAsynDriverConfigure()
 command, already explained in the main README file.
 
 #  Initialize BSAS driver
-#  make assoication with BSA channels: bsasAssociateBsaChannels(<BSA port name>)
+#  make association with BSA channels: bsasAssociateBsaChannels(<BSA port name>)
 bsasAssociateBsaChannels("bsaPort")
 
 *Remark*: the <BSA port name> should be the same string id which was used for 
@@ -219,7 +219,7 @@ dbLoadRecords("db/bsasCtrl.db", "DEV=${TPR_PREFIX},PORT=bsasPort")
 
 Here's how one of the PVs will result with this example:
 
-TPR:LI24:BP01:1:BSAS_LOCAL  ->  disconnects from the global PVs from the TPG
+TPR:LI24:BP01:1:BSAS_LOCAL  ->  Disconnects from the global PVs from the TPG
                                 support IOC. This is to be used in case you
                                 want to test specific timing filters
                                 independent of what is configured in TPG.
