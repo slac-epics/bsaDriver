@@ -327,7 +327,7 @@ void BsaPv::append(unsigned n, double mean, double rms2)
             __mean = (double) u.f32;
             break;
         case llrfPhase:
-            __mean = (double) u.u32;
+            __mean = (double) u.i32;
             break;
         case llrfAmp:
             __mean = (double) u.u32;
@@ -465,7 +465,6 @@ void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done
 {
     uint32_t mask = DEFAULT_MASK;
     uint32_t val = 0, iVal = 0, qVal = 0;
-    float    quant1float = 0.0, quant2float = 0.0;
     double   amp = 0.0, phase = 0.0, quant1 = 0.0, quant2 = 0.0;
 
     // Add channel data for the current BSA buffer to an array 
@@ -524,13 +523,13 @@ void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done
                     // Compute phase & amplitude
                     llrfCalcPhaseAmp(static_cast<signed short>(iVal),static_cast<signed short>(qVal),amp,phase);                
                     // Append computed values to PVs
-                    quant1 = (*type == llrfAmp)?amp:phase; quant1float = (float)quant1;
-                    quant2 = (quant1 == amp   )?phase:amp; quant2float = (float)quant2;
+                    quant1 = (*type == llrfAmp)?amp:phase;
+                    quant2 = (quant1 == amp   )?phase:amp;
                     pv->append  (_rawChannelData[wordIndex]->n, 
-                                  quant1float,
+                                  quant1,
                                  _rawChannelData[wordIndex]->rms2);
                     pvN->append (_rawChannelData[wordIndex]->n, 
-                                  quant2float,
+                                  quant2,
                                  _rawChannelData[wordIndex]->rms2);
                     pvIndex++;
                     bitSum += 2 * BLOCK_WIDTH_16;
