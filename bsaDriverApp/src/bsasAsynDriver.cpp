@@ -956,20 +956,20 @@ void bsasAsynDriver::bsasCallback(void *p, unsigned size)
                 if (quant1 != NAN) quant1 = quant1 * (*plist ->pslope) + (*plist ->poffset);
                 if (quant2 != NAN) quant2 = quant2 * (*plistN->pslope) + (*plistN->poffset);
                 // Assign quant1
-                avg  = double(_sum.u32);
+                avg = (plist->type == llrfAmp_bsas)?double(_sum.u32):double(_sum.i32);
+                min = (plist->type == llrfAmp_bsas)?double(_min.u32):double(_min.i32);
+                max = (plist->type == llrfAmp_bsas)?double(_max.u32):double(_max.i32);
                 rms  = double(_sum_square.u64);
-                min  = double(_min.u32);
-                max  = double(_max.u32);
                 if(avg != NAN) avg = avg * (*plist->pslope) + (*plist->poffset);
                 if(rms != NAN) rms = rms * (*plist->pslope);
                 if(min != NAN) min = min * (*plist->pslope) + (*plist->poffset);
                 if(max != NAN) max = max * (*plist->pslope) + (*plist->poffset);
                 pEdefNTTbl[hd->edef_index]->store(col,hd->row_number,(pl+i)->sample_count,quant1,avg,rms,min,max);
                 // Assign quant2
-                avg  = double(_sum.u32);
+                avg = (plistN->type == llrfAmp_bsas)?double(_sum.u32):double(_sum.i32);
+                min = (plistN->type == llrfAmp_bsas)?double(_min.u32):double(_min.i32);
+                max = (plistN->type == llrfAmp_bsas)?double(_max.u32):double(_max.i32);
                 rms  = double(_sum_square.u64);
-                min  = double(_min.u32);
-                max  = double(_max.u32);
                 if(avg != NAN) avg = avg * (*plistN->pslope) + (*plistN->poffset);
                 if(rms != NAN) rms = rms * (*plistN->pslope);
                 if(min != NAN) min = min * (*plistN->pslope) + (*plistN->poffset);
