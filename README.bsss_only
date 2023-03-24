@@ -20,11 +20,11 @@ This command needs to be called anywhere after the bsaAsynDriverConfigure()
 command, already explained in the main README file.
 
 #  Initialize BSSS driver
-#  make assoication with BSA channels: bsssAssociateBsaChannels(<BSA port name>)
+#  make association with BSA channels: bsssAssociateBsaChannels(<BSA port name>)
 bsssAssociateBsaChannels("bsaPort")
 
 *Remark*: the <BSA port name> should be the same string id which was used for 
-bsaASynDriverConfigure()
+bsaAsynDriverConfigure()
 
 
 2. Configure BSSS driver with the following command
