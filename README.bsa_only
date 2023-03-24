@@ -22,8 +22,7 @@ Macros:
   $(TPR)         ; an optional macro. If the IOC uses multiple different device
                    names for $(DEV), we need to add up $(TPR) which has a
                    single name in the ioc.
-
-  $(PORT)        ; asyn port name for bsa driver. Must match the port name used
+  $(PORT)        ; asyn port name for BSA driver. Must match the port name used
                    in the function bsaAsynDriverConfigure.
 
   <n>            ; given instance number / name
@@ -76,28 +75,54 @@ dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=TMIT0C5,SEC
 
 This is the result for the example above with BSA user buffer 28:
 BPM:LI24:123:TMITHST28    -> data array
+BPM:LI24:123:TMITCNTHST28 -> number of samples for average array
+BPM:LI24:123:TMITRMSHST28 -> RMS array
 BPM:LI24:123:TMITPIDHST28 -> PID array
+
 BPM:LI24:123:XHST28    -> data array
+BPM:LI24:123:XCNTHST28 -> number of samples for average array
+BPM:LI24:123:XRMSHST28 -> RMS array
 BPM:LI24:123:XPIDHST28 -> PID array
+
 BPM:LI24:123:YHST28    -> data array
+BPM:LI24:123:YCNTHST28 -> number of samples for average array
+BPM:LI24:123:YRMSHST28 -> RMS array
 BPM:LI24:123:YPIDHST28 -> PID array
+
 BPM:LI24:123:TMITC0HST28    -> data array
+BPM:LI24:123:TMITC0CNTHST28 -> number of samples for average array
+BPM:LI24:123:TMITC0RMSHST28 -> RMS array
 BPM:LI24:123:TMITC0PIDHST28 -> PID array
 (...)
 BPM:LI24:123:TMITC5HST28    -> data array
+BPM:LI24:123:TMITC5CNTHST28 -> number of samples for average array
+BPM:LI24:123:TMITC5RMSHST28 -> RMS array
 BPM:LI24:123:TMITC5PIDHST28 -> PID array
 
 This is the result for the example above with BSA system buffer SCS at 10 Hz:
 BPM:LI24:123:TMITHSTSCSTH    -> data array
+BPM:LI24:123:TMITCNTHSTSCSTH -> number of samples for average array
+BPM:LI24:123:TMITRMSHSTSCSTH -> RMS array
 BPM:LI24:123:TMITPIDHSTSCSTH -> PID array
+
 BPM:LI24:123:XHSTSCSTH    -> data array
+BPM:LI24:123:XCNTHSTSCSTH -> number of samples for average array
+BPM:LI24:123:XRMSHSTSCSTH -> RMS array
 BPM:LI24:123:XPIDHSTSCSTH -> PID array
+
 BPM:LI24:123:YHSTSCSTH    -> data array
+BPM:LI24:123:YCNTHSTSCSTH -> number of samples for average array
+BPM:LI24:123:YRMSHSTSCSTH -> RMS array
 BPM:LI24:123:YPIDHSTSCSTH -> PID array
+
 BPM:LI24:123:TMITC0HSTSCSTH    -> data array
+BPM:LI24:123:TMITC0CNTHSTSCSTH -> number of samples for average array
+BPM:LI24:123:TMITC0RMSHSTSCSTH -> RMS array
 BPM:LI24:123:TMITC0PIDHSTSCSTH -> PID array
 (...)
 BPM:LI24:123:TMITC5HSTSCSTH    -> data array
+BPM:LI24:123:TMITC5CNTHSTSCSTH -> number of samples for average array
+BPM:LI24:123:TMITC5RMSHSTSCSTH -> RMS array
 BPM:LI24:123:TMITC5PIDHSTSCSTH -> PID array
 
 
@@ -119,36 +144,80 @@ dbLoadRecords("db/bsa.db", "DEV=${DEVICE2_PREFIX},TPR=${TPR_PREFIX},PORT=bsaPort
 
 This is the result for the example above with BSA user buffer 25:
 BPM:GUNB:123:TMITHST25    -> data array
+BPM:GUNB:123:TMITCNTHST25 -> number of samples for average array
+BPM:GUNB:123:TMITRMSHST25 -> RMS array
 BPM:GUNB:123:TMITPIDHST25 -> PID array
+
 BPM:GUNB:123:XHST25    -> data array
+BPM:GUNB:123:XCNTHST25 -> number of samples for average array
+BPM:GUNB:123:XRMSHST25 -> RMS array
 BPM:GUNB:123:XPIDHST25 -> PID array
+
 BPM:GUNB:123:YHST25    -> data array
+BPM:GUNB:123:YCNTHST25 -> number of samples for average array
+BPM:GUNB:123:YRMSHST25 -> RMS array
 BPM:GUNB:123:YPIDHST25 -> PID array
+
 BPM:GUNB:345:TMITHST25    -> data array
+BPM:GUNB:345:TMITCNTHST25 -> number of samples for average array
+BPM:GUNB:345:TMITRMSHST25 -> RMS array
 BPM:GUNB:345:TMITPIDHST25 -> PID array
+
 BPM:GUNB:345:XHST25    -> data array
+BPM:GUNB:345:XCNTHST25 -> number of samples for average array
+BPM:GUNB:345:XRMSHST25 -> RMS array
 BPM:GUNB:345:XPIDHST25 -> PID array
+
 BPM:GUNB:345:YHST25    -> data array
+BPM:GUNB:345:YCNTHST25 -> number of samples for average array
+BPM:GUNB:345:YRMSHST25 -> RMS array
 BPM:GUNB:345:YPIDHST25 -> PID array
 
 This is the result for the example above with BSA system buffer SCH at 100 Hz:
 BPM:GUNB:123:TMITHSTSCHHH    -> data array
+BPM:GUNB:123:TMITCNTHSTSCHHH -> number of samples for average array
+BPM:GUNB:123:TMITRMSHSTSCHHH -> RMS array
 BPM:GUNB:123:TMITPIDHSTSCHHH -> PID array
+
 BPM:GUNB:123:XHSTSCHHH    -> data array
+BPM:GUNB:123:XCNTHSTSCHHH -> number of samples for average array
+BPM:GUNB:123:XRMSHSTSCHHH -> RMS array
 BPM:GUNB:123:XPIDHSTSCHHH -> PID array
+
 BPM:GUNB:123:YHSTSCHHH    -> data array
+BPM:GUNB:123:YCNTHSTSCHHH -> number of samples for average array
+BPM:GUNB:123:YRMSHSTSCHHH -> RMS array
 BPM:GUNB:123:YPIDHSTSCHHH -> PID array
+
 BPM:GUNB:345:TMITHSTSCHHH    -> data array
+BPM:GUNB:345:TMITCNTHSTSCHHH -> number of samples for average array
+BPM:GUNB:345:TMITRMSHSTSCHHH -> RMS array
 BPM:GUNB:345:TMITPIDHSTSCHHH -> PID array
+
 BPM:GUNB:345:XHSTSCHHH    -> data array
+BPM:GUNB:345:XCNTHSTSCHHH -> number of samples for average array
+BPM:GUNB:345:XRMSHSTSCHHH -> RMS array
 BPM:GUNB:345:XPIDHSTSCHHH -> PID array
+
 BPM:GUNB:345:YHSTSCHHH    -> data array
+BPM:GUNB:345:YCNTHSTSCHHH -> number of samples for average array
+BPM:GUNB:345:YRMSHSTSCHHH -> RMS array
 BPM:GUNB:345:YPIDHSTSCHHH -> PID array
 
 
 You see that the $(TPR) macro doesn't affect the final result for the list of
 PVs available for usage. This macro is used with internal PVs and is required
 in case you have different values for the $(DEV) macro.
+
+In example 1, when not using the TPR macro, the internal PVs will result in:
+BPM:LI24:123:PIDHST28
+BPM:LI24:123:PIDHSTSCSTH
+etc.
+
+In example 2, by using the TPR macro the result will be:
+TPR:GUNB:BP01:1:PIDHST25
+TPR:GUNB:BP01:1:PIDHSTSCHHH
+etc.
 
 
 The database template loading can be located either before or after the driver 
