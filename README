@@ -431,7 +431,7 @@ values for the PVs
 Suppose that the firmware collected the BSA buffer 27 with 3 values:
 
   $ caget $(DEV):TMITHST27
-  $(DEV):TMITHST27 3 1,000 2,000 3,000
+  $(DEV):TMITHST27 3 1000 2000 3000
 
 Now let's change slope and offset:
 
@@ -445,19 +445,93 @@ The new result for the buffer will be:
 
 
 *******************************************************************************
-***         3. Configuration of individual acquisition services             ***
+***                        3.  Diagnostic reports                           ***
+*******************************************************************************
+
+To check the status of the acquisition services engine. Although the driver is
+called bldStreamDriver, this is the driver that deals with all 4 services: BSA,
+BSSS, BSAS, and BLD. Use this command on the IOC shell:
+
+epics> dbior bldStreamDriver 5
+Driver: bldStreamDriver
+        BLD Stream for root_0
+          read size  : 48
+          read count : 44
+          bld count  : 20
+          bsss count : 0
+          bsas count : 20
+          else count : 0
+          overrun    : 0
+          bld callback : 0x741d40
+          bld_usr      : 0x14909a0
+          bsss_callback: 0x741a60
+          bsss_usr     : 0x104f6c0
+          bsas_callback: 0x747ce0
+          bsas_usr     : 0x147dba0
+          free list    : 0x1041ec0
+          bldQueue[0]
+                 name of thread: bldQ0_root_0
+                 pending count : 0
+                 water mark    : 0
+                 fail  count   : 0
+                 overrun count : 0
+          bsssQueue[0]
+                 name of thread: bsssQ0_root_0
+                 pending count : 0
+                 water mark    : 0
+                 fail  count   : 0
+                 overrun count : 0
+          bsasQueue[0]
+                 name of thread: bsasQ0_root_0
+                 pending count : 0
+                 water mark    : 0
+                 fail  count   : 0
+                 overrun count : 0
+                 --------------------------------
+                 BSAS Packet: size(48)
+                 --------------------------------
+                 timestamp (64bit)  :    18d7b15752e3f
+                 pulse id  (64bit)  :       15ffdf0880
+                 channel mask       :        8
+                 row number         : 0
+                 table_count        : 6
+                 edef_index         : 0
+                 byte pad           :  0
+                 service mask (0x80):  8
+                 PL CH    CNT EVL ESQ FIX     VAL       SUM       SQUARE      MIN      MAX
+                 -------------------------------------------------------------------------
+                  0  3      1   N   N   N      38b      38b        c8d79      38b      38b
+                 --------------------------------
+                 BLD Packet: size(40)
+                 --------------------------------
+                 timestamp        :    18d7b15752e3f
+                 pulse ID         :       15ffdf0880
+                 channel mask     :               88
+                 service mask     :         20000003
+                 Chan. data found :               2
+                 Severity mask    : 3fffffff33333333
+
+
+epics> dbior serviceAsynDriver 1
+Driver: serviceAsynDriver
+named_root: root_0, port: bsssPort, driver instace: 0x104f6c0, number of channels: 14
+named_root: root_0, port: bldPort, driver instace: 0x14909a0, number of channels: 14
+
+
+*******************************************************************************
+***         4. Configuration of individual acquisition services             ***
 *******************************************************************************
 
 BSA, BSSS, BSAS, and BLD configuration are described in specific readme files:
 
-BSA - README.bsa
-BSSS - README.bsss
-BSAS - README.bsas
-BLD - README.bld
+BSA - README.bsa_only
+BSSS - README.bsss_only
+BSAS - README.bsas_only
+BLD - README.bld_only
 
 
 *******************************************************************************
-***                        4. Example st.cmd                                ***
+***                        5. Example st.cmd                                ***
 *******************************************************************************
 
 An example st.cmd is available at README.example_st_cmd

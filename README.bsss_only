@@ -40,7 +40,7 @@ on the application. The example, though, will probably fit most applications.
 
 3. Load up BSSS control database template in st.cmd
 This database provides:
-- a PV to stop the BSSS service locally
+- a PV to stop the BSSS service locally.
 - PVs with diagnostic data from the firmware.
 - PVs used for timing filtering. These PVs are not meant to be altered locally
 and should not be shown to the user on the GUIs. These PVs are tied to the
