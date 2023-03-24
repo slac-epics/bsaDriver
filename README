@@ -200,16 +200,18 @@ Before starting this configuration, you need to receive from the firmware
 engineer the list of BSA signals available, with its data type. Make sure to
 have this list in the correct order. When asking the firmware engineer, use the
 following jargon: "I need the ordered list of data that goes into the
-diagnostic bus, with the data type.
+diagnostic bus, with the data type".
  
 bsaDriver provides the ioc shell command 
-addBsa(<BSA key>, <BSA data type>)
+addBsa(<BSA key>, <signal data type>)
 
 You need to use addBsa for each of the BSA signals from the list provided by
 the firmware engineer, in the same order as the list.
 
 <BSA key> can be any string you want to describe the signal.
-<BSA data type> can be: "int32", "uint32", "float32".
+<signal data type> can be: "int32", "uint32", "float32". Details on data type
+                           restrictions are available later in a specific
+                           section of the README.
 
 Optionally, should the signal stay untouched (not scaled using slope/offset or
 casted to another type), a third parameter is passed to the addBsa function.
@@ -228,15 +230,18 @@ Example of use of the bsaDriver functions:
 # ====================================
 # Setup BSA Driver
 # ====================================
-# add BSA
+# We need to add the status signals because they are the first ones, even if
+# they are not used by the acquisition services.
 addBsa("STATUSAMC0",       "uint32", 1)
 addBsa("STATUSAMC1",       "uint32", 1)
+# Add signals for BSA, BSSS, BSAS
 addBsa("TMITAMC0",         "int32")
 addBsa("TMITAMC1",         "int32")
 addBsa("XFIXEDPAMC0",      "int32")
 addBsa("XFIXEDPAMC1",      "int32")
 addBsa("YFIXEDPAMC0",      "int32")
 addBsa("YFIXEDPAMC1",      "int32")
+# Add signals for BLD
 addBsa("TMITFLOATAMC0",    "float32", 1)
 addBsa("TMITFLOATAMC1",    "float32", 1)
 addBsa("XFLOATPAMC0",      "float32", 1)
@@ -309,7 +314,7 @@ etc.
 listBsa() command shows the parent node and its children nodes.
 
 
-2.3.2 More about BSA Data Types
+2.3.2 More about signal Data Types
 
 bsaDriver and firmware allow {"int32", "uint32", "float32"} type of data.
 

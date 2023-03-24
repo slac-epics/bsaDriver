@@ -56,8 +56,13 @@ Example:
 # TPR:LI24:BP01:1
 dbLoadRecords("db/bsssCtrl.db", "DEV=${TPR_PREFIX},PORT=bsssPort")
 
+Here's how a few of the PVs will result with this example:
 
-3. load up BSSS Scalar PVs (for each channel data)
+TPR:LI24:BP01:1:BSSS_CTRL  -> enable/disable BSSS service locally
+TPR:LI24:BP01:1:BSSS_RATELIMIT  ->  controlled by the TPG support IOC
+
+
+4. load up BSSS Scalar PVs (for each channel data)
 
 Here is the structure of the template:
 
@@ -157,7 +162,7 @@ The database template loading can be located either before or after the driver
 initialization.
 
 
-4. Simple Test
+5. Simple Test
 
 Set up a BSA acquisition using the provided GUI from the TPG IOC application.
 The set would be fixed rate with 10 Hz, without filtering for destination.

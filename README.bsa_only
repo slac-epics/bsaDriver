@@ -220,6 +220,38 @@ TPR:GUNB:BP01:1:PIDHSTSCHHH
 etc.
 
 
+Example 3: Fault buffers
+
+Prefixes:
+TPR_PREFIX = TPR:GUNB:BP01:1
+DEVICE_PREFIX = BPM:GUNB:123
+
+
+BPM:GUNB:123:TMITHSTFLTB0    -> data array
+BPM:GUNB:123:TMITCNTHSTFLTB0 -> number of samples for average array
+BPM:GUNB:123:TMITRMSHSTFLTB0 -> RMS array
+BPM:GUNB:123:TMITPIDHSTFLTB0 -> PID array
+
+BPM:GUNB:123:XHSTFLTB0    -> data array
+BPM:GUNB:123:XCNTHSTFLTB0 -> number of samples for average array
+BPM:GUNB:123:XRMSHSTFLTB0 -> RMS array
+BPM:GUNB:123:XPIDHSTFLTB0 -> PID array
+
+BPM:GUNB:123:YHSTFLTB0    -> data array
+BPM:GUNB:123:YCNTHSTFLTB0 -> number of samples for average array
+BPM:GUNB:123:YRMSHSTFLTB0 -> RMS array
+BPM:GUNB:123:YPIDHSTFLTB0 -> PID array
+
+The same structure above is repeated for FLTB1, FLTB2, and FLTB3.
+
+
+The 4 hidden PVs using $(TPR):
+TPR:GUNB:BP01:1:PIDHSTFLTB0
+TPR:GUNB:BP01:1:PIDHSTFLTB1
+TPR:GUNB:BP01:1:PIDHSTFLTB2
+TPR:GUNB:BP01:1:PIDHSTFLTB3
+
+
 The database template loading can be located either before or after the driver 
 initialization.
 
