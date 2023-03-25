@@ -149,7 +149,7 @@ We are naming the header title for each signal as <signal_header>. For each
 
 <signal_header>.CNT, <signal_header>.VAL, <signal_header>.AVG, <signal_header>.RMS, <signal_header>.MIN, <signal_header>.MAX
 
-We've been conventioning to use the DEVICE_PREFIX macro no name header titles.
+We've been conventioning to use the DEVICE_PREFIX macro to name header titles.
 The DEVICE_PREFIX can be, for example, BPM:LI24:123.
 
 This is the command to configure the header titles:

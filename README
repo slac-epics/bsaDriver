@@ -449,6 +449,14 @@ The new result for the buffer will be:
   $(DEV):TMITHST27 3 132 232 332
 
 
+2.7 Callback Queue Size
+
+As bsaDriver running all services takes a lot of resources, we need to increase
+the size of the queue. Place this command anywhere before iocInit():
+
+callbackSetQueueSize(12000)
+
+
 *******************************************************************************
 ***                        3.  Diagnostic reports                           ***
 *******************************************************************************
