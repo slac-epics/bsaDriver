@@ -532,7 +532,58 @@ named_root: root_0, port: bldPort, driver instace: 0x14909a0, number of channels
 
 
 *******************************************************************************
-***         4. Configuration of individual acquisition services             ***
+***                           4. Timing filters                             ***
+*******************************************************************************
+
+In normal conducting timing, using the EVG (Event Generator), you would select
+the acquisition frequency by using EDEFs (Event Definitions). The correspondent
+of it for the superconducting timing TPG (Timing Pattern Generator) is called
+the timing filter.
+
+Timing filters are a way of configuring a frequency and applying a few filters
+to it, like the destination where the electron bunch is sent to. Timing filters
+are used not only by the acquisition services, but also by the configuration of
+triggers. So, explaining its configuration is out of scope of this README.
+
+There's a good introductory text on this Confluence page: 
+https://confluence.slac.stanford.edu/x/4wVwFg. Check for the section related
+to timing filters.
+
+
+*******************************************************************************
+***       5. Database macro conventions for all acquisition services        ***
+*******************************************************************************
+
+In all available READMEs, when describing EPICS databases, we mention a
+DEVICE_PREFIX and a TPR_PREFIX.
+
+By DEVICE_PREFIX we mean the traditional combination of DEVICE:AREA:LOCA.
+
+Some systems may contain multiple DEVICE_PREFIX in the same IOC. Say the MPS
+system, for example. Below is a real list of DEVICE_PREFIX for one IOC in
+production:
+
+CBLM:UNDH:4575
+CBLM:UNDH:4676
+BEND:DMPH:395
+PBLM:DMO0:846:AH
+PBLM:LTUS:846:AH
+PBLM:LTUH:846:AH
+ 
+bsaDriver provides a few EPICS database files which generate PVs that are
+unique for the entire IOC. In this case the question is inevitable? Which
+prefix should I use? CBLM:UNDH:4575? PBLM:DMO0:846:AH?
+
+You see that none of them makes sense. For these cases a new prefix is needed.
+One that is unique throughout the IOC. We are calling it TPR_PREFIX.
+
+MPS could use, for example,
+
+TPR:DMO0:MP01:1
+
+
+*******************************************************************************
+***         6. Configuration of individual acquisition services             ***
 *******************************************************************************
 
 BSA, BSSS, BSAS, and BLD configuration are described in specific readme files:
@@ -544,7 +595,7 @@ BLD - README.bld_only
 
 
 *******************************************************************************
-***                        5. Example st.cmd                                ***
+***                        7. Example st.cmd                                ***
 *******************************************************************************
 
 An example st.cmd is available at README.example_st_cmd

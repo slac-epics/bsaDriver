@@ -11,7 +11,7 @@ specific timestamp and pulse ID. Each row corresponds to statistical
 calculations made with one of more data points collected between one row and
 the other. For example, if 10 data points are in use for the calculations, row1
 will contain statistical data from the first 10 points, row2 will contain
-statistical data from the next 10 points, so far so on.
+statistical data from the next 10 points, and so on.
 
 Of course, if the row contains data from one single data point, then the data
 on that row is the straight data itself, without any calculations. We are
@@ -21,11 +21,11 @@ The number of data points used per row depends on how the rates are configured
 for the BSAS service.
 
 There are multiple columns on the NTTable PV: timestamp-seconds, 
-timestamp-nonoseconds, pulse ID and one or more signal columns. The number of
+timestamp-nanoseconds, pulse ID and one or more signal columns. The number of
 signal columns is configurable and is always a sub-set of the signals created
 with the addBsa() and addSlaveBsa() commands explained in the main README file.
 
-Each signal column is actually a group of 5 columns:
+Each signal column is actually a group of 6 columns:
     .CNT: number of accumulated samples in the row
           for statistical data     .CNT >= 2
           for non-statistical data .CNT = 1
@@ -192,7 +192,8 @@ be the TPR prefix, which is unique for each IOC.
 # TPR:GUNB:BP01:1
 bsasAsynDriverConfigure("bsasPort", "mmio/AmcCarrierCore/AmcCarrierBsa/Bsas", "${TPR_PREFIX}:SC_HXR", "${TPR_PREFIX}:SC_SXR", "${TPR_PREFIX}:SC_BSYD", "${TPR_PREFIX}:SC_DIAG0")
 
-<bsas port> can be any string you see fit.
+<bsas port> can be any string you see fit. You will use <bsas port> later on,
+so make sure you give it a meaningful name.
 
 *Remark*: the register path may be different from the example above. It depends
 on the application. The example, though, will probably fit most applications.

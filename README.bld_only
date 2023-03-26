@@ -86,7 +86,7 @@ addBsa() command. If this argument is 1, BLD will ignore slope and offset.
 This was already explained in item 2.3 of the main README.
  
 
-6. Load BSAS rate control template in st.cmd
+6. Load BLD rate control template in st.cmd
 ---------------------------------------------
 
 This database provides:
