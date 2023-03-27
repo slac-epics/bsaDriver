@@ -57,7 +57,7 @@ addBsa("YFLOATPAMC1",      "float32", 1)
 # bsaAsynDriverConfigure(<asyn port name for BSA>, <path for register space>, <path for dram space>)
 # The <path for register space> and <path for dram space> varies from application to application
 # and need to be consistent with 000TopLevel.yaml. The example below probably fits most cases.
-bsaAsynDriverConfigure("bsaPort", "mmio/AmcCarrierCore/AmcCarrierBsa", "BsaRam/dram")s
+bsaAsynDriverConfigure("bsaPort", "mmio/AmcCarrierCore/AmcCarrierBsa", "BsaRam/dram")
  
 # DEV is the DEVICE:AREA:LOCAL of an IOC.
 # The pair $(DEV) / $(SECN) must be unique, otherwise it will create duplicated PVs.

@@ -583,7 +583,43 @@ TPR:DMO0:MP01:1
 
 
 *******************************************************************************
-***         6. Configuration of individual acquisition services             ***
+***                        6. Severity masks                                ***
+*******************************************************************************
+
+Some of the databases provide a way of setting a severity mask. Signals coming
+from the firmware are classified according to a severity, similiar to alarm
+severities from EPICS. Each severity type has a weight:
+
+None < Minor < Major < Invalid
+
+For all services you can determine that data with a given severity is
+discarded. If the severity of the data is less than or equal to the chosen
+severity mask, the data is accepted by the acquisition service. Otherwise, it
+is thrown away.
+
+In summary, the rule is:
+
+Data accepted if:
+    data severity in firmware <= severity mask
+
+Example 1:
+Data in firmware is classified as Major.
+Severity mask is None.
+
+Major > None ==> data rejected
+
+Example 2:
+Data in firmware is classified as Minor.
+Severity mask is Invalid.
+
+Minor <= Invalid ==> data accepted
+
+In other words, if Invalid is used for the severity mask, any data will be
+accepted.
+
+
+*******************************************************************************
+***         7. Configuration of individual acquisition services             ***
 *******************************************************************************
 
 BSA, BSSS, BSAS, and BLD configuration are described in specific readme files:
@@ -595,7 +631,7 @@ BLD - README.bld_only
 
 
 *******************************************************************************
-***                        7. Example st.cmd                                ***
+***                        8. Example st.cmd                                ***
 *******************************************************************************
 
 An example st.cmd is available at README.example_st_cmd
