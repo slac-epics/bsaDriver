@@ -1,8 +1,8 @@
-Branch out to R3.0.0-addNewMacro,      Mar 21, 2023,       Kukhee Kim
-             - branch out to improve bsa "per channel" template to allow multiple $(DEV) names
-               in a single ioc, allow multi-device iocs
-
-
+R3.1.0    Mar 27, 2023, Kukhee Kim and Marcio Donadio
+             - Improve bsa "per channel" template to allow multiple $(DEV)
+               names in a single ioc. Allow multi-device iocs by adding a new
+               macro $(TPR) for the per channel template in BSA.
+             - Complete refactorying of the README file.
 
 R3.0.0    Mar 14, 2023    Kukhee Kim
              - merge R2.5.0-3.0-BSSS_BSA_upgrade bracnh to the master
