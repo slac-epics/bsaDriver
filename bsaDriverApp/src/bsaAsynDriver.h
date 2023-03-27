@@ -34,12 +34,13 @@
 #define  MAX_FLTB_LENGTH   1000000
 
 #define  UINT2STRING     "uint2"
-#define  INT16STRING     "int16"
 #define  UINT16STRING    "uint16"
 #define  INT32STRING     "int32"
 #define  UINT32STRING    "uint32"
 #define  UINT64STRING    "uint64"
 #define  FLOAT32STRING   "float32"
+#define  LLRFPHSSTRING   "llrfPhase"
+#define  LLRFAMPSTRING   "llrfAmp"
 
 #define HW_CHANNELS     31
 
@@ -50,6 +51,8 @@
 #define KEEP_LSB_2    0x00000003 
 #define KEEP_LSB_16   0x0000ffff 
 #define DEFAULT_MASK  0xffffffff
+
+#define M_PI_DEGREES 180.0
 
 extern "C" {
 // interface for BSSS driver
@@ -187,6 +190,9 @@ class BsaPvArray : public Bsa::PvArray {
         const std::vector <Bsa::Pv*>& _pvs;
 
         int _p_pid_UL;
+
+        void llrfPerformChecks (const Bsa::Pv*, const Bsa::Pv*, int);
+        void llrfCalcPhaseAmp  (signed short, signed short, double&, double&);
 };
 
 

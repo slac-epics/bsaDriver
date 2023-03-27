@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <math.h>
+#include <tgmath.h>
 #include <time.h>
 
 #include <new>
@@ -816,6 +817,44 @@ void bsasAsynDriver::lateInit(void)
    }
 }
 
+void bsasAsynDriver::llrfPerformChecks(const bsasList_t * pv, const bsasList_t * pvN, int bitIndex)
+{
+    // Check if channel pointers are nullptr
+    if (pv == nullptr || pvN == nullptr)
+    {
+        printf("bsasAsynDriver:llrfPerformChecks(): ERROR - LLRF BSAS channels are nullptr!!\n");
+        printf("bsasAsynDriver:llrfPerformChecks(): ERROR - Check LLRF BSAS channels!!\n");
+        printf("bsasAsynDriver:llrfPerformChecks(): ERROR - Exiting ...\n");
+        exit(EXIT_FAILURE);
+    }
+    // Ensure bit index points to the start of the channel
+    if (bitIndex != 0)
+    {
+        printf("bsasAsynDriver::llrfPerformChecks(): ERROR - LLRF BSAS channel not aligned with LSB!!\n");
+        printf("bsasAsynDriver::llrfPerformChecks(): ERROR - Check LLRF BSAS channel order!!\n");
+        printf("bsasAsynDriver::llrfPerformChecks(): ERROR - Exiting ...\n");
+        exit(EXIT_FAILURE);
+    }
+    // Ensure the types of consecutive channels are valid (phase->amp or amp->phase)
+    if ((pv->type == llrfAmp_bsas   && pvN->type == llrfPhase_bsas) ||
+        (pv->type == llrfPhase_bsas && pvN->type == llrfAmp_bsas  )   ){}
+    else
+    {
+        printf("bsasAsynDriver::llrfPerformChecks(): ERROR - Did NOT find consecutive Amplitude and Phase channels!!\n");
+        printf("bsasAsynDriver::llrfPerformChecks(): ERROR - Check LLRF BSAS channel types!!\n");
+        printf("bsasAsynDriver::llrfPerformChecks(): ERROR - Exiting ...\n");
+        exit(EXIT_FAILURE);
+    }
+}
+
+void bsasAsynDriver::llrfCalcPhaseAmp(signed short i, signed short q, double& amp, double& phase)
+{
+    // Calculate amplitude 
+    amp = (!isnan(i) && !isnan(q))?sqrt(pow(i,2) + pow(q,2)):0.0;
+    // Calculate phase
+    phase = (!isnan(i) && !isnan(q) && i != 0)?atan2((double)q, (double)i) * M_PI_DEGREES / M_PI:0.0;
+}
+
 void bsasAsynDriver::bsasCallback(void *p, unsigned size)
 {
     packet_t     *pk = (packet_t *) p ;
@@ -825,8 +864,10 @@ void bsasAsynDriver::bsasCallback(void *p, unsigned size)
     int i   = 0;
     int col = 0;
     
-    uint32_t cnt, tmpVal, mask;
-    double   val, avg, rms, min, max, sq;
+    uint32_t cnt, tmpVal, iVal, qVal, mask;
+    double   val, avg, rms, min, max, sq; 
+    double   amp = 0.0, phase = 0.0, quant1 = 0.0, quant2 = 0.0;
+
     union {
         uint32_t u32;
         int32_t  i32;
@@ -864,6 +905,9 @@ void bsasAsynDriver::bsasCallback(void *p, unsigned size)
         if (!(this->channelMask & (uint32_t(0x1) << plist->hwChIndex)))
             continue;
 
+        // Get a pointer to the next BSAS channel
+        bsasList_t *plistN = (bsasList_t *)(*(it+1));
+
         switch(plist->type) {
             case uint2_bsas:
                 // Read unpartitioned payload data for current channel/PV  
@@ -879,7 +923,6 @@ void bsasAsynDriver::bsasCallback(void *p, unsigned size)
                 // Increment bitSum counter
                 bitSum += BLOCK_WIDTH_2;
                 break;
-            case int16_bsas:
             case uint16_bsas:
                 // Read unpartitioned payload data for current channel/PV  
                 tmpVal = _val.u32;
@@ -893,6 +936,49 @@ void bsasAsynDriver::bsasCallback(void *p, unsigned size)
                 max = double(_max.u32);
                 // Increment bitSum counter
                 bitSum += BLOCK_WIDTH_16;
+                break;
+            case llrfAmp_bsas:
+            case llrfPhase_bsas:
+                // Perform checks to ensure type validity
+                llrfPerformChecks(const_cast<bsasList_t*>(plist),const_cast<bsasList_t*>(plistN),bitSum);
+                // Extract lower 16 bits
+                iVal = _val.u32;
+                mask = KEEP_LSB_16;iVal >>= bitSum;iVal &= mask;
+                // Extract upper 16 bits
+                qVal = _val.u32;
+                mask = KEEP_LSB_16;qVal >>= BLOCK_WIDTH_16;qVal &= mask;
+                // Compute phase & amplitude
+                llrfCalcPhaseAmp(static_cast<signed short>(iVal),static_cast<signed short>(qVal), amp, phase);                
+                // Figure out the PV assignment order of the computed values
+                quant1 = (plist->type == llrfAmp_bsas)?amp:phase;
+                quant2 = (quant1 == amp)?phase:amp;
+                // Linear conversion
+                if (quant1 != NAN) quant1 = quant1 * (*plist ->pslope) + (*plist ->poffset);
+                if (quant2 != NAN) quant2 = quant2 * (*plistN->pslope) + (*plistN->poffset);
+                // Assign quant1
+                avg = (plist->type == llrfAmp_bsas)?double(_sum.u32):double(_sum.i32);
+                min = (plist->type == llrfAmp_bsas)?double(_min.u32):double(_min.i32);
+                max = (plist->type == llrfAmp_bsas)?double(_max.u32):double(_max.i32);
+                rms = (plist->type == llrfAmp_bsas)?double(_sum_square.u64):double(_sum_square.i64);
+                if(avg != NAN) avg = avg * (*plist->pslope) + (*plist->poffset);
+                if(rms != NAN) rms = rms * (*plist->pslope);
+                if(min != NAN) min = min * (*plist->pslope) + (*plist->poffset);
+                if(max != NAN) max = max * (*plist->pslope) + (*plist->poffset);
+                pEdefNTTbl[hd->edef_index]->store(col,hd->row_number,(pl+i)->sample_count,quant1,avg,rms,min,max);
+                // Assign quant2
+                avg = (plistN->type == llrfAmp_bsas)?double(_sum.u32):double(_sum.i32);
+                min = (plistN->type == llrfAmp_bsas)?double(_min.u32):double(_min.i32);
+                max = (plistN->type == llrfAmp_bsas)?double(_max.u32):double(_max.i32);
+                rms = (plist->type == llrfAmp_bsas)?double(_sum_square.u64):double(_sum_square.i64);
+                if(avg != NAN) avg = avg * (*plistN->pslope) + (*plistN->poffset);
+                if(rms != NAN) rms = rms * (*plistN->pslope);
+                if(min != NAN) min = min * (*plistN->pslope) + (*plistN->poffset);
+                if(max != NAN) max = max * (*plistN->pslope) + (*plistN->poffset);
+                pEdefNTTbl[hd->edef_index]->store(col+1,hd->row_number,(pl+i)->sample_count,quant2,avg,rms,min,max);
+                // Increase iterator and table column
+                it++;col++;
+                // Increment bitSum counter
+                bitSum += 2 * BLOCK_WIDTH_16;
                 break;
             case int32_bsas:
                 // Assign extracted channel/PV value and statistics
@@ -930,39 +1016,42 @@ void bsasAsynDriver::bsasCallback(void *p, unsigned size)
                 break;
         }
 
-        cnt = (pl+i)->sample_count;
+        if (plist->type != llrfAmp_bsas && plist->type != llrfPhase_bsas)
+        {
+            cnt = (pl+i)->sample_count;
 
-        if((pl+i)->flag_fixed || cnt < 2 ) {   // no-statistics
-            cnt = 1;
-            rms = 0.;
-            min = max = avg = val;
-            goto done;
-        }
-        if((pl+i)->exception_sum) {   // exception on sum
-            avg = NAN;
-        }
-        if((pl+i)->exception_var) {   // exception on sum of sequares
-            rms = NAN;
-        }
+            if((pl+i)->flag_fixed || cnt < 2 ) {   // no-statistics
+                cnt = 1;
+                rms = 0.;
+                min = max = avg = val;
+                goto done;
+            }
+            if((pl+i)->exception_sum) {   // exception on sum
+                avg = NAN;
+            }
+            if((pl+i)->exception_var) {   // exception on sum of sequares
+                rms = NAN;
+            }
 
-        if(cnt >1) {
-            if(avg != NAN) {
-                sq = avg * avg;
-                avg /= cnt;
-            } else sq = NAN;
+            if(cnt >1) {
+                if(avg != NAN) {
+                    sq = avg * avg;
+                    avg /= cnt;
+                } else sq = NAN;
 
-            if(sq != NAN && rms != NAN) rms = sqrt((rms - sq / cnt) / (cnt -1));
-            else                        rms = NAN;
-        }
+                if(sq != NAN && rms != NAN) rms = sqrt((rms - sq / cnt) / (cnt -1));
+                else                        rms = NAN;
+            }
 
-        done:    // linear conversion
-        if(val != NAN) val = val * (*plist->pslope) + (*plist->poffset);
-        if(avg != NAN) avg = avg * (*plist->pslope) + (*plist->poffset);
-        if(rms != NAN) rms = rms * (*plist->pslope);
-        if(min != NAN) min = min * (*plist->pslope) + (*plist->poffset);
-        if(max != NAN) max = max * (*plist->pslope) + (*plist->poffset);
+            done:    // linear conversion
+            if(val != NAN) val = val * (*plist->pslope) + (*plist->poffset);
+            if(avg != NAN) avg = avg * (*plist->pslope) + (*plist->poffset);
+            if(rms != NAN) rms = rms * (*plist->pslope);
+            if(min != NAN) min = min * (*plist->pslope) + (*plist->poffset);
+            if(max != NAN) max = max * (*plist->pslope) + (*plist->poffset);
 
-       pEdefNTTbl[hd->edef_index]->store(col, hd->row_number, cnt, val, avg, rms, min, max);
+            pEdefNTTbl[hd->edef_index]->store(col, hd->row_number, cnt, val, avg, rms, min, max);
+       }
 
        // Increment index only if done reading current 32-bit word from the packet payload 
        if (bitSum == wordWidth)

@@ -78,19 +78,21 @@
 #define KEEP_LSB_16   0x0000ffff 
 #define DEFAULT_MASK  0xffffffff
 
+#define M_PI_DEGREES 180.0
+
 typedef enum {
     uint2_service,
-    int16_service,
     uint16_service,
     int32_service,
     uint32_service,
     uint64_service,
     float32_service,
-    fault_service
+    fault_service,
+    llrfAmp_service,
+    llrfPhase_service
 } serviceDataType_t;
 
 static std::map<serviceDataType_t, int> channelBitMap = {{uint2_service,   BLOCK_WIDTH_2 },
-                                                         {int16_service,   BLOCK_WIDTH_16},
                                                          {uint16_service,  BLOCK_WIDTH_16},
                                                          {int32_service,   BLOCK_WIDTH_32},
                                                          {uint32_service,  BLOCK_WIDTH_32},
@@ -210,6 +212,8 @@ class serviceAsynDriver: asynPortDriver {
         int  GetChannelSevr(int chn);
 
         void printMap();
+        void llrfPerformChecks (const channelList_t*, const channelList_t*, int);
+        void llrfCalcPhaseAmp  (signed short, signed short, double&, double&);
 
         serviceType_t serviceType;
         int           numMod;

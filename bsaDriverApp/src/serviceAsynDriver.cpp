@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <math.h>
+#include <tgmath.h>
 #include <time.h>
 
 #include <new>
@@ -764,6 +765,44 @@ void serviceAsynDriver::printMap()
     }
 }
 
+void serviceAsynDriver::llrfPerformChecks(const channelList_t * pv, const channelList_t * pvN, int bitIndex)
+{
+    // Check if channel pointers are nullptr
+    if (pv == nullptr || pvN == nullptr)
+    {
+        printf("serviceAsynDriver::llrfPerformChecks(): ERROR - LLRF BSA channels are nullptr!!\n");
+        printf("serviceAsynDriver::llrfPerformChecks(): ERROR - Check LLRF BSA channels!!\n");
+        printf("serviceAsynDriver::llrfPerformChecks(): ERROR - Exiting ...\n");
+        exit(EXIT_FAILURE);
+    }
+    // Ensure bit index points to the start of the channel
+    if (bitIndex != 0)
+    {
+        printf("serviceAsynDriver::llrfPerformChecks(): ERROR - LLRF BSA channel not aligned with LSB!!\n");
+        printf("serviceAsynDriver::llrfPerformChecks(): ERROR - Check LLRF BSA channel order!!\n");
+        printf("serviceAsynDriver::llrfPerformChecks(): ERROR - Exiting ...\n");
+        exit(EXIT_FAILURE);
+    }
+    // Ensure the types of consecutive channels are valid (phase->amp or amp->phase)
+    if ((pv->type == llrfAmp_service   && pvN->type == llrfPhase_service) ||
+        (pv->type == llrfPhase_service && pvN->type == llrfAmp_service  )   ){}
+    else
+    {
+        printf("serviceAsynDriver::llrfPerformChecks(): ERROR - Did NOT find consecutive Amplitude and Phase channels!!\n");
+        printf("serviceAsynDriver::llrfPerformChecks(): ERROR - Check LLRF BSA channel types!!\n");
+        printf("serviceAsynDriver::llrfPerformChecks(): ERROR - Exiting ...\n");
+        exit(EXIT_FAILURE);
+    }
+}
+
+void serviceAsynDriver::llrfCalcPhaseAmp(signed short i, signed short q, double& amp, double& phase)
+{
+    // Calculate amplitude 
+    amp = (!isnan(i) && !isnan(q))?sqrt(pow(i,2) + pow(q,2)):0.0;
+    // Calculate phase
+    phase = (!isnan(i) && !isnan(q) && i != 0)?atan2((double)q, (double)i) * M_PI_DEGREES / M_PI:0.0;
+}
+
 void serviceAsynDriver::bsssCallback(void *p, unsigned size)
 {
      uint32_t *buf         = (uint32_t *) p;
@@ -776,7 +815,8 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
      uint64_t sevr_mask    = *(uint64_t*) (buf+IDX_SEVR_MASK(size));
      uint64_t pulse_id     = ((uint64_t)(buf[IDX_PIDU])) << 32 | buf[IDX_PIDL];
 
-     uint32_t tmpVal, mask;
+     uint32_t tmpVal, mask, iVal, qVal;
+     double amp = 0.0, phase = 0.0, quant1 = 0.0, quant2 = 0.0;
 
      int mod = (service_mask & ((uint32_t) 0x1 << BSSS1_BIT))?1:0;   // decide BSSS0 or BSSS1
 
@@ -787,7 +827,8 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
 
      // Loop over data channels (i.e. PVs)
      channelList_t *plist = (channelList_t *) ellFirst(pChannelEllList);
-     int hwChIndex = 0;     // data/firmware channel number
+
+     int hwChIndex = 0;        // data/firmware channel number
      int dataIndex = 0;        // indicate the data location
 
      // Variable to keep track of bit boundaries as we read in channel data
@@ -807,7 +848,9 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
              if (hwChIndex >= BLOCK_WIDTH_32)
                  return;
          }
-        
+         // Get a pointer to the next channel
+         channelList_t *plistN = (channelList_t *) ellNext(&plist->node);
+
          // Count newly extracted bits only once below, regardless of multiple EDEFs
          unsigned newBitsExtracted = 0;
 
@@ -830,7 +873,6 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
                              // Increment bitSum counter once and only after done with all EDEFs  
                              newBitsExtracted = BLOCK_WIDTH_2;
                              break;
-                         case int16_service:
                          case uint16_service:
                              // Read channel data
                              tmpVal = p_uint32[dataIndex];
@@ -839,6 +881,34 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
                              val  = (double) (tmpVal);
                              // Increment bitSum counter once and only after done with all EDEFs  
                              newBitsExtracted = BLOCK_WIDTH_16;
+                             break;
+                         case llrfAmp_service:
+                         case llrfPhase_service:
+                             // Perform checks to ensure type validity
+                             llrfPerformChecks(const_cast<channelList_t *>(plist),const_cast<channelList_t *>(plistN),bitSum);
+                             // Extract lower 16 bits
+                             iVal = p_uint32[dataIndex];
+                             mask = KEEP_LSB_16;iVal >>= bitSum;iVal &= mask;
+                             // Extract upper 16 bits
+                             qVal = p_uint32[dataIndex];
+                             mask = KEEP_LSB_16;qVal >>= BLOCK_WIDTH_16;qVal &= mask;
+                             // Compute phase & amplitude
+                             llrfCalcPhaseAmp(static_cast<signed short>(iVal),static_cast<signed short>(qVal), amp, phase);                
+                             // Figure out the PV assignment order of the computed values
+                             quant1 = (plist->type == llrfAmp_service)?amp:phase;
+                             quant2 = (quant1 == amp)?phase:amp;
+                             // Assign quant1
+                             if(!isnan(quant1)) quant1 = quant1 * (*plist->pslope) + (*plist->poffset);
+                             plist->vPv[edef].v = quant1;
+                             plist->vPv[edef].time = _ts;
+                             process_vPv(&plist->vPv[edef]);
+                             // Assign quant2
+                             if(!isnan(quant2)) quant2 = quant2 * (*plistN->pslope) + (*plistN->poffset);
+                             plistN->vPv[edef].v = quant2;
+                             plistN->vPv[edef].time = _ts;
+                             process_vPv(&plistN->vPv[edef]);
+                             // Increment bitSum counter once and only after done with all EDEFs
+                             newBitsExtracted = 2 * BLOCK_WIDTH_16;
                              break;
                          case int32_service:
                              // Read channel data
@@ -864,14 +934,21 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
                              break;
                      }
                  } else val = NAN;  // put NAN for invalid mask
-
-                 if(!isnan(val)) val = val * (*plist->pslope) + (*plist->poffset);
-                 plist->vPv[edef].v = val;
-                 plist->vPv[edef].time = _ts;
-                 process_vPv(&plist->vPv[edef]);
+                
+                 // Assign the value
+                 if (plist->type != llrfAmp_service && plist->type != llrfPhase_service){
+                     if(!isnan(val)) val = val * (*plist->pslope) + (*plist->poffset);
+                     plist->vPv[edef].v = val;
+                     plist->vPv[edef].time = _ts;
+                     process_vPv(&plist->vPv[edef]);
+                 }
              } // end of (service_mask & svc_mask)
          } // end of for-loop for all EDEFs
 
+         // Increment channel pointer if we have an LLRF channel type
+         if (plist->type == llrfAmp_service || plist->type == llrfPhase_service)
+             plist = (channelList_t *) ellNext(&plist->node);
+         
          // Update bitSum counter
          bitSum += newBitsExtracted;
 
@@ -882,7 +959,7 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
              // All good, move on to the next 32-bit word
              bitSum = 0;      // reset bitSum counter
              ++dataIndex;     // point to next 32-bit word in memory buffer
-             ++hwChIndex;      // evolve data channel number to next firmware channel
+             ++hwChIndex;     // evolve data channel number to next firmware channel
          }
          else if (bitSum > wordWidth)
              userFault = true;

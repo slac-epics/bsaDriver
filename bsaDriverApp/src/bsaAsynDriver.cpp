@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <math.h>
+#include <tgmath.h>
 #include <time.h>
 
 #include <new>
@@ -304,16 +305,13 @@ void BsaPv::append(unsigned n, double mean, double rms2)
         int32_t  i32;
         float    f32;
     } u;
-
+    
     double __mean;
 
     u.u32 = (uint32_t) mean;
 
     switch(*_p_type) {
         case uint2:
-            __mean = (double) u.u32;
-            break;
-        case int16:
             __mean = (double) u.u32;
             break;
         case uint16:
@@ -328,11 +326,16 @@ void BsaPv::append(unsigned n, double mean, double rms2)
         case float32:
             __mean = (double) u.f32;
             break;
+        case llrfPhase:
+            __mean = (double) u.i32;
+            break;
+        case llrfAmp:
+            __mean = (double) u.u32;
+            break;
         default:
            __mean = 0.;
            break;
     }
-
 
     _n[loc]    = _n[loc + max_size]    = n;
     _mean[loc] = _mean[loc + max_size] = isnan(mean)? NAN: (*_p_slope * __mean + *_p_offset);
@@ -420,13 +423,52 @@ void BsaPvArray::set(unsigned sec, unsigned nsec)
     }
 }
 
+void BsaPvArray::llrfPerformChecks(const Bsa::Pv* pv, const Bsa::Pv* pvN, int bitIndex)
+{
+    // Check if channel pointers are nullptr
+    if (pv == nullptr || pvN == nullptr)
+    {
+        printf("BsaPvArray::llrfPerformChecks(): ERROR - LLRF BSA channels are nullptr!!\n");
+        printf("BsaPvArray::llrfPerformChecks(): ERROR - Check LLRF BSA channels!!\n");
+        printf("BsaPvArray::llrfPerformChecks(): ERROR - Exiting ...\n");
+        exit(EXIT_FAILURE);
+    }
+    // Ensure bit index points to the start of the channel
+    if (bitIndex != 0)
+    {
+        printf("BsaPvArray::llrfPerformChecks(): ERROR - LLRF BSA channel not aligned with LSB!!\n");
+        printf("BsaPvArray::llrfPerformChecks(): ERROR - Check LLRF BSA channel order!!\n");
+        printf("BsaPvArray::llrfPerformChecks(): ERROR - Exiting ...\n");
+        exit(EXIT_FAILURE);
+    }
+    // Ensure the types of consecutive channels are valid (phase->amp or amp->phase)
+    if ((*pv->get_p_type() == llrfAmp   && *pvN->get_p_type() == llrfPhase) ||
+        (*pv->get_p_type() == llrfPhase && *pvN->get_p_type() == llrfAmp  )   ){}
+    else
+    {
+        printf("BsaPvArray::llrfPerformChecks(): ERROR - Did NOT find consecutive Amplitude and Phase channels!!\n");
+        printf("BsaPvArray::llrfPerformChecks(): ERROR - Check LLRF BSA channel types!!\n");
+        printf("BsaPvArray::llrfPerformChecks(): ERROR - Exiting ...\n");
+        exit(EXIT_FAILURE);
+    }
+}
+
+void BsaPvArray::llrfCalcPhaseAmp(signed short i, signed short q, double& amp, double& phase)
+{
+    // Calculate amplitude 
+    amp = (!isnan(i) && !isnan(q))?sqrt(pow(i,2) + pow(q,2)):0.0;
+    // Calculate phase
+    phase = (!isnan(i) && !isnan(q) && i != 0)?atan2((double)q, (double)i) * M_PI_DEGREES / M_PI:0.0;
+}
+
 void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done)
 {
-    uint32_t val  = 0;
     uint32_t mask = DEFAULT_MASK;
+    uint32_t val = 0, iVal = 0, qVal = 0;
+    double   amp = 0.0, phase = 0.0, quant1 = 0.0, quant2 = 0.0;
 
     // Add channel data for the current BSA buffer to an array 
-    static int storeIndex = 0;
+    static unsigned int storeIndex = 0;
     _rawChannelData[storeIndex++] = new ChannelDataStruct(n,mean,rms2);
 
     // When all channel data is stored, partition if and as needed
@@ -445,51 +487,72 @@ void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done
         bool userFault = false;
 
         // Loop through the channel data and split if necessary
-        for (Bsa::Pv* pv:_pvs)
+        for (unsigned int pvIndex = 0; pvIndex < pvs().size(); pvIndex++)
         {
-            // Get the data type of the next PV (32-bit or less)
+            // Get pointers to current and next PVs
+            Bsa::Pv* pv  = pvs()[pvIndex];
+            Bsa::Pv* pvN = (pvIndex+1 < pvs().size())?pvs()[pvIndex+1]:nullptr;
+            
+            // Get the data type of the PV (32-bit or less)
             bsaDataType_t *type  = pv->get_p_type();
+            
             // Partition 32-bit data and distribute to new PVs as needed
             switch(*type){
                 case uint2:
                     // Extract the 2-bit block
                     val = (uint32_t)_rawChannelData[wordIndex]->mean;
-                    mask = KEEP_LSB_2;
-                    val >>= bitSum;  
-                    val &= mask;
+                    mask = KEEP_LSB_2;val >>= bitSum;val &= mask;
                     bitSum += BLOCK_WIDTH_2;
                     break; 
-                case int16:
                 case uint16:
                     // Extract the 16-bit block
                     val = (uint32_t)_rawChannelData[wordIndex]->mean;
-                    mask = KEEP_LSB_16;
-                    val >>= bitSum; 
-                    val &= mask;
+                    mask = KEEP_LSB_16;val >>= bitSum;val &= mask;
                     bitSum += BLOCK_WIDTH_16;
+                    break;
+                case llrfAmp:
+                case llrfPhase:
+                    // Perform checks to ensure type validity
+                    llrfPerformChecks(const_cast<Bsa::Pv*>(pv),const_cast<Bsa::Pv*>(pvN),bitSum);
+                    // Extract lower 16 bits
+                    iVal = (uint32_t)_rawChannelData[wordIndex]->mean;
+                    mask = KEEP_LSB_16;iVal >>= bitSum;iVal &= mask;
+                    // Extract upper 16 bits
+                    qVal = (uint32_t)_rawChannelData[wordIndex]->mean;
+                    mask = KEEP_LSB_16;qVal >>= BLOCK_WIDTH_16;qVal &= mask;
+                    // Compute phase & amplitude
+                    llrfCalcPhaseAmp(static_cast<signed short>(iVal),static_cast<signed short>(qVal),amp,phase);                
+                    // Append computed values to PVs
+                    quant1 = (*type == llrfAmp)?amp:phase;
+                    quant2 = (quant1 == amp   )?phase:amp;
+                    pv->append  (_rawChannelData[wordIndex]->n, 
+                                  quant1,
+                                 _rawChannelData[wordIndex]->rms2);
+                    pvN->append (_rawChannelData[wordIndex]->n, 
+                                  quant2,
+                                 _rawChannelData[wordIndex]->rms2);
+                    pvIndex++;
+                    bitSum += 2 * BLOCK_WIDTH_16;
                     break;
                 case int32:
                 case uint32:
                 case float32:
                 default:
                     // Send data as is (no partition required)
-                    val = (uint32_t)_rawChannelData[wordIndex  ]->mean;
+                    val = (uint32_t)_rawChannelData[wordIndex]->mean;
                     bitSum += BLOCK_WIDTH_32;
             }
             // Append the value to the corresponding PV history
-            pv->append(_rawChannelData[wordIndex  ]->n, 
-                       (double)val, 
-                       _rawChannelData[wordIndex]->rms2);
+            if (*type != llrfAmp && *type != llrfPhase)
+                pv->append(_rawChannelData[wordIndex]->n, 
+                           (double)val, 
+                           _rawChannelData[wordIndex]->rms2);
             
             // Check if the 32-bit boundary has been violated
             if (bitSum == wordWidth)
             {
                 // All good, move on to the next 32-bit word
                 bitSum = 0;
-
-                // Free memory
-                delete _rawChannelData[wordIndex];
-                _rawChannelData[wordIndex] = nullptr;
 
                 // Incremenent index to next channel
                 wordIndex++;
@@ -505,10 +568,18 @@ void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done
                 printf("BsaPvArray::procChannelData(): ERROR - Exiting ...\n");
                 exit(EXIT_FAILURE);
             }
+        } // end of all-PVs for loop  
+
+        // Deallocate memory
+        for (unsigned int i = 0; i < storeIndex; i++)
+        {
+            delete _rawChannelData[i];
+            _rawChannelData[i] = nullptr;
         }
+
         // Reset store index
         storeIndex = 0;
-    }
+    } // end of if (done)
 }
 
 
@@ -1019,12 +1090,13 @@ bsaDataType_t getBsaDataType(const char *bsaType)
     bsaDataType_t type;
 
     if(!strcmp(UINT2STRING,        bsaType)) type = uint2;
-    else if(!strcmp(INT16STRING,   bsaType)) type = int16;
     else if(!strcmp(UINT16STRING,  bsaType)) type = uint16;
     else if(!strcmp(INT32STRING,   bsaType)) type = int32;
     else if(!strcmp(UINT32STRING,  bsaType)) type = uint32;
     else if(!strcmp(UINT64STRING,  bsaType)) type = uint64;
     else if(!strcmp(FLOAT32STRING, bsaType)) type = float32;
+    else if(!strcmp(LLRFAMPSTRING, bsaType)) type = llrfAmp;
+    else if(!strcmp(LLRFPHSSTRING, bsaType)) type = llrfPhase;
     else type = fault;
 
     return type;
