@@ -816,7 +816,7 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
      uint64_t pulse_id     = ((uint64_t)(buf[IDX_PIDU])) << 32 | buf[IDX_PIDL];
 
      uint32_t tmpVal, mask, iVal, qVal;
-     double amp = 0.0, phase = 0.0, quant1 = 0.0, quant2 = 0.0;
+     double amp, phase, quant1, quant2;
 
      int mod = (service_mask & ((uint32_t) 0x1 << BSSS1_BIT))?1:0;   // decide BSSS0 or BSSS1
 
@@ -834,12 +834,6 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
      // Variable to keep track of bit boundaries as we read in channel data
      unsigned bitSum = 0;
 
-     // Fault flag to indicate violation of bit boundaries in the channel data
-     bool userFault = false;
-
-     // Incoming data are 32-bit words
-     const unsigned wordWidth = BLOCK_WIDTH_32;
-
      while(plist) {
          // Skipping the (firmware) channel, if the channel is not enabled in the mask
          while(!(channel_mask & (uint32_t(0x1) << hwChIndex)))
@@ -852,7 +846,7 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
          channelList_t *plistN = (channelList_t *) ellNext(&plist->node);
 
          // Count newly extracted bits only once below, regardless of multiple EDEFs
-         unsigned newBitsExtracted = 0;
+         unsigned newBitsExtracted;
 
          // Now loop over all EDEFs
          for (unsigned int i = 0, svc_mask = 0x1; i < this->pService[mod]->getEdefNum(); i++, svc_mask <<= 1) {
@@ -930,7 +924,8 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
                              break;
                          case uint64_service:
                          default:
-                              val = NAN;   // uint64 never defined
+                             val = NAN;   // uint64 never defined
+                             newBitsExtracted = 0;
                              break;
                      }
                  } else val = NAN;  // put NAN for invalid mask
@@ -954,18 +949,14 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
 
          // Increment data index only if done reading current (firmware) channel 
          // (i.e. may take a few repetitions if reading <32-bit blocks at a time) 
-         if (bitSum == wordWidth)
+         if (bitSum == BLOCK_WIDTH_32)
          {
              // All good, move on to the next 32-bit word
              bitSum = 0;      // reset bitSum counter
              ++dataIndex;     // point to next 32-bit word in memory buffer
              ++hwChIndex;     // evolve data channel number to next firmware channel
          }
-         else if (bitSum > wordWidth)
-             userFault = true;
-
-         // Maybe throw an exception in here instead of exiting? 
-         if (userFault) 
+         else if (bitSum > BLOCK_WIDTH_32)
          {
              printf("serviceAsynDriver::bsssCallback(): ERROR - Please ensure BSSS channels do not violate 32-bit boundaries!!\n");
              printf("serviceAsynDriver::bsssCallback(): ERROR - Check type for channel %s\n", plist->channel_name); 

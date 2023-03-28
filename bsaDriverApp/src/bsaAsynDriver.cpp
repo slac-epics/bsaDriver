@@ -463,9 +463,9 @@ void BsaPvArray::llrfCalcPhaseAmp(signed short i, signed short q, double& amp, d
 
 void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done)
 {
-    uint32_t mask = DEFAULT_MASK;
-    uint32_t val = 0, iVal = 0, qVal = 0;
-    double   amp = 0.0, phase = 0.0, quant1 = 0.0, quant2 = 0.0;
+    uint32_t mask;
+    uint32_t val, iVal, qVal;
+    double   amp, phase, quant1, quant2;
 
     // Add channel data for the current BSA buffer to an array 
     static unsigned int storeIndex = 0;
@@ -477,21 +477,18 @@ void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done
         // Define useful indices
         unsigned wordIndex = 0;
 
-        // Incoming data are 32-bits
-        const unsigned wordWidth = BLOCK_WIDTH_32;
-
         // Keep track of bit boundaries
         unsigned bitSum = 0;
 
-        // Fault flag for bit boundaries
-        bool userFault = false;
+        // Number of PVs
+        unsigned numOfPVs = _pvs.size();
 
         // Loop through the channel data and split if necessary
-        for (unsigned int pvIndex = 0; pvIndex < pvs().size(); pvIndex++)
+        for (unsigned int pvIndex = 0; pvIndex < numOfPVs; pvIndex++)
         {
             // Get pointers to current and next PVs
-            Bsa::Pv* pv  = pvs()[pvIndex];
-            Bsa::Pv* pvN = (pvIndex+1 < pvs().size())?pvs()[pvIndex+1]:nullptr;
+            Bsa::Pv* pv  = _pvs[pvIndex];
+            Bsa::Pv* pvN = ((pvIndex+1) < numOfPVs)?_pvs[pvIndex+1]:nullptr;
             
             // Get the data type of the PV (32-bit or less)
             bsaDataType_t *type  = pv->get_p_type();
@@ -549,19 +546,14 @@ void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done
                            _rawChannelData[wordIndex]->rms2);
             
             // Check if the 32-bit boundary has been violated
-            if (bitSum == wordWidth)
+            if (bitSum == BLOCK_WIDTH_32)
             {
                 // All good, move on to the next 32-bit word
                 bitSum = 0;
-
                 // Incremenent index to next channel
                 wordIndex++;
             }
-            else if (bitSum > wordWidth)
-                userFault = true;
-
-            // Maybe throw an exception in here later
-            if (userFault) 
+            else if (bitSum > BLOCK_WIDTH_32)
             {
                 printf("BsaPvArray::procChannelData(): ERROR - Please ensure BSA channels do not violate 32-bit boundaries!!\n");
                 printf("BsaPvArray::procChannelData(): ERROR - Check BSA channel type!!\n");

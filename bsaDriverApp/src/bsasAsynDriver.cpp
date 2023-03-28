@@ -866,7 +866,7 @@ void bsasAsynDriver::bsasCallback(void *p, unsigned size)
     
     uint32_t cnt, tmpVal, iVal, qVal, mask;
     double   val, avg, rms, min, max, sq; 
-    double   amp = 0.0, phase = 0.0, quant1 = 0.0, quant2 = 0.0;
+    double   amp, phase, quant1, quant2;
 
     union {
         uint32_t u32;
@@ -885,13 +885,6 @@ void bsasAsynDriver::bsasCallback(void *p, unsigned size)
 
      // Variable to keep track of bit boundaries as we read in the packet payload
      unsigned bitSum = 0;
-
-     // Fault flag to indicate violation of bit boundaries in the 
-     // association of the active channels/PVs vs the packet payload
-     bool userFault = false;
-
-     // Incoming payload data are 32-bit words
-     const unsigned wordWidth = BLOCK_WIDTH_32;
 
      for(std::vector<void*>::iterator it = activeChannels->begin(); it != activeChannels->end(); it++, col++) {
         bsasList_t *plist = (bsasList_t *)(*it);
@@ -1054,17 +1047,13 @@ void bsasAsynDriver::bsasCallback(void *p, unsigned size)
        }
 
        // Increment index only if done reading current 32-bit word from the packet payload 
-       if (bitSum == wordWidth)
+       if (bitSum == BLOCK_WIDTH_32)
        {
            // All good, move on to the next 32-bit word
            bitSum = 0; // reset bitSum counter
            i++;        // point to next 32-bit word in packet payload 
        }
-       else if (bitSum > wordWidth)
-           userFault = true;
-
-       // Maybe throw an exception in here instead of exiting? 
-       if (userFault) 
+       else if (bitSum > BLOCK_WIDTH_32)
        {
            printf("serviceAsynDriver::bsasCallback(): ERROR - Please ensure BSAS channels do not violate 32-bit boundaries!!\n");
            printf("serviceAsynDriver::bsasCallback(): ERROR - Check type for channel %s!!\n", plist->bsas_name); 
