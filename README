@@ -4,103 +4,146 @@
 #
 #  Rem:
 #        EPICS driver module
-#        LCLS-II Timing System
-#
-#  Side: None
+#        Superconducting Timing System
 #
 #  Auth: 17-Mar-2017, Kukhee Kim      (KHKIM)
 #  Rev:  27-Sep-2022, Dawood Alnajjar (DNAJJAR)
-#--------------------------------------------------------------
-#  Mod:
-#        dd-mmm-yyyy, Reviewer's Name (USERNAME)
-#          coment
-#
+#  Rev:  22-Mar-2023, Marcio Donadio  (MARCIO)
 #==============================================================
-#
-# NOTE:
 
-This is an epics driver module to provide BSA interface for LCLS-II High Performance System (HPS)
-which is based on ATCA platform.
-It provides epics shell command to configure/setup the BSA names and also provides epics database
-templates for BSA PVs in epics ioc application.
+This is an epics driver module to provide BSA, BSSS, BSAS, and BLD interface
+for superconducting timing High Performance System (HPS) which is based on ATCA
+platform. We are calling BSA, BSSS, BSAS, and BLD as "acquisition services" in
+this document.
 
-Requirements:
+Important definition:
+  - "Signal" is used in this document as a piece of data calculated by the
+    system and exported to the acquisition services. Example: X, Y, and TMIT
+    are BPM signals. Originally the word "channel" was used with this meaning
+    but recently this was changed. The software was all built using the
+    "channel" word to define this concept, so you will see IOC shell commands,
+    reports, and database record names using "channel" instead of "signal".
+    The change in software names will require more time to be implemented.
 
-- The epics ioc application should build with yamlLoader driver and with CPSW framework.
+This module provides:
+  - Epics IOC shell commands to configure/setup all the acquisition services.
+  - Epics database templates for:
+    - BSA and BSSS PVs.
+    - Diagnostic PVs for all services.
+    - Control PVs for BSSS, BSAS, and BLD.
+  - pvxs PVs for BSAS.
 
-  API layer
-  . cpsw/framework R4.4.1
-  . yaml-cpp-0.5.3_boost-1.64.0
-  . boost 1.64.0
-  . timing/bsa R2.4.0
+*******************************************************************************
+***             1. Building the IOC application with the module             ***
+*******************************************************************************
 
-  configure/CONFIG_SITE.Common.<platform> in application should have the followings:
+1.1 - Packages for configure/CONFIG_SITE:
+      . cpsw/framework R4.4.1
+      . yaml-cpp-0.5.3_boost-1.64.0
+      . boost 1.64.0
+      . timing/bsa R2.4.0
 
-  CPSW_FRAMEWORK_PACKAGE_NAME=cpsw/framework
-  CPSW_FRAMEWORK_VERSION=R4.4.1
-  CPSW_FRAMEWORK=$(PACKAGE_AREA)/$(CPSW_FRAMEWORK_PACKAGE_NAME)/$(CPSW_FRAMEWORK_VERSION)/$(LINUXRT_BUILDROOT_VERSION)-x86_64
-  CPSW_FRAMEWORK_LIB     = $(CPSW_FRAMEWORK)/lib
-  CPSW_FRAMEWORK_INCLUDE = $(CPSW_FRAMEWORK)/include
+configure/CONFIG_SITE should have the following*:
 
-  YAML_NAME=yaml-cpp
-  YAML_VERSION=yaml-cpp-0.5.3_boost-1.64.0
-  YAML_ARCH=$(LINUXRT_BUILDROOT_VERSION)-x86_64
-  YAML=$(PACKAGE_AREA)/$(YAML_NAME)/$(YAML_VERSION)/$(YAML_ARCH)
-  YAML_INCLUDE=$(YAML)/include
-  YAML_LIB=$(YAML)/lib
+CPSW_FRAMEWORK_PACKAGE_NAME=cpsw/framework
+CPSW_FRAMEWORK_VERSION=R4.4.1
+CPSW_FRAMEWORK_TOP=$(PACKAGE_SITE_TOP)/$(CPSW_FRAMEWORK_PACKAGE_NAME)/$(CPSW_FRAMEWORK_VERSION)
+CPSW_FRAMEWORK_LIB = $(CPSW_FRAMEWORK_TOP)/$(PKG_ARCH)/lib
+CPSW_FRAMEWORK_INCLUDE = $(CPSW_FRAMEWORK_TOP)/$(PKG_ARCH)/include
 
-  BOOST_PACKAGE_NAME=boost
-  BOOST_VERSION=1.64.0
-  BOOST_ARCH=$(LINUXRT_BUILDROOT_VERSION)-x86_64
-  BOOST=$(PACKAGE_AREA)/$(BOOST_PACKAGE_NAME)/$(BOOST_VERSION)/$(BOOST_ARCH)
-  BOOST_LIB     = $(BOOST)/lib
-  BOOST_INCLUDE = $(BOOST)/include
+YAML_NAME=yaml-cpp
+YAML_VERSION=yaml-cpp-0.5.3_boost-1.64.0
+YAML_TOP=$(PACKAGE_SITE_TOP)/$(YAML_PACKAGE_NAME)/$(YAML_VERSION)
+YAML_LIB= $(YAML_TOP)/$(PKG_ARCH)/lib
+YAML_INCLUDE=$(YAML_TOP)/$(PKG_ARCH)/include
 
-  BSA_PACKAGE_NAME=timing/bsa
-  BSA_VERSION=R2.4.0
-  BSA_ARCH=$(LINUXRT_BUILDROOT_VERSION)-x86_64
-  BSA=$(PACKAGE_AREA)/$(BSA_PACKAGE_NAME)/$(BSA_VERSION)/$(BSA_ARCH)
-  BSA_LIB     = $(BSA)/lib
-  BSA_INCLUDE = $(BSA)/include
+BOOST_PACKAGE_NAME=boost
+BOOST_VERSION=1.64.0
+BOOST_TOP=$(PACKAGE_SITE_TOP)/$(BOOST_PACKAGE_NAME)/$(BOOST_VERSION)
+BOOST_LIB = $(BOOST_TOP)/$(PKG_ARCH)/lib
+BOOST_INCLUDE = $(BOOST_TOP)/$(PKG_ARCH)/include
 
+BSA_PACKAGE_NAME=timing/bsa
+BSA_VERSION=R2.4.0
+BSA_TOP=$(PACKAGE_SITE_TOP)/$(BSA_PACKAGE_NAME)/$(BSA_VERSION)
+BSA_LIB=$(BSA_TOP)/$(PKG_ARCH)/lib
+BSA_INCLUDE=$(BSA_TOP)/$(PKG_ARCH)/include
 
-
-
-  EPICS module
-  . yamlLoader R2.2.0
-  . asyn R4.39-1.0.1
-  . pvxs R0.3.1-0.0.1
-
-  configure/RELEASE in application should have the followings:
-
-  ASYN_MODULE_VERSION=R4.39-1.0.1
-  YAMLLOADER_MODULE_VERSION=R2.2.0
-  BSADRIVER_MODULE_VERSION=R3.0.0
-  PVXS_MODULE_VERSION=R0.3.1-0.0.1
-
-  ASYN=$(EPICS_MODULES)/asyn/$(ASYN_MODULE_VERSION)
-  YAMLLOADER=$(EPICS_MODULES)/yamlLoader/$(YAMLLOADER_MODULE_VERSION)
-  PVXS=$(EPICS_MODULES)/pvxs/$(PVXS_MODULE_VERSION)
-
-  BSADRIVER=$(EPICS_MODULES)/bsaDriver/$(BSADRIVER_MODULE_VERSION
+* We are assuming that files configure/CONFIG_SITE.Common.<architecture>
+defining $(PKG_ARCH) already exist as this is standard for all IOC applications
+using LinuxRT.
 
 
+1.2 - EPICS modules for configure/RELEASE
+      . yamlLoader/R2.2.0
+      . asyn/R4.39-1.0.1
+      . pvxs/R0.3.1-0.0.1
+      . bsaDriver/R3.1.0
 
-  <application>/src/Makefile should have the follwings:
+ASYN_MODULE_VERSION=R4.39-1.0.1
+YAMLLOADER_MODULE_VERSION=R2.2.0
+BSADRIVER_MODULE_VERSION=R3.1.0
+PVXS_MODULE_VERSION=R0.3.1-0.0.1
+
+ASYN=$(EPICS_MODULES)/asyn/$(ASYN_MODULE_VERSION)
+YAMLLOADER=$(EPICS_MODULES)/yamlLoader/$(YAMLLOADER_MODULE_VERSION)
+PVXS=$(EPICS_MODULES)/pvxs/$(PVXS_MODULE_VERSION)
+BSADRIVER=$(EPICS_MODULES)/bsaDriver/$(BSADRIVER_MODULE_VERSION
 
 
-  <application>_DBD += asyn.dbd
-  <applicaiton>_DBD += yamlLoader.dbd
-  <application>_DBD += bsaAsynDriver.dbd
+1.3 - src/Makefile:
 
-  <application>_LIBS += cpsw
-  <application>_LIBS += bsa
-  <applicaiton>_LIBS += asyn
-  <application>_LIBS += yamlLoader
-  <application>_LIBS += bsaDriver
+# =====================================================
+# Path to "NON EPICS" External PACKAGES: USER INCLUDES
+# =====================================================
+USR_INCLUDES += -I$(BOOST_INCLUDE)
+USR_INCLUDES += -I$(CPSW_FRAMEWORK_INCLUDE)
+USR_INCLUDES += -I$(YAML_INCLUDE)
+USR_INCLUDES += -I$(BSA_INCLUDE)
+# =====================================================
+
+#======================================================
+# PATH TO "NON EPICS" EXTERNAL PACKAGES: USER LIBRARIES
+# ======================================================
+boost_system_DIR  = $(BOOST_LIB)
+cpsw_DIR          = $(CPSW_FRAMEWORK_LIB)
+yaml-cpp_DIR      = $(YAML_LIB)
+bsa_DIR           = $(BSA_LIB)
+# ======================================================
+
+# ======================================================
+# LINK "NON EPICS" EXTERNAL PACKAGE LIBRARIES STATICALLY
+# =======================================================
+USR_LIBS_Linux += boost_system
+USR_LIBS_Linux += cpsw
+USR_LIBS_Linux += yaml-cpp
+USR_LIBS_Linux += bsa
+# ======================================================
+
+# RHEL6 is too old and its gcc is not compatible with pvxs, which is needed by
+# BSAS. So we need this to build only for linuxRT.
+ifeq ($(T_A),linuxRT-x86_64)
+PROD_IOC = <appliccation>
+endif
+
+<application>_DBD += asyn.dbd
+<applicaiton>_DBD += yamlLoader.dbd
+<application>_DBD += bsaAsynDriver.dbd
+
+<application>_LIBS += cpsw
+<application>_LIBS += bsa
+<applicaiton>_LIBS += asyn
+<application>_LIBS += yamlLoader
+<application>_LIBS += bsaDriver
+
+# EPICS 7 PVXS support
+# Order of the two libraries is important:
+<application>_LIBS += pvxsIoc
+<application>_LIBS += pvxs
+<application>_DBD  += pvxsIoc.dbd
 
 
-<application>/Db/Makefile should have the followings:
+1.4 - Db/Makefile. Add the files only for the services that you need to use.
 
 DB_INSTALLS += $(BSADRIVER)/db/bsa.db
 DB_INSTALLS += $(BSADRIVER)/db/bsss.db
@@ -110,986 +153,485 @@ DB_INSTALLS += $(BSADRIVER)/db/bsasCtrl.db
 DB_INSTALLS += $(BSADRIVER)/db/bld.db
 DB_INSTALLS += $(BSADRIVER)/db/bldCtrl.db
 
-- bsa.db  ;  BSA database template for each BSA data channel
-- bsss.db ;  BSSS database template for each BSSS data channel
-- bsas.db  ;  BSAS database template for each BSA data channel
-- bld.db ;  BLD database template for each BSSS data channel
+- bsa.db  ;  BSA database template for each BSA signal.
+- bsss.db ;  BSSS database template for each BSSS signal.
+- bsas.db  ;  BSAS database template for enabling/disabling and defining
+              severity filters per signal.
+- bld.db ;  BLD database template for enabling/disabling and defining
+            severity filters per signal.
 - bsssCtrl.db  ; BSSS controls database template 
 - bsasCtrl.db  ; BSAS controls database template 
 - bldCtrl.db  ; BLD controls database template 
 
 
-- The yamlLoader driver should provide register hierarchy and path information.
-- The application firmware should have BSA functionallity
+*******************************************************************************
+***                 2. Basic commands required for st.cmd                   ***
+*******************************************************************************
 
-yamlLoader Driver:
+2.1 - yamlLoader Driver:
 
-- the yamlLoader driver should load up the hierarchy file before BSA initialization
+The yamlLoader driver needs to load up the hierarchy file before BSA
+initialization.
 
-ex)  cpswLoadYamlFile("000TopLevel.yaml", "NetIODev", "", "10.0.3.105")
+Example:
+# cpswLoadYamlFile(<top level yaml path>, "NetIODev, "", <carrier board IP)
+cpswLoadYamlFile("000TopLevel.yaml", "NetIODev", "", "10.0.3.105")
 
-- please, check up more details in README file in yamlLoader driver
+Please, check up more details in the README file of yamlLoader driver.
 
 
-Adding BSA names for the driver:
+2.2 - Load YAML configuration file to disable all acquisition services. A
+file template with the YAML contents is available at
+README.disable_bld_bsss_bsas.
 
-- before the driver intialization, the ioc application engineer should create the BSA name list.
-- the order of the names should be matched with the BSA data order in the application firmware.
-- the driver provides the ioc shell command "addBsa(<BSA name string>, <BSA data type string>"),
-   the ioc engineer can use the command to add up the bsa name into the list
-- Various datatypes are supported and hence the user should ensure that 32-bit boundaries are not violated:
-  e.g. addBsa --> name string, 32-bit data type
-       addBsa --> name string, 16-bit data type
-       addBsa --> name string,  2-bit data type
-       addBSa --> name string, 16-bit data type
-       ...
+The line below needs to be added right after cpswLoadYamlFile. Please, adjust
+the path for disable_bld_bsss_bsas.yaml accordingly. The second argument, which
+is the yaml path may be different from application to application. The one
+below should work on most cases. If it doesn't work for you, you need to
+contact the firmware engineer to get the correct one.
 
-       The above example is INCORRECT because the consecutive bitwidths that are lower than 32 bits don't add up to exactly 32.
+# Load configuration to disable BSA/BLD/BSSS/BSAS on boot
+cpswLoadConfigFile("${YAML_DIR}/config/disable_bld_bsss_bsas.yaml", "mmio/AmcCarrierCore/AmcCarrierBsa")
 
-       Below, see an example of a BSA name list that is CORRECT:
-       addBsa --> name string, 32-bit data type
-       addBsa --> name string, 16-bit data type
-       addBSa --> name string, 16-bit data type
-       addBsa --> name string, 32-bit data type
-       ...
-- the driver provides the ioc shell command "listBsa()" to print out the BSA name list,
-   the ioc engineer could verify the bsa name list with the command
-- Should the data channel stay untouched (not scaled using slope/offset or casted to another type),
-  a third optional parameter is passed to the addBsa function. This parameter is only taken into
-  consideration for BLD (not BSA/BSAS/BSSS).
-    - "0" (or empty) -> Operable
+
+2.3 Adding BSA names for the driver:
+
+Before starting this configuration, you need to receive from the firmware
+engineer the list of BSA signals available, with its data type. Make sure to
+have this list in the correct order. When asking the firmware engineer, use the
+following jargon: "I need the ordered list of data that goes into the
+diagnostic bus, with the data type".
+ 
+bsaDriver provides the ioc shell command 
+addBsa(<BSA key>, <signal data type>)
+
+You need to use addBsa for each of the BSA signals from the list provided by
+the firmware engineer, in the same order as the list.
+
+<BSA key> can be any string you want to describe the signal.
+<signal data type> can be: "int32", "uint32", "float32". Details on data type
+                           restrictions are available later in a specific
+                           section of the README.
+
+Optionally, should the signal stay untouched (not scaled using slope/offset or
+casted to another type), a third parameter is passed to the addBsa function.
+This parameter is only used by BLD, not BSA/BSAS/BSSS. More about slope and
+offset will be explained later.
+    - "0" (or empty) -> Allowed to apply slope/offset
     - "1" -> Do not touch
 
-ex)
+*Important note!* Although the command is called addBsa, the configuration you
+make by using it is going to be used by all acquisition services.
+
+The driver also provides the IOC shell command "listBsa()" to print out the BSA
+name list, so the IOC engineer can verify the BSA names loaded.
+
+Example of use of the bsaDriver functions:
 # ====================================
 # Setup BSA Driver
 # ====================================
-# add BSA
-addBsa("PIDL",       "uint32")
-addBsa("PIDU",       "uint32")
-addBsa("TSL",        "uint32")
-addBsa("TSU",        "uint32", "1")
-addBsa("RATES",      "uint32")
-addBsa("BEAMREQ",    "uint32")
-addBsa("BEAMNRG01",  "uint32", "1")
-addBsa("BEAMNRG23",  "uint32")
-addBsa("MPSSTAT",    "uint32")
-addBsa("MPSCLASS01", "uint32")
-addBsa("MPSCLASS23", "uint32")
+# We need to add the status signals because they are the first ones, even if
+# they are not used by the acquisition services.
+addBsa("STATUSAMC0",       "uint32", 1)
+addBsa("STATUSAMC1",       "uint32", 1)
+# Add signals for BSA, BSSS, BSAS
+addBsa("TMITAMC0",         "int32")
+addBsa("TMITAMC1",         "int32")
+addBsa("XFIXEDPAMC0",      "int32")
+addBsa("XFIXEDPAMC1",      "int32")
+addBsa("YFIXEDPAMC0",      "int32")
+addBsa("YFIXEDPAMC1",      "int32")
+# Add signals for BLD
+addBsa("TMITFLOATAMC0",    "float32", 1)
+addBsa("TMITFLOATAMC1",    "float32", 1)
+addBsa("XFLOATPAMC0",      "float32", 1)
+addBsa("XFLOATPAMC1",      "float32", 1)
+addBsa("YFLOATPAMC0",      "float32", 1)
+addBsa("YFLOATPAMC1",      "float32", 1)
 
-ex)
-vioc-b84-ev01>listBsa()
-Total 31 BSA(s) has(have) been registered
-        0       PIDL, uint32
-        1       PIDU, uint32
-        2       TSL, uint32
-        3       TSU, uint32
-        4       RATES, uint32
-        5       BEAMREQ, uint32
-        6       BEAMNRG01, uint32
-        7       BEAMNRG23, uint32
-        8       MPSSTAT, uint32
-        9       MPSCLASS01, uint32
-
-
-Adding Slave BSA names for the driver
-- The slave BSA shares BSA data source with master.
-- It could have different data conversion - separate slope and offset from the master BSA
-- After creating master BSA node, create slave BSA node as the followings:
-
-  addSlaveBsa(<BSA name for master>, <BSA name for slave>, "uint32")
-
-- The "BSA name for master" should exist when adding the slave
-- The "BSA name for slave" will be used for the BSAKEY for dbLoadRecords()
+sioc-b84-ts01> listBsa()
+Total 14 BSA(s) has(have) been registered
+        0       STATUSAMC0, uint32
+        1       STATUSAMC1, uint32
+        2       TMITAMC0, int32
+        3       TMITAMC1, int32
+        4       XFIXEDPAMC0, int32
+        5       XFIXEDPAMC1, int32
+        6       YFIXEDPAMC0, int32
+        7       YFIXEDPAMC1, int32
+        8       TMITFLOATAMC0, float32
+        9       TMITFLOATAMC1, float32
+        10      XFLOATPAMC0, float32
+        11      XFLOATPAMC1, float32
+        12      YFLOATPAMC0, float32
+        13      YFLOATPAMC1, float32
 
 
-ex)
-  addSlaveBsa("PIDL", "pidlSlave0", "uint32")
-  addSlaveBsa("PIDL", "pidlSlave1", "uint32")
-  addSlaveBsa("PIDL", "pidlSlave2", "uint32")
-  addSlaveBsa("PIDL", "pidlSlave3", "uint32")
-  addSlaveBsa("PIDL", "pidlSlave4", "uint32")
-  addSlaveBsa("PIDL", "pidlSlave5", "uint32")
+2.3.1 Adding dependent children BSA names for the driver
 
-  In this example, we added up 6 slave BSAs for PIDL BSA.
+The children BSA shares BSA data source with the parent. The children can have
+different data conversion or separate slope and offset from the parent BSA. The
+idea is that you can provide different conversions for each signal. Example:
+the signal related to the charge in the BCM could be presented as coulombs,
+nano coulombs, or number of electrons.
 
-  listBsa()
-  Total 31 BSA(s) has(have) been registered
-        0       PIDL, double
-                +----- slave node 0     pidlSlave0, uint32
-                +----- slave node 1     pidlSlave1, uint32
-                +----- slave node 2     pidlSlave2, uint32
-                +----- slave node 3     pidlSlave3, uint32
-                +----- slave node 4     pidlSlave4, uint32
-                +----- slave node 5     pidlSlave5, uint32
-        1       PIDU, uint32
-        2       TSL, uint32
-        3       TSU, uint32
+After creating the parent BSA node using addBsa, create the child BSA node as
+the following:
 
-  listBsa() command shows master node and its slave nodes
+addSlaveBsa(<BSA key for parent>, <BSA key for child>, <data type>)
 
-ex)
-  addBsa("SIGNAL00_I",    "uint16")
-  addBsa("SIGNAL00_Q",    "uint16")
-  addBsa("SIGNAL01_I",    "uint16")
-  addBsa("SIGNAL01_Q",    "uint16")
-  addBsa("SIGNAL02_I",    "uint16")
-  addBsa("SIGNAL02_Q",    "uint16")
-  addBsa("SIGNAL03_I",    "uint16")
-  addBsa("SIGNAL03_Q",    "uint16")
-  addBsa("SIGNAL04_I",    "uint16")
-  addBsa("SIGNAL04_Q",    "uint16")
-  ...
-  addBsa("SIGNAL23_I",    "uint16")
-  addBsa("SIGNAL23_Q",    "uint16")
-  addBsa("SIGNAL24",      "uint32")
-  addBsa("SIGNAL25",      "uint32")
-  addBsa("SIGNAL26",      "uint32")
-  addBsa("SIGNAL27",      "uint32")
-  addBsa("SIGNAL28",      "uint32")
-  addBsa("SIGNAL29",      "uint32")
-  addBsa("SIGNAL30",      "uint32")
+- The "BSA key for parent" should exist before adding the child
+- The "BSA key for child" will be used as the BSAKEY database macro for
+dbLoadRecords(). More about this will be explained in other README specific
+files.
 
-sioc-b15-ts02>listBsa
-  Bsa Driver (named_root: MyRoot0, port: bsaPort)
-  Total 55 BSA(s) has(have) been registered
-  0       SIGNAL00_I, uint16
-  1       SIGNAL00_Q, uint16
-  2       SIGNAL01_I, uint16
-  3       SIGNAL01_Q, uint16
-  4       SIGNAL02_I, uint16
-  5       SIGNAL02_Q, uint16
-  6       SIGNAL03_I, uint16
-  7       SIGNAL03_Q, uint16
-  8       SIGNAL04_I, uint16
-  9       SIGNAL04_Q, uint16
-  ...
-  47      SIGNAL23_Q, uint16
-  48      SIGNAL24, uint32
-  49      SIGNAL25, uint32
-  50      SIGNAL26, uint32
-  51      SIGNAL27, uint32
-  52      SIGNAL28, uint32
-  53      SIGNAL29, uint32
-  54      SIGNAL30, uint32
+Example:
+addSlaveBsa("TMITAMC0", "TMIT0C0", "int32")
+addSlaveBsa("TMITAMC0", "TMIT0C1", "int32")
+addSlaveBsa("TMITAMC0", "TMIT0C2", "int32")
+addSlaveBsa("TMITAMC0", "TMIT0C3", "int32")
+addSlaveBsa("TMITAMC0", "TMIT0C4", "int32")
+addSlaveBsa("TMITAMC0", "TMIT0C5", "int32")
+
+In this example, we added 6 children BSAs for the TMITAMC0 BSA.
+
+listBsa()
+  Total 14 BSA(s) has(have) been registered
+        0       STATUSAMC0, uint32
+        1       STATUSAMC1, uint32
+        2       TMITAMC0, int32
+                +----- slave node 0     TMIT0C0, int32
+                +----- slave node 1     TMIT0C1, int32
+                +----- slave node 2     TMIT0C2, int32
+                +----- slave node 3     TMIT0C3, int32
+                +----- slave node 4     TMIT0C4, int32
+                +----- slave node 5     TMIT0C5, int32
+        3       TMITAMC1, int32
+        4       XFIXEDPAMC0, int32
+        5       XFIXEDPAMC1, int32
+etc.
+
+listBsa() command shows the parent node and its children nodes.
 
 
-BSA Data Type
+2.3.2 More about signal Data Types
 
-BSA driver and firmware allow {"uint2", "int16", "uint16", "int32", "uint32", "float32"} type of data.
-If firmware doesn't calculate statistics (mean and rms) all types are allowed.
-If firmware calculate statstics, only "int32" type is allowed.
+bsaDriver and firmware allow {"int32", "uint32", "float32"} type of data.
 
+Due to limited "space" in the FPGA chip, the firmware will only calculate
+statistics (mean and rms) for a BSA signal if its type is int32. This
+programming is in the firmware and can't be configured by software. So, if
+the firmware engineer sent you the list of BSA signals and a few of them are
+float32 you already know that this signal will not have mean and rms calculated
+for BSA.
 
-driver initialization:
-- the driver provide ioc shell command
-  "bsaAsynDriverConfigure(<asyn port name for BSA>, <path for register space>, <path for dram space>)"
-  for the driver initialization
-- the driver initialization command should be called after completing the hierarchy loading by yamlLoader driver
-  and also after the BSA name list is built.
-- the register path and dram path should be consistent with the hierarchy files.
-  (in the example, ROOT path of hierarchy is NetIODev,
-   the register space is located at NetIODev/mmio/AmcCarrierTimingGenerator/AmcCarrierCore/AmcCarrierBsa,
-   and the stream dram is located at NetIODev/strm/AmcCarrierDRAM/dram.)
-
-ex)  bsaAsynDriverConfigure("bsaPort", "mmio/AmcCarrierTimingGenerator/AmcCarrierCore/AmcCarrierBsa","strm/AmcCarrierDRAM/dram")
+Sometimes the signal will represent a status with each of the bits from a
+uint32 representing a condition. Of course a status can't be part of
+statistic calculation and this was also already programmed in the firmware.
 
 
-Enable/Disable BSA:
+2.4 Driver initialization
 
-After the driver initialization, the BSA can be disabled and enabled anytime via the following commands:
+For the driver initialization, bsaDriver provides the IOC shell command
+bsaAsynDriverConfigure(<asyn port name for BSA>, <path for register space>, <path for dram space>)
 
-    bsaAsynDriverEnable()
-    bsaAsynDriverDisable()
+The driver initialization command must be called after completing the yaml
+loading by yamlLoader driver (item 2.2) and after the BSA name list is built
+(item 2.3).
 
-The bsaAsynDriverConfigure() command enables BSA as a default (backward compatible).
+<asyn port name for BSA> can be any string. This string will be used later to
+configure the other acquisition services and also for the BSA EPICS database
+template.
 
-The enable/disable is introduced for a work around solution for RSSI communication down issue.
-We found RSSI communication is down when bsa driver makes heavy communication load,
-and the communication down causes exception on iocs.
-During the bsa driver is disabled, the firmware still works for bsa and keeps write data into DRAM.
-The software does not check up new data and does not retrieve data from DRAM.
-But, it is not harmful for firmware operation, if the write pointer reach to boundary of buffer,
-the pointer moves back to the start address of the buffer.
+The register path and dram path should be consistent with the yaml files. In
+the example below, ROOT path of hierarchy is NetIODev. The register space is
+located at NetIODev/mmio/AmcCarrierTimingGenerator/AmcCarrierCore/AmcCarrierBsa,
+and the stream dram is located at NetIODev/strm/AmcCarrierDRAM/dram.
 
-
-
-EPICS database template loading:
-
-- the driver module provide epics database template for the BSA history buffer PVs
-- the template has few macros to set up PV name, BSA name and BSA buffer length for the history buffer PVs
-- followings are an example BSA history buffer
-
-  $(DEV):$(SECN)HST<n>          ; BSA history for average value
-  $(DEV):$(SECN)CNTHST<n>       ; number of samples for an average value
-  $(DEV):$(SECN)RMSHST<n>       ; RMS value
-  $(DEV):$(SECN)PIDUHST<n>      ; pulse id upper word
-  $(DEV):$(SECN)PIDLHST<n>      ; pulse id lower word
-
-  $(DEV)         ; macro
-  $(SECN)        ; macro, bsa PV name
-  $(BSAKEY)      ; macro, bsa key, it should be matched with the bsa name string in addBsa()
-
-  $(PORT)        ; macro, asyn port name for bsa driver, should be matched with the port name in the driver initialization
-
-  <n>            ; given instance number / name
-        [0..55]   BSA slot number for general use
-	1H        pre-programmed BSA for 1Hz continuous acquisition
-        TH        pre-programmed BSA for 10Hz continuous acquisition
-        F1        reserved BSA slot for fast feedback
-        F2        reserved BSA slot for fast feedback
-        FLTB0     reserved BSA slot for fault buffer
-        FLTB1     reserved BSA slot for fault buffer
-        FLTB2     reserved BSA slot for fault buffer
-        FLTB3     reserved BSA slot for fault buffer
-
-ex)
-
-# BSA driver DB
-# DEVICE_PREFIX can be, for example:
-# BPM:LI24:123 
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=PIDU,SECN=PIDU")
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=PIDL,SECN=PIDL")
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=TSU,SECN=TSU")
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=TSL,SECN=TSL")
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=RATES,SECN=RATES")
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=BEAMREQ,SECN=BEAMREQ")
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=BEAMNRG01,SECN=BEAMNRG01")
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=BEAMNRG23,SECN=BEAMNRG23")
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=MPSSTAT,SECN=MPSSTAT")
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=MPSCLASS01,SECN=MPSCLASS01")
-
-# PIDL has Slave BSAs
-#
-#   Test Slave Bsa Node
-#
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=pidlSlave0,SECN=PIDLSL0")
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=pidlSlave1,SECN=PIDLSL1")
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=pidlSlave2,SECN=PIDLSL2")
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=pidlSlave3,SECN=PIDLSL3")
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=pidlSlave4,SECN=PIDLSL4")
-dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=pidlSlave5,SECN=PIDLSL5")
+Example:
+bsaAsynDriverConfigure("bsaPort", "mmio/AmcCarrierCore/AmcCarrierBsa","BsaRam/dram")
 
 
+2.4.1 Check 000TopLevel.yaml if bsaAsynDriverConfigure() fails to load
+
+bldstream needs to be defined in the top yaml file. Although it is called
+bldstream, it serves all acquisition services.
+
+# BLD Stream
+bldstream: &bldstream
+  SRP:
+    protocolVersion: SRP_UDP_NONE
+  UDP:
+    port: 8198
+    numRxThreads: *udpThreads
+    threadPriority:  *udpPri
+    pollSecs: 1
+
+#  Inside NetIoDev session
+     bldstream:
+       class: Field
+       at:
+         <<: *bldstream
 
 
-- the database template loading can be located before driver initialization
+2.5 Enable/Disable BSA
+
+After the driver initialization, the BSA can be disabled and enabled anytime
+via the following commands:
+
+bsaAsynDriverEnable()
+bsaAsynDriverDisable()
+
+The bsaAsynDriverConfigure() command (item 2.4) enables BSA by default
+(backward compatible).
+
+The enable/disable was introduced for a work around solution for RSSI
+communication down issue. We found that RSSI communication was down when 
+bsaDriver had a heavy communication load. The communication down caused
+exception on iocs.
+
+When the BSA driver is disabled, the firmware still works for BSA and keeps
+collecting data internally to the carrier board DRAM. On the other hand, the
+software does not check up new data and does not retrieve data from DRAM.
+
+Using bsaAsynDriverDisable is not harmful for the firmware operation. If the
+write pointer reach the boundary of the buffer, the pointer moves back to the
+start address of the buffer.
 
 
+2.6 Linear Conversion
 
-BSA buffer length change and Fault buffer length change
+Usually the signals arrive from the firmware as an integer number that needs
+to be converted to the correct engineering unit.
 
-The BSA buffer length and Fault buffer length are fixed (BSA length: 20000 and Fault buffer length: 1000000)
-We do not suppose, end user need to change it, but the bsaDriver has way to make change the lengths.
+The BSA database template provides slope and offset PVs for each BSA signal
+created by addBsa or addSlaveBsa (bsakey). These PVs affect all acquisition
+services at the same time so the signal can be shown with the right unit
+everywhere.
 
-the buffer lengths is defined in epics ioc shell variables. you cna check up the values as the followings.
-
-example)
-
-    epics>var bsa_length
-    bsa_length = 20000
-    epics>var fltb_length
-    fltb_length = 100000
-
-You can change the variable with "var" command, but you should make change prior than any of BSA driver related command.
-
-example) we are going to make double length for both buffer.
-
-    epics>var bsa_length 40000
-    epics>var fltb_length 2000000
-
-You can also change the waveform length with two macros: BSA_LENGTH, FLTB_LENGTH.
-If you do not specify the macors, these have 20000 and 1000000 as default values.
-
-example)
-
-dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,BSAKEY=PIDU,SECN=PIDU,BSA_LENGTH=40000,FLTB_LENGTH=2000000")
-dbLoadRecords("db/bsa.db", "DEV=TPG2:BSA,PORT=bsaPort,BSAKEY=PIDL,SECN=PIDL,BSA_LENGTH=40000,FLTB_LENGTH=2000000")
-
-
-
-
-
-
-Linear Conversion
-
-BSA database template has slope and offset PVs for each bsa name (bsakey).
-The linear conversion affect the followings:
+The linear conversion affects the following:
 
   bsa_data       = slope * raw_bsa_data + offset
   bsa_rmsa_value = slope * raw_rms_value
 
-
 Slope and Offset PV names are:
 
-  $(DEV):$(SECN)_SLOPE
-  $(DEV):$(SECN)_OFFSET
+  $(DEV):$(SECN)_SLOPE_BSA
+  $(DEV):$(SECN)_OFFSET_BSA
 
-These will be in autosave list.
-The database template bsa.db has default value for SLOPE=1 and OFFSET=0.
-These will be override by the autosave, once the user setting is saved.
+Macros:
+  $(DEV)         ; device PV name
+  $(SECN)        ; signal name as part of the PV name
 
+These are in the autosave list. The database template bsa.db has default value
+for SLOPE=1 and OFFSET=0. These will be overriden by autosave, once the user
+setting is saved.
 
+Example: if the signal name in the PV is TMIT (SECN), consider these default
+values for the PVs
 
+  $(DEV):TMIT_SLOPE_BSA = 1
+  $(DEV):TMIT_OFFSET_BSA = 0
 
--------------------------------------
-Beam Synchronous Scalar Service (BSSS)
---------------------------------------
+Suppose that the firmware collected the BSA buffer 27 with 3 values:
 
-BSSS is implemented as a part of BSA driver in R2.0.0 or later.
-Thus ioc engineer does not need to add up ".dbd" file and library file if the ioc already had BSA.
+  $ caget $(DEV):TMITHST27
+  $(DEV):TMITHST27 3 1000 2000 3000
 
-0. need to define BLD stream in 000TopLevel.yaml
+Now let's change slope and offset:
 
-# BLD Stream
-bldstream: &bldstream
-  SRP:
-    protocolVersion: SRP_UDP_NONE
-  UDP:
-    port: 8198
-    numRxThreads: *udpThreads
-    threadPriority:  *udpPri
-    pollSecs: 1
+  $(DEV):TMIT_SLOPE_BSA = 0.1
+  $(DEV):TMIT_OFFSET_BSA = 32
 
-#  Inside NetIoDev session
-     bldstream:
-       class: Field
-       at:
-         <<: *bldstream
+The new result for the buffer will be:
+
+  $ caget $(DEV):TMITHST27
+  $(DEV):TMITHST27 3 132 232 332
 
 
-1. need to install database template (add folowings in Db/Makefile)
+2.7 Callback Queue Size
 
-DB_INSTALLS += $(BSADRIVER)/db/bsss.db
-DB_INSTALLS += $(BSADRIVER)/db/bsssCtrl.db
+As bsaDriver running all services takes a lot of resources, we need to increase
+the size of the queue. Place this command anywhere before iocInit():
 
-- bsss.db ;  BSSS database template for each BSSS data channel
-- bsssCtrl.db  ; BSSS controls database template 
-
-
-2. load up BSSS control data base template in st.cmd
-example)
-# BSSS Control/Monitoring PVs
-# ${TPR_PREFIX} can be, for example:
-# TPR:LI24:123
-# There's a hidden ${GLOBAL} macro that defaults to TPG:SYS0:1. This matches the
-# dev TPG in B34 and also in production. If you are using a different TPG, you
-# need to redefine ${GLOBAL} with the correct prefix of the TPG.
-# Example: GLOBAL=TPG:B15:1
-dbLoadRecords("db/bsssCtrl.db", "DEV=${TPR_PREFIX},PORT=bsssPort")
+callbackSetQueueSize(12000)
 
 
+*******************************************************************************
+***                        3.  Diagnostic reports                           ***
+*******************************************************************************
 
-3. load up BSSS Scalar PVs (for each channel data)
-example)
-# BSSS Scalar PVs
-# DEVICE_PREFIX can be, for example:
-# BPM:LI24:123 
-dbLoadRecords("db/bsss.db", "DEV=${DEVICE_PREFIX},PORT=bsssPort,BSAKEY=PIDL,SECN=PIDL")
-dbLoadRecords("db/bsss.db", "DEV=${DEVICE_PREFIX},PORT=bsssPort,BSAKEY=PIDU,SECN=PIDU")
-dbLoadRecords("db/bsss.db", "DEV=${DEVICE_PREFIX},PORT=bsssPort,BSAKEY=TSL,SECN=TSL")
-dbLoadRecords("db/bsss.db", "DEV=${DEVICE_PREFIX},PORT=bsssPort,BSAKEY=TSU,SECN=TSU")
-dbLoadRecords("db/bsss.db", "DEV=${DEVICE_PREFIX},PORT=bsssPort,BSAKEY=RATES,SECN=RATES")
-......
-remark) use the same macros what we have used for BSA template. new macro, IDX macro should have a sequencial number from 0
+To check the status of the acquisition services engine. Although the driver is
+called bldStreamDriver, this is the driver that deals with all 4 services: BSA,
+BSSS, BSAS, and BLD. Use this command on the IOC shell:
 
-4. make association with BSA channel, BSSS can use BSA channel defintitions
-Use the following command to make association with BSA channels after bsaAsynDriverConfigure() command
-
-#
-#  Initialize BSSS driver
-#  make assoication with BSA channels: bsssAssociateBsaChannels(<BSA port name>)
-bsssAssociateBsaChannels("bsaPort")
-
-remark) the <BSA port name> should be the smae string id which has been used for bsaASynDriverConfigure()
-
-
-5. configure BSSS driver with the following command
-
-# confiugre BSSS driver: bsssAsynDriverConfigure(<bsss port>, <register path>)
-bsssAsynDriverConfigure("bsssPort", "mmio/AmcCarrierTimingGenerator/AmcCarrierCore/AmcCarrierBsa/Bsss")
-
-remark) the register path sould be different depends application
-
-6. report function
-
-- bldStream
 epics> dbior bldStreamDriver 5
 Driver: bldStreamDriver
         BLD Stream for root_0
-          read size  : 152
-          read count : 959035
-          bld count  : 0
-          bsss count : 959035
-          bld callback : (nil)
-          bld_usr      : (nil)
-          bsss_callback: 0x695970
-          bsss_usr     : 0x275ef50
-          free list    : 0x28a0b70
-                 >>>>valid mask<<<: 7fffffff
-                 timestamp, nsec  : 24b14a1e
-                 timestamp, sec   : 3c48c4ce
-                 pulse id, lower  : 6b18ebbe
-                 pulse id, upper  :     eb11
-                 channel mask     : 7fffffff
-                 service mask     :        3
-
-- serviceAsynDriver
-epics> dbior serviceAsynDriver 1
-Driver: serviceAsynDriver
-named_root: MyRoot0, port: bsssPort, driver instace: 0x14e4b80, number of channels: 31
-named_root: MyRoot0, port: bldPort, driver instace: 0x187f310, number of channels: 31
-
-7. Simple Test
-
-Set up 10Hz fixed rate for SCUD1 (one of user defined rate) and monitor BSSS data and pulse id
-suppose) IOC name                  TPG:SYS2:2      (B84 TPG)
-         BSSS data channel name    ACVADCA         (AC voltage ADC phase A)
-
-
-caput TPG:SYS2:2:SCUD1:RATELIMIT "119Hz"           # set up rate limit to 119Hz
-caput TPG:SYS2:2:SCUD1:RATEMODE  "Fixed Rate"      # choose fixed rate mode
-caput TPG:SYS2:2:SCUD1:FIXEDRATE "10Hz"            # select 10Hz rate
-caput TPG:SYS2:2:SCUD1:DESTMODE  "Disable"         # disable destination, do not care about destination
-caput TPG:SYS2:2:ACVADCABSSSCHNSEVR "Invalid"      # setup max severity to Invalid (no severity filtering) for ACVADCA
-caput TPG:SYS2:2:SCUD1:ENB "Enable"                # Enable SCUD1
-
-# monitor ACVADCA and its pulse id for SCUD1
-
-camonitor -g 16 TPG:SYS2:2:ACVADCASCUD1   TPG:SYS2:2:ACVADCAPIDSCUD1
-TPG:SYS2:2:ACVADCAPIDSCUD1     2022-01-18 17:33:27.608926 258461968689718  
-TPG:SYS2:2:ACVADCASCUD1        2022-01-18 17:33:27.608926 53357  
-TPG:SYS2:2:ACVADCAPIDSCUD1     2022-01-18 17:33:27.706926 258461968780718  
-TPG:SYS2:2:ACVADCASCUD1        2022-01-18 17:33:27.706926 53359  
-TPG:SYS2:2:ACVADCAPIDSCUD1     2022-01-18 17:33:27.804926 258461968871718  
-TPG:SYS2:2:ACVADCASCUD1        2022-01-18 17:33:27.804926 53358  
-TPG:SYS2:2:ACVADCAPIDSCUD1     2022-01-18 17:33:27.902926 258461968962718  
-TPG:SYS2:2:ACVADCASCUD1        2022-01-18 17:33:27.902926 53358  
-TPG:SYS2:2:ACVADCAPIDSCUD1     2022-01-18 17:33:28.000926 258461969053718  
-TPG:SYS2:2:ACVADCASCUD1        2022-01-18 17:33:28.000926 53358  
-TPG:SYS2:2:ACVADCAPIDSCUD1     2022-01-18 17:33:28.098926 258461969144718  
-TPG:SYS2:2:ACVADCASCUD1        2022-01-18 17:33:28.098926 53360  
-TPG:SYS2:2:ACVADCAPIDSCUD1     2022-01-18 17:33:28.196926 258461969235718  
-TPG:SYS2:2:ACVADCASCUD1        2022-01-18 17:33:28.196926 53355  
-TPG:SYS2:2:ACVADCAPIDSCUD1     2022-01-18 17:33:28.294926 258461969326718  
-TPG:SYS2:2:ACVADCASCUD1        2022-01-18 17:33:28.294926 53357  
-
-Timestamp should be aligned between data and PID
-PID interval should be 91000 at 10Hz rate
-
-
-remark) BSSS PV names and descriptions in the following link:
-https://confluence.slac.stanford.edu/display/~khkim/BSSS+PV+Name+List
-
-
-
--------------------------------------
-Beamline data acquisition (BLD)
---------------------------------------
-
-BLD is implemented as a part of BSA driver in R2.5.0 or later.
-Thus ioc engineer does not need to add up ".dbd" file and library file if the ioc already had BSA.
-
-0. need to define BLD stream in 000TopLevel.yaml
---------------------------------------------------
-
-# BLD Stream
-bldstream: &bldstream
-  SRP:
-    protocolVersion: SRP_UDP_NONE
-  UDP:
-    port: 8198
-    numRxThreads: *udpThreads
-    threadPriority:  *udpPri
-    pollSecs: 1
-
-#  Inside NetIoDev session
-     bldstream:
-       class: Field
-       at:
-         <<: *bldstream
-
-
-1. need to install database template (add folowings in Db/Makefile)
---------------------------------------------------
-
-DB_INSTALLS += $(BSADRIVER)/db/bld.db
-DB_INSTALLS += $(BSADRIVER)/db/bldCtrl.db
-
-- bld.db ;  BLD database template for each BLD data channel
-- bldCtrl.db  ; BLD controls database template 
-
-
-2. load up BLD control data base template in st.cmd
---------------------------------------------------
-
-example)
-# BLD Control/Monintoring PVs
-# TPR_PREFIX can be, for example:
-# TPR:LI24:123 
-# There's a hidden ${GLOBAL} macro that defaults to TPG:SYS0:1. This matches the
-# dev TPG in B34 and also in production. If you are using a different TPG, you
-# need to redefine ${GLOBAL} with the correct prefix of the TPG.
-# Example: GLOBAL=TPG:B15:1
-dbLoadRecords("db/bldCtrl.db", "DEV=${TPR_PREFIX},PORT=bldPort")
-
-
-
-3. load up BLD Scalar PVs (for each channel data)
---------------------------------------------------
-
-example)
-# BLD Scalar PVs
-# DEVICE_PREFIX can be, for example:
-# BPM:LI24:123 
-dbLoadRecords("db/bld.db", "DEV=${DEVICE_PREFIX},PORT=bldPort,BSAKEY=PIDL,SECN=PIDL")
-dbLoadRecords("db/bld.db", "DEV=${DEVICE_PREFIX},PORT=bldPort,BSAKEY=PIDU,SECN=PIDU")
-dbLoadRecords("db/bld.db", "DEV=${DEVICE_PREFIX},PORT=bldPort,BSAKEY=TSL,SECN=TSL")
-dbLoadRecords("db/bld.db", "DEV=${DEVICE_PREFIX},PORT=bldPort,BSAKEY=TSU,SECN=TSU")
-dbLoadRecords("db/bld.db", "DEV=${DEVICE_PREFIX},PORT=bldPort,BSAKEY=RATES,SECN=RATES")
-......
-remark) use the same macros what we have used for BSA template. 
-
-4. make association with BSA channel 
---------------------------------------------------
-
-BLD can use BSA channel definitions. Use the following command to make association with BSA channels after bsaAsynDriverConfigure() command
-
-#
-#  Initialize BLD driver
-#  make assoication with BSA channels: bldAssociateBsaChannels(<BSA port name>)
-bldAssociateBsaChannels("bsaPort")
-
-remark) the <BSA port name> should be the smae string id which has been used for bsaASynDriverConfigure()
-
-5. configure BLD driver with the following command
---------------------------------------------------
-
-# configure BLD driver: bldAsynDriverConfigure(<bld port>, <register path>, <payload pva basename>)
-bldAsynDriverConfigure("bldPort", "mmio/AmcCarrierCore/AmcCarrierBsa/Bld", "TST:SYS2:04")
-
-remark) the register path should be different depending on the application
-
-In case the BSAKEY is not desired to be used in the name/type PVA, a name for the BLD channel can
-be created using the following function.
-
-bldChannelName(<BSAKEY>,   <NAME/ALIAS>)
-
-Example)
-bldChannelName("YFIXEDPAMC1",   "POSY")
-
-6. Report function
---------------------------------------------------
-
-- bldStream
-epics>dbior bldStreamDriver 5
-Driver: bldStreamDriver
-        BLD Stream for MyRoot0
-          read size  : 768
-          read count : 7960928
-          bld count  : 7695234
-          bsss count : 1131
-          bsas count : 193179
-          bld callback : 0x62e5c0
-          bld_usr      : 0x187f310
-          bsss_callback: 0x62e370
-          bsss_usr     : 0x14e4b80
-          bsas_callback: 0x631710
-          bsas_usr     : 0x18a3930
-          free list    : 0x16a8780
-          bld  callback processing (usec): snapshot   15.496, min   14.167, max   39.318
-          bsss callback processing (usec): snapshot 1074.218, min  968.287, max 4042.424
-          bsas callback processing (usec): snapshot    5.948, min    4.807, max 1241.223
+          read size  : 48
+          read count : 44
+          bld count  : 20
+          bsss count : 0
+          bsas count : 20
+          else count : 0
+          overrun    : 0
+          bld callback : 0x741d40
+          bld_usr      : 0x14909a0
+          bsss_callback: 0x741a60
+          bsss_usr     : 0x104f6c0
+          bsas_callback: 0x747ce0
+          bsas_usr     : 0x147dba0
+          free list    : 0x1041ec0
+          bldQueue[0]
+                 name of thread: bldQ0_root_0
+                 pending count : 0
+                 water mark    : 0
+                 fail  count   : 0
+                 overrun count : 0
+          bsssQueue[0]
+                 name of thread: bsssQ0_root_0
+                 pending count : 0
+                 water mark    : 0
+                 fail  count   : 0
+                 overrun count : 0
+          bsasQueue[0]
+                 name of thread: bsasQ0_root_0
+                 pending count : 0
+                 water mark    : 0
+                 fail  count   : 0
+                 overrun count : 0
                  --------------------------------
-                 BSSS Packet: size(768)
+                 BSAS Packet: size(48)
                  --------------------------------
-                 timestamp, nsec  : 13f39b57
-                 timestamp, sec   : 3d9550d1
-                 pulse id, lower  : 4e45bad3
-                 pulse id, upper  :     fded
-                 channel mask     : 7fffffff
-                 service mask     : 801e033d
-                 severity mask    :   b9098100b90981
-                 --------------------------------
-                 BSAS Packet: size(768)
-                 --------------------------------
-                 timestamp (64bit): 3d9550d114892497
-                 pulse id  (64bit):     fded4e45de5f
-                 channel mask     : 7fffffff
-                 row number       : 839
-                 table_count      : 14
-                 edef_index       : 0
-                 byte pad (0x80)  : 80
+                 timestamp (64bit)  :    18d7b15752e3f
+                 pulse id  (64bit)  :       15ffdf0880
+                 channel mask       :        8
+                 row number         : 0
+                 table_count        : 6
+                 edef_index         : 0
+                 byte pad           :  0
+                 service mask (0x80):  8
                  PL CH    CNT EVL ESQ FIX     VAL       SUM       SQUARE      MIN      MAX
                  -------------------------------------------------------------------------
-                  0  0      1   N   N   N    1de5f    1de5f    37de6e741    1de5f    1de5f
-                  1  1      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
-                  2  2      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
-                  3  3      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
-                  4  4      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
-                  5  5      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
-                  6  6      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
-                  7  7      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
-                  8  8      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
-                  9  9      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
-                 10 10      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
-                 11 11      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
-                 12 12      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
-                 13 13      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
-                 14 14      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
-                 15 15      1   N   N   N    12d0d    12d0d    1620792a9    12d0d    12d0d
-                 16 16      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
-                 17 17      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
-                 18 18      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
-                 19 19      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
-                 20 20      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
-                 21 21      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
-                 22 22      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
-                 23 23      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
-                 24 24      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
-                 25 25      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
-                 26 26      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
-                 27 27      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
-                 28 28      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
-                 29 29      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
-                 30 30      0   N   E   F   b92d0d        0            0   b92d0d   b92d0d
+                  0  3      1   N   N   N      38b      38b        c8d79      38b      38b
                  --------------------------------
-                 BLD Packet: size(156)
+                 BLD Packet: size(40)
                  --------------------------------
-                 timestamp        : 3d9550d1149818b7
-                 pulse ID         :     fded4e45e1ed
-                 channel mask     :         7fffffff
-                 service mask     :          8000000
-                 Chan. data found :               31
-                 Severity mask    : 3faa5500ffaa5500
+                 timestamp        :    18d7b15752e3f
+                 pulse ID         :       15ffdf0880
+                 channel mask     :               88
+                 service mask     :         20000003
+                 Chan. data found :               2
+                 Severity mask    : 3fffffff33333333
 
 
-- serviceAsynDriver
 epics> dbior serviceAsynDriver 1
 Driver: serviceAsynDriver
-named_root: MyRoot0, port: bsssPort, driver instace: 0x14e4b80, number of channels: 31
-named_root: MyRoot0, port: bldPort, driver instace: 0x187f310, number of channels: 31
+named_root: root_0, port: bsssPort, driver instace: 0x104f6c0, number of channels: 14
+named_root: root_0, port: bldPort, driver instace: 0x14909a0, number of channels: 14
 
 
-7. Slope and offset
---------------------------------------------------
+*******************************************************************************
+***                           4. Timing filters                             ***
+*******************************************************************************
 
-The slope and offset for BLD are those of the BSA as mentioned earlier.
+In normal conducting timing, using the EVG (Event Generator), you would select
+the acquisition frequency by using EDEFs (Event Definitions). The correspondent
+of it for the superconducting timing TPG (Timing Pattern Generator) is called
+the timing filter.
 
-  $(DEV):$(SECN)_SLOPE
-  $(DEV):$(SECN)_OFFSET
+Timing filters are a way of configuring a frequency and applying a few filters
+to it, like the destination where the electron bunch is sent to. Timing filters
+are used not only by the acquisition services, but also by the configuration of
+triggers. So, explaining its configuration is out of scope of this README.
 
-8. Simple Test
---------------------------------------------------
+There's a good introductory text on this Confluence page: 
+https://confluence.slac.stanford.edu/x/4wVwFg. Check for the section related
+to timing filters.
 
-All BLD EDEFs are system EDEFs. They should automatically get their configuration from the global PVs.
 
-Nonetheless, the user still need to perform the following settings
+*******************************************************************************
+***       5. Database macro conventions for all acquisition services        ***
+*******************************************************************************
 
-caput TST:SYS2:04:SCHBR:MULT_PORT 50000
-caput TST:SYS2:04:SCHBR:MULT_ADDR 239.255.4.3
-caput TST:SYS2:04:BLD_CTRL:ENB "Enable"            # Enabling BLD functionality in IOC
+In all available READMEs, when describing EPICS databases, we mention a
+DEVICE_PREFIX and a TPR_PREFIX.
 
-Now you should be able to capture the outgoing BLD packets using tcpdump
->>  /usr/sbin/tcpdump -i <interface> port 50000
-To see the contents of the packet, run
->>  /usr/sbin/tcpdump -X -i <interface> port 50000
+By DEVICE_PREFIX we mean the traditional combination of DEVICE:AREA:LOCA.
 
-The channel types in the packets are reflected by the pv access PV <payload pva basename>:BLD_PAYLOAD
-To uncover the correct full name, use the following command from the IOC terminal
-IOCSHELL> pvxsl
-<payload pva basename>:BLD_PAYLOAD
+Some systems may contain multiple DEVICE_PREFIX in the same IOC. Say the MPS
+system, for example. Below is a real list of DEVICE_PREFIX for one IOC in
+production:
 
-To examine its content, you can run from a linux terminal
-pvinfo <payload pva basename>:BLD_PAYLOAD
+CBLM:UNDH:4575
+CBLM:UNDH:4676
+BEND:DMPH:395
+PBLM:DMO0:846:AH
+PBLM:LTUS:846:AH
+PBLM:LTUH:846:AH
+ 
+bsaDriver provides a few EPICS database files which generate PVs that are
+unique for the entire IOC. In this case the question is inevitable? Which
+prefix should I use? CBLM:UNDH:4575? PBLM:DMO0:846:AH?
 
-remark) BLD PV names and descriptions in the following link:
-https://confluence.slac.stanford.edu/pages/viewpage.action?spaceKey=~carolina&title=BLD+PVs
+You see that none of them makes sense. For these cases a new prefix is needed.
+One that is unique throughout the IOC. We are calling it TPR_PREFIX.
 
--------------------------------------------
-Beam Synchronous Acquisition Service (BSAS)
--------------------------------------------
+MPS could use, for example,
 
-BSAS (Beam Synchronous Acquisition Service) provides timestamp and pulse id aligned waveform data to the high-level application.
-The BSAS uses NTTable PV to make a structured data format:
+TPR:DMO0:MP01:1
 
-- There are multiple rows in the NTTable, all of data in a row aligned with a specific timestamp and pulse id
-- There are multiple columns in the NTTable PV: timestamp-seconds, timestamp-nonoseconds, pulse id and data column.
-  the number of data columns can be configurable and varies for different iocs.
-- Each data channel have 5 columns
-    .CNT: number of accumulated samples in the row
-          for statstical data      .CNT >= 2
-          for non-statistical data .CNT = 1
-    .VAL: delegate sample (very first sample in the row for the statistical data)
-    .AVG: arithmetic mean of the samples
-    .RMS: standard deviation of the samples
-    .MIN: minimum of the samples
-    .MAX: maximum of the samples
-- There are 4 of NTTable PVs which can be configured independently for different destinations and different rates
-- The acquisition rate, number of samples for statistical data in a row, number rows and update rate for NTTable can be configured by BSAS rate control PVs
 
-Remarks) please, check up the following slide deck for the BSAS design amd impelmentation details
+*******************************************************************************
+***                        6. Severity masks                                ***
+*******************************************************************************
 
-https://1drv.ms/p/s!AsH0Qpew48nUh7xfkO4-X_lMj48VmA?e=6Ea8FP
+Some of the databases provide a way of setting a severity mask. Signals coming
+from the firmware are classified according to a severity, similiar to alarm
+severities from EPICS. Each severity type has a weight:
 
-Please, check up the following confluence page
+None < Minor < Major < Invalid
 
-https://confluence.slac.stanford.edu/display/~khkim/BSAS+Driver+Configuration+and+Control+PVs
+For all services you can determine that data with a given severity is
+discarded. If the severity of the data is less than or equal to the chosen
+severity mask, the data is accepted by the acquisition service. Otherwise, it
+is thrown away.
 
+In summary, the rule is:
 
-0. Build application with PVXS and QSRV
-----------------------------------------
+Data accepted if:
+    data severity in firmware <= severity mask
 
-BSAS uses NTTable to expose the strcutred data, it requires to build with PVXS and QSRV
+Example 1:
+Data in firmware is classified as Major.
+Severity mask is None.
 
-- configure/RELEASE.local
-PVXS_MODULE_VERSION  = R0.3.1-0.0.1
-PVXS                 =$(EPICS_MODULES)/pvxs/$(PVXS_MODULE_VERSION)
+Major > None ==> data rejected
 
-- src/Makefile
-# ===========================================
-# EPICS 7 PVXS support
-# Order of the two libraries is important:
-# ===========================================
-<your application>_LIBS += pvxsIoc
-<your application>_LIBS += pvxs
-<your application>_DBD  += pvxsIoc.dbd
-# ===========================================
+Example 2:
+Data in firmware is classified as Minor.
+Severity mask is Invalid.
 
-# ===================================================
-# Include Support for EPICS version 7
-# Link QSRV (pvAccess Server) if available
-# ===================================================
-<your application>_LIBS += qsrv
-<your application>_LIBS += $(EPICS_BASE_PVA_CORE_LIBS)
-<your applicaiton>_DBD  += PVAServerRegister.dbd
-<your application>_DBD  += qsrv.dbd
+Minor <= Invalid ==> data accepted
 
+In other words, if Invalid is used for the severity mask, any data will be
+accepted.
 
 
-1. How to install BSAS database templates
------------------------------------------
+*******************************************************************************
+***         7. Configuration of individual acquisition services             ***
+*******************************************************************************
 
-Put the followings into the Db/Makefile
+BSA, BSSS, BSAS, and BLD configuration are described in specific readme files:
 
-DB_INSTALLS += $(BSADRIVER)/db/bsas.db         # channel control tempalte (enable/disable channel, severity filtering for channel), need to load up for each data channels
-DB_INSTALLS += $(BSADRIVER)/db/bsasCtrl.db     # rate control template, work with global PVs
-
-
-2. load BSAS rate control template in st.cmd
----------------------------------------------
-
-# BSAS Destination/Rates Control PVs
-# TPR_PREFIX can be, for example:
-# TPR:LI24:123 
-# There's a hidden ${GLOBAL} macro that defaults to TPG:SYS0:1. This matches the
-# dev TPG in B34 and also in production. If you are using a different TPG, you
-# need to redefine ${GLOBAL} with the correct prefix of the TPG.
-# Example: GLOBAL=TPG:B15:1
-dbLoadRecords("db/bsasCtrl.db", "DEV=${TPR_PREFIX},PORT=bsasPort")
-
-
-
-3. load BSAS channel control (enable/disable, channel filtering) template in st.cmd
------------------------------------------------------------------------------------
-
-# BSAS Severity Filtering for Each channel
-# TPR_PREFIX can be, for example:
-# TPR:LI24:123 
-dbLoadRecords("db/bsas.db", "DEV=${DEVICE_PREFIX},PORT=bsasPort,BSAKEY=PIDL,SECN=PIDL")
-dbLoadRecords("db/bsas.db", "DEV=${DEVICE_PREFIX},PORT=bsasPort,BSAKEY=PIDU,SECN=PIDU")
-dbLoadRecords("db/bsas.db", "DEV=${DEVICE_PREFIX},PORT=bsasPort,BSAKEY=TSL,SECN=TSL")
-dbLoadRecords("db/bsas.db", "DEV=${DEVICE_PREFIX},PORT=bsasPort,BSAKEY=TSU,SECN=TSU")
-dbLoadRecords("db/bsas.db", "DEV=${DEVICE_PREFIX},PORT=bsasPort,BSAKEY=RATES,SECN=RATES")
-
-
-4. make association with BSA to inherit the BSA data channels
--------------------------------------------------------------
-
-#
-#  Initialize BSSS driver
-#  make assoication with BSA channels: bsssAssociateBsaChannels(<BSA port name>)
-bsssAssociateBsaChannels("bsaPort")
-
-
-5. make mapping between data channel and base name
---------------------------------------------------
-
-The base name will be used for the column lable in the NTTable
-ex) column lable will be <base_name>.CNT, <base_name>.VAL, <base_name>.AVG, <base_name>.RMS, <base_name>.MIN, <base_name>.MAX
-
-
-#  base name assign for the BSAS channels
-# DEVICE_PREFIX can be, for example:
-# BPM:LI24:123 
-#  bsasBaseName(<BSAS data channel, BsaKey>, <base PV name>)
-bsasBaseName("PIDL",    "${DEVICE_PREFIX}:PIDL")
-bsasBaseName("PIDU",    "${DEVICE_PREFIX}:PIDLU")
-bsasBaseName("TSL",     "${DEVICE_PREFIX}:TSL")
-bsasBaseName("TSU",     "${DEVICE_PREFIX}:TSU")
-bsasBaseName("RATES",   "${DEVICE_PREFIX}:RATES")
-
-
-6. configure BSAS driver
-------------------------
-
-# configure BSAS driver: bsasAsynDriverConfigure(<bsas port>, <register path>, <NTTable PV1>, <NTTable PV2>, <NTTable PV3>, <NTTable PV4>, [named_root (optional)])
-# remarks) ioc shell does NOT allow multiple-line input for a command, thus, we need to list up all of the arguments in a sngle line
-# DEVICE_PREFIX can be, for example:
-# BPM:LI24:123 
-bsasAsynDriverConfigure("bsasPort", "mmio/AmcCarrierCore/AmcCarrierBsa/Bsas", "${DEVICE_PREFIX}:NTTBL1", "${DEVICE_PREFIX}:NTTBL2", "${DEVICE_PREFIX}:NTTBL3","${DEVICE_PREFIX}:NTTBL4" )
-
-
-
-7. Programming NTTable rate
----------------------------
-Please, check up the slide deck above to understand the rate control operation
-
-8. checking up BSAS driver status
----------------------------------
-
-ex) use dbior() command on the ioc shell
-
-sioc-b084-ts02>dbior bldStreamDriver 1
-Driver: bldStreamDriver
-        BLD Stream for MyRoot0
-          read size  : 768
-          read count : 11785893
-          bld count  : 0
-          bsss count : 118033
-          bsas count : 11667845
-          bld callback : (nil)
-          bld_usr      : (nil)
-          bsss_callback: 0x8136a0
-          bsss_usr     : 0x13d9dd0
-          bsas_callback: 0x8165a0
-          bsas_usr     : 0x152bf60
-          free list    : 0x14b8660
-          bld  callback processing (usec): snapshot    0.000, min    0.000, max    0.000
-          bsss callback processing (usec): snapshot  553.818, min  444.024, max 1122.685
-          bsas callback processing (usec): snapshot    3.097, min    0.694, max 1461.080
-                 --------------------------------
-                 BSSSS Packet: size(156)
-                 --------------------------------
-                 timestamp, nsec  :  dff5c81
-                 timestamp, sec   : 3ce80602
-                 pulse id, lower  : 2f2da330
-                 pulse id, upper  :     f499
-                 channel mask     : 7fffffff
-                 service mask     :        1
-                 severity mask    : 3faa5500ffaa5500
-                 --------------------------------
-                 BSAS Packet: size(768)
-                 --------------------------------
-                 timestamp (64bit): 3ce806020f396321
-                 pulse id  (64bit):     f4992f2dedd6
-                 channel mask     : 7fffffff
-                 row number       : 821
-                 table_count      : 0
-                 edef_index       : 0
-                 byte pad (0x80)  : 80
-                 PL CH    CNT EVL ESQ FIX     VAL       SUM       SQUARE      MIN      MAX
-                 -------------------------------------------------------------------------
-                  0  0      1   N   E   N 2f2dedd6  f2dedd6    3b8a1eee4 2f2dedd6 2f2df163
-                  1  1      1   E   E   N 809359f4   9359f4     6bb39090 809359f4 80935d81
-                  2  2      1   N   E   N  11359f4  11359f4     6bb39090  11359f4  1135d81
-                  3  3      1   E   E   N 819359f4  19359f4     6bb39090 819359f4 81935d81
-                  4  4      1   N   E   N  21359f4  21359f4     6bb39090  21359f4  2135d81
-                  5  5      1   E   E   N 829359f4  29359f4     6bb39090 829359f4 82935d81
-                  6  6      1   N   E   N  31359f4  31359f4     6bb39090  31359f4  3135d81
-                  7  7      1   E   E   N 839359f4  39359f4     6bb39090 839359f4 83935d81
-                  8  8      1   N   E   N  41359f4  41359f4     6bb39090  41359f4  4135d81
-                  9  9      1   E   E   N 849359f4  49359f4     6bb39090 849359f4 84935d81
-                 10 10      1   N   E   N  51359f4  51359f4     6bb39090  51359f4  5135d81
-                 11 11      1   E   E   N 859359f4  59359f4     6bb39090 859359f4 85935d81
-                 12 12      1   N   E   N  61359f4  61359f4     6bb39090  61359f4  6135d81
-                 13 13      1   E   E   N 869359f4  69359f4     6bb39090 869359f4 86935d81
-                 14 14      1   N   E   N  71359f4  71359f4     6bb39090  71359f4  7135d81
-                 15 15      1   E   E   N 879359f4  79359f4     6bb39090 879359f4 87935d81
-                 16 16      0   N   E   F  81359f4        0            0  81359f4  8135d81
-                 17 17      0   E   E   F 889359f4        0            0 889359f4 88935d81
-                 18 18      0   N   E   F  91359f4        0            0  91359f4  9135d81
-                 19 19      0   E   E   F 899359f4        0            0 899359f4 89935d81
-                 20 20      0   N   E   F  a1359f4        0            0  a1359f4  a135d81
-                 21 21      0   E   E   F 8a9359f4        0            0 8a9359f4 8a935d81
-                 22 22      0   N   E   F  b1359f4        0            0  b1359f4  b135d81
-                 23 23      0   E   E   F 8b9359f4        0            0 8b9359f4 8b935d81
-                 24 24      0   N   E   F  c1359f4        0            0  c1359f4  c135d81
-                 25 25      0   E   E   F 8c9359f4        0            0 8c9359f4 8c935d81
-                 26 26      0   N   E   F  d1359f4        0            0  d1359f4  d135d81
-                 27 27      0   E   E   F 8d9359f4        0            0 8d9359f4 8d935d81
-                 28 28      0   N   E   F  e1359f4        0            0  e1359f4  e135d81
-                 29 29      0   E   E   F 8e9359f4        0            0 8e9359f4 8e935d81
-                 30 30      0   N   E   F  f1359f4        0            0  f1359f4  f135d81
-sioc-b084-ts02>
-
-
-9. read out NTTtable
---------------------
-
-- get pv list in a host
-  pvlist <host>
-
-ex)
-khkim@lcls-dev3 ~ $ pvlist cpu-b084-sp18
-TST:SYS2:4:NTTBL1
-TST:SYS2:4:NTTBL2
-TST:SYS2:4:NTTBL3
-TST:SYS2:4:NTTBL4
-
-
-- check up pv structure
-  pvinfo <pv name, NTTable PV name>
-ex)
-khkim@lcls-dev3 ~ $ pvinfo TST:SYS2:4:NTTBL1
-TST:SYS2:4:NTTBL1
-Server: 134.79.217.42:5075
-Type:
-    epics:nt/NTTable:1.0
-        string[] labels
-        structure value
-            uint[] secondsPastEpoch
-            uint[] nanoseconds
-            ulong[] pulseId
-            uint[] pv0_cnt
-            double[] pv0_val
-            double[] pv0_avg
-            double[] pv0_rms
-            double[] pv0_min
-            double[] pv0_max
-            uint[] pv1_cnt
-            double[] pv1_val
-            double[] pv1_avg
-            double[] pv1_rms
-            double[] pv1_min
-            double[] pv1_max
-            uint[] pv2_cnt
-            double[] pv2_val
-            double[] pv2_avg
-            double[] pv2_rms
-            double[] pv2_min
-            double[] pv2_max
-
-
-            uint[] pv30_cnt
-            double[] pv30_val
-            double[] pv30_avg
-            double[] pv30_rms
-            double[] pv30_min
-            double[] pv30_max
-
-
-- get data from the NTTable PV
-  pvget <pv name, NTTable PV name>
-
-ex)
-  pvget TST:SYS2:4:NTTBL1
-
-
-
-
-
-
-
-
-# End of file
+BSA - README.bsa_only
+BSSS - README.bsss_only
+BSAS - README.bsas_only
+BLD - README.bld_only
+
+
+*******************************************************************************
+***                        8. Example st.cmd                                ***
+*******************************************************************************
+
+An example st.cmd is available at README.example_st_cmd

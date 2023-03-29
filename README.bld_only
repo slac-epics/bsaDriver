@@ -1,0 +1,219 @@
+1. Introduction
+----------------------------------------------------------------
+
+BLD is implemented as a part of bsaDriver at R2.5.0 or later.
+
+BLD stands form BeamLine Data and is a service used by the experimental
+stations.
+
+BLD doesn't provide PVs with the final data, as it happens with BSA, BSSS, and
+BSAS. Instead, all data received from the ATCA is sent directly to a multicast
+network. Instead of using caget or pvget, clients that want to read the data
+need to register for the multicast channel and keep listening to the network
+until new data arrives.
+
+The BLD packets follow a well defined format and clients need to follow the
+same format when receiving data from the multicast network.
+
+
+2. Automatically copy the list of BSA signals made previously with addBsa() and
+addSlaveBsa() to BLD:
+-------------------------------------------------------------------------------
+
+Use the bldAssociateBsaChannels to make the association with BSA channels.
+This command needs to be called anywhere after the bsaAsynDriverConfigure()
+command, already explained in the main README file.
+
+#  Initialize BLD driver
+#  make association with BSA channels: bldAssociateBsaChannels(<BSA port name>)
+bldAssociateBsaChannels("bsaPort")
+
+*Remark*: the <BSA port name> should be the same string id which was used for 
+bsaAsynDriverConfigure()
+
+
+3. Configure BLD driver
+-----------------------
+
+The BLD driver provides and EPICS 7 structured PV that shows what is the BLD
+packet content for interested clients. Its PV name is hardcoded as
+<PREFIX>:BLD_PAYLOAD. More about this later.
+
+This structured PV is completely created with C++ code. There's no EPICS
+database with macro substitution to load from. When configuring the BLD
+driver, the PV prefix need to be defined.
+
+As the BLD_PAYLOAD PV is unique for the IOC, independent of how many devices
+the IOC controls, we conventioned that the prefix will be the TPR prefix.
+
+# TPR_PREFIX can be, for example:
+# TPR:GUNB:BP01:1
+# configure BLD driver: bldAsynDriverConfigure(<bld port>, <register path>, <payload pv prefix>)
+bldAsynDriverConfigure("bldPort", "mmio/AmcCarrierCore/AmcCarrierBsa/Bld", "${TPR_PREFIX}")
+
+<bld port> can be any string you see fit.
+
+*Remark*: the register path may be different from the example above. It depends
+on the application. The example, though, will probably fit most applications.
+
+
+4. Configure the signal names in the BLD_PAYLOAD PV:
+----------------------------------------------------
+
+By default, the signal names shown by the BLD_PAYLOAD PV use the BSA key as
+they were defined when using addBsa() and addSlaveBsa() (see the main README
+file).
+
+If the default name is not adequate, another name can be configure with the
+command:
+
+bldChannelName(<BSAKEY>,   <NAME/ALIAS>)
+
+Example:
+bldChannelName("YFIXEDPAMC1",   "Y")
+
+
+5. Slope and offset
+-------------------
+
+The same PVs used for the linear conversion mentioned in item 2.6 of the main
+README is applied to the signals delivered by the BLD. To be clear, when
+configuring slope/offset for BSA, it will also affect BLD.
+
+If this is not a desired behavior, there's an optional third argument for the
+addBsa() command. If this argument is 1, BLD will ignore slope and offset. 
+
+This was already explained in item 2.3 of the main README.
+ 
+
+6. Load BLD rate control template in st.cmd
+---------------------------------------------
+
+This database provides:
+- a PV to stop the BLD service locally.
+- PVs with diagnostic data from the firmware.
+- PVs used for timing filtering. These PVs are not meant to be altered locally
+and should not be shown to the user on the GUIs. These PVs are tied to the
+TPG support IOC application with the DOL and OMSL record fields.
+There's a hidden ${GLOBAL} macro that defaults to TPG:SYS0:1. This matches the
+dev TPG in B34 and also in production. If you are using a different TPG, you
+need to redefine ${GLOBAL} with the correct prefix of the TPG.
+Example: GLOBAL=TPG:B15:1
+
+Example:
+# BLD Control/Monintoring PVs
+# TPR_PREFIX can be, for example:
+# TPR:GUNB:BP01:1 
+dbLoadRecords("db/bldCtrl.db", "DEV=${TPR_PREFIX},PORT=bldPort")
+
+Here's how one of the PVs will result with this example:
+
+TPR:LI24:BP01:1:BLD_CTRL    ->  Enable/disable the BLD service locally.
+TPR:LI24:BP01:1:BLD_PKTSZ   ->  Change the packet size from the firmware to
+                                the software. This indirectly controls the
+                                packet size from the software to the multicast
+                                network. This is important if the multicast
+                                network can't handle jumbo frames and need the
+                                packet size to be reduced.
+TPR:LI24:BP01:1:BLD_LOCAL   ->  Disconnects from the global PVs from the TPG
+                                support IOC. This is to be used in case you
+                                want to test specific timing filters
+                                independent of what is configured in TPG.
+                                Activating the BLD_LOCAL PV will bring a major
+                                alarm so you don't forget to bring it back to
+                                Global after the tests.
+
+All other PVs in this database are the controls of 12 timing filters which are
+all integrated with the global control from the TPG Support IOC and diagnostic
+PVs used by the timing engineers.
+
+
+7. Load up BLD Scalar PVs (for each signal)
+-------------------------------------------
+
+This database provides a mechanism to enable/disable and to select severity
+for each signal individually.
+
+Examples of prefixes:
+DEVICE1_PREFIX = BPM:GUNB:123
+DEVICE2_PREFIX = BPM:GUNB:345
+
+# BLD Severity Filtering for each signal
+dbLoadRecords("db/bld.db", "DEV=${DEVICE1_PREFIX},PORT=bldPort,BSAKEY=TMITAMC0,SECN=TMIT")
+dbLoadRecords("db/bld.db", "DEV=${DEVICE1_PREFIX},PORT=bldPort,BSAKEY=XFIXEDPAMC0,SECN=X")
+dbLoadRecords("db/bld.db", "DEV=${DEVICE1_PREFIX},PORT=bldPort,BSAKEY=YFIXEDPAMC0,SECN=Y")
+
+dbLoadRecords("db/bld.db", "DEV=${DEVICE2_PREFIX},PORT=bldPort,BSAKEY=TMITAMC1,SECN=TMIT")
+dbLoadRecords("db/bld.db", "DEV=${DEVICE2_PREFIX},PORT=bldPort,BSAKEY=XFIXEDPAMC1,SECN=X")
+dbLoadRecords("db/bld.db", "DEV=${DEVICE2_PREFIX},PORT=bldPort,BSAKEY=YFIXEDPAMC1,SECN=Y")
+
+This will result in:
+
+BPM:GUNB:123:TMITBLDCHNMASK
+BPM:GUNB:123:TMITBLDCHNSEVR
+BPM:GUNB:123:XBLDCHNMASK
+BPM:GUNB:123:XBLDCHNSEVR
+BPM:GUNB:123:YBLDCHNMASK
+BPM:GUNB:123:YBLDCHNSEVR
+
+BPM:GUNB:345:TMITBLDCHNMASK
+BPM:GUNB:345:TMITBLDCHNSEVR
+BPM:GUNB:345:XBLDCHNMASK
+BPM:GUNB:345:XBLDCHNSEVR
+BPM:GUNB:345:YBLDCHNMASK
+BPM:GUNB:345:YBLDCHNSEVR
+
+
+8. Configuration of multicast IP and port
+-----------------------------------------
+
+BLD allow the configuration of 4 different timing filters. Although the PVs
+reside on the IOC, the records are connected to a central IOC using the DOL and
+OMSL fields of each record. This guarantees that all IOCs running BLD will run
+with the same timing filter.
+
+The central configuration is done at the TPG Support IOC and there's a team
+that decides how to configure each of the four available filters. There are no
+user defined filters, like in BSA and BSSS.
+
+Nonetheless, the user still need to configure the multicast IP and port per
+timing filter as the IP and port are different for each IOC.
+
+Example using TPR_PREFIX = TPR:GUNB:BP01:1 
+
+caput TPR:GUNB:BP01:1:BLD1_MULT_PORT 51000
+caput TPR:GUNB:BP01:1:BLD1_MULT_ADDR 239.255.4.3
+
+caput TPR:GUNB:BP01:1:BLD2_MULT_PORT 52000
+caput TPR:GUNB:BP01:1:BLD2_MULT_ADDR 239.255.4.3
+
+caput TPR:GUNB:BP01:1:BLD3_MULT_PORT 53000
+caput TPR:GUNB:BP01:1:BLD3_MULT_ADDR 239.255.4.3
+
+caput TPR:GUNB:BP01:1:BLD4_MULT_PORT 54000
+caput TPR:GUNB:BP01:1:BLD4_MULT_ADDR 239.255.4.3
+
+
+9. Simple test
+--------------
+
+Now you should be able to capture the outgoing BLD packets using tcpdump
+
+>>  /usr/sbin/tcpdump -i <interface> port 52000
+
+To see the contents of the packet, run
+>>  /usr/sbin/tcpdump -X -i <interface> port 52000
+
+As mentioned before, the channel types in the packets are reflected by the PV 
+${TPR_PREFIX}:BLD_PAYLOAD. To uncover the correct full name, use the following
+command from the IOC terminal:
+
+IOCSHELL> pvxsl
+TPR:GUNB:BP01:1:BLD_PAYLOAD
+
+To examine the BLD packet content, you can run from a linux terminal, for 
+example:
+$ pvinfo TPR:GUNB:BP01:1:BLD_PAYLOAD
+
+Remark: BLD PV names and descriptions are in the following link:
+https://confluence.slac.stanford.edu/pages/viewpage.action?spaceKey=~carolina&title=BLD+PVs

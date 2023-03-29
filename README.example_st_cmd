@@ -1,0 +1,218 @@
+#!../../bin/linuxRT-x86_64/bpm
+ 
+< envPaths
+ 
+epicsEnvSet("TPR_PREFIX", "TPR:GUNB:BP01:1")
+epicsEnvSet("DEVICE1_PREFIX", "BPM:GUNB:123")
+epicsEnvSet("DEVICE2_PREFIX", "BPM:GUNB:345")
+ 
+epicsEnvSet("FPGA_IP", "10.0.1.103")
+epicsEnvSet("YAML_DIR", "${IOC_DATA}/${IOC}/yaml")
+epicsEnvSet("TOP_YAML", "${YAML_DIR}/000TopLevel.yaml")
+epicsEnvSet("YAML_CONFIG_FILE", "${YAML_DIR}/config/defaults_cc.yaml")
+ 
+ 
+# ===========================================
+#              CPSW SETUP
+# ===========================================
+ 
+## Download yaml file from FPGA to $YAML_DIR
+DownloadYamlFile("${FPGA_IP}", "${YAML_DIR}")
+ 
+# Read and interpret yaml files that were downloaded before
+cpswLoadYamlFile("${TOP_YAML}", "NetIODev", "", "${FPGA_IP}")
+ 
+# Load configuration to disable BSA/BLD/BSSS/BSAS on boot
+cpswLoadConfigFile("${YAML_DIR}/config/disable_bld_bsss_bsas.yaml", "mmio/AmcCarrierCore/AmcCarrierBsa")
+ 
+# Load device local configurations
+cpswLoadConfigFile("${YAML_CONFIG_FILE}", "mmio", "")
+ 
+ 
+# ===========================================
+#              BSA SETUP
+# ===========================================
+ 
+# add BSA - must be in the same order as in the diagnostic bus
+#addBsa(<BSA key>,       <signal type>)
+# We need to add the status signals because they are the first ones, even if
+# they are not used by the acquisition services.
+addBsa("STATUSAMC0",       "uint32", 1)
+addBsa("STATUSAMC1",       "uint32", 1)
+# Add signals for BSA, BSSS, BSAS
+addBsa("TMITAMC0",         "int32")
+addBsa("TMITAMC1",         "int32")
+addBsa("XFIXEDPAMC0",      "int32")
+addBsa("XFIXEDPAMC1",      "int32")
+addBsa("YFIXEDPAMC0",      "int32")
+addBsa("YFIXEDPAMC1",      "int32")
+# Add signals for BLD
+addBsa("TMITFLOATAMC0",    "float32", 1)
+addBsa("TMITFLOATAMC1",    "float32", 1)
+addBsa("XFLOATPAMC0",      "float32", 1)
+addBsa("XFLOATPAMC1",      "float32", 1)
+addBsa("YFLOATPAMC0",      "float32", 1)
+addBsa("YFLOATPAMC1",      "float32", 1)  
+ 
+# bsaAsynDriverConfigure(<asyn port name for BSA>, <path for register space>, <path for dram space>)
+# The <path for register space> and <path for dram space> varies from application to application
+# and need to be consistent with 000TopLevel.yaml. The example below probably fits most cases.
+bsaAsynDriverConfigure("bsaPort", "mmio/AmcCarrierCore/AmcCarrierBsa", "BsaRam/dram")
+ 
+# DEV is the DEVICE:AREA:LOCAL of an IOC.
+# The pair $(DEV) / $(SECN) must be unique, otherwise it will create duplicated PVs.
+# BSAKEY must correspond with what was used with addBsa().
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE1_PREFIX},TPR=${TPR_PREFIX},PORT=bsaPort,BSAKEY=TMITAMC0,SECN=TMIT")
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE1_PREFIX},TPR=${TPR_PREFIX},PORT=bsaPort,BSAKEY=XFIXEDPAMC0,SECN=X")
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE1_PREFIX},TPR=${TPR_PREFIX},PORT=bsaPort,BSAKEY=YFIXEDPAMC0,SECN=Y")
+ 
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE2_PREFIX},TPR=${TPR_PREFIX},PORT=bsaPort,BSAKEY=TMITAMC1,SECN=TMIT")
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE2_PREFIX},TPR=${TPR_PREFIX},PORT=bsaPort,BSAKEY=XFIXEDPAMC1,SECN=X")
+dbLoadRecords("db/bsa.db", "DEV=${DEVICE2_PREFIX},TPR=${TPR_PREFIX},PORT=bsaPort,BSAKEY=YFIXEDPAMC1,SECN=Y")
+ 
+ 
+# ===========================================
+#              BSSS SETUP
+# ===========================================
+ 
+# Make association with BSA signals: bsssAssociateBsaChannels(<BSA port name>)
+bsssAssociateBsaChannels("bsaPort")            
+           
+# Configure BSSS driver: bsssAsynDriverConfigure(<bsss port>, <register path>)
+# The register path may be different from the example below. It depends
+# on the application. The example, though, will probably fit most applications.
+bsssAsynDriverConfigure("bsssPort", "mmio/AmcCarrierCore/AmcCarrierBsa/Bsss")
+ 
+# BSSS rate control template
+# DEV is the DEVICE:AREA:LOCAL of an IOC.
+# There's a hidden ${GLOBAL} macro that defaults to TPG:SYS0:1. This matches the
+# dev TPG in B34 and also in production. If you are using a different TPG, you
+# need to redefine ${GLOBAL} with the correct prefix of the TPG.
+# Example: dbLoadRecords("db/bsssCtrl.db", "DEV=${TPR_PREFIX},PORT=bsssPort,GLOBAL=TPG:B15:1")
+# Below we are using the default TPG, so we don't need to provide GLOBAL.
+dbLoadRecords("db/bsssCtrl.db", "DEV=${TPR_PREFIX},PORT=bsssPort")
+ 
+# BSSS Scalar PVs.
+# DEV is the DEVICE:AREA:LOCAL of an IOC.
+# You must use dbLoadRecords for bsss.db the same number of times you did with
+# bsa.db. Users of the BSA system expect to see a waveform
+# from BSA and, also, the correspondent scalar from BSSS. If you provide less
+# BSSS signals than BSA, this imbalance will be perceived as an error by the
+# end user.
+# SECN is used as part of the PV name. The combination of DEV and SECN macros must
+# be unique in the IOC. If you produce an identical pair of DEV and SECN more than
+# once, you will have duplicate PVs in the IOC.
+# BSAKEY must correspond with what was used with addBsa().
+dbLoadRecords("db/bsss.db", "DEV=${DEVICE1_PREFIX},PORT=bsssPort,BSAKEY=TMITAMC0,SECN=TMIT")
+dbLoadRecords("db/bsss.db", "DEV=${DEVICE1_PREFIX},PORT=bsssPort,BSAKEY=XFIXEDPAMC0,SECN=X")
+dbLoadRecords("db/bsss.db", "DEV=${DEVICE1_PREFIX},PORT=bsssPort,BSAKEY=YFIXEDPAMC0,SECN=Y")
+ 
+dbLoadRecords("db/bsss.db", "DEV=${DEVICE2_PREFIX},PORT=bsssPort,BSAKEY=TMITAMC1,SECN=TMIT")
+dbLoadRecords("db/bsss.db", "DEV=${DEVICE2_PREFIX},PORT=bsssPort,BSAKEY=XFIXEDPAMC1,SECN=X")
+dbLoadRecords("db/bsss.db", "DEV=${DEVICE2_PREFIX},PORT=bsssPort,BSAKEY=YFIXEDPAMC1,SECN=Y")
+ 
+ 
+# ===========================================
+#              BSAS SETUP
+# ===========================================
+ 
+# Make association with BSA channels: bsasAssociateBsaChannels(<BSA port name>)
+bsasAssociateBsaChannels("bsaPort")
+ 
+# Configure the 2-D table header titles
+# bsasBaseName(<BSA key>, <signal_header>)
+# <BSA key> must correspond with what was used with addBsa().
+# We've been conventioning to use the DEVICE_PREFIX macro to name header titles.
+bsasBaseName("TMITAMC1",    "${DEVICE1_PREFIX}:TMIT")
+bsasBaseName("XFIXEDPAMC1", "${DEVICE1_PREFIX}:X")
+bsasBaseName("YFIXEDPAMC1", "${DEVICE1_PREFIX}:Y")
+ 
+bsasBaseName("TMITAMC2",    "${DEVICE2_PREFIX}:TMIT")
+bsasBaseName("XFIXEDPAMC2", "${DEVICE2_PREFIX}:X")
+bsasBaseName("YFIXEDPAMC2", "${DEVICE2_PREFIX}:Y")
+ 
+# bsasAsynDriverConfigure(<bsas port>, <register path>, <NTTable PV1>, <NTTable PV2>, <NTTable PV3>, <NTTable PV4>)
+# The register path may be different from the example below. It depends
+# on the application. The example, though, will probably fit most applications.
+# The ioc shell does NOT allow multiple-line input for a command,
+# thus, we need to list up all of the arguments in a single line.
+bsasAsynDriverConfigure("bsasPort", "mmio/AmcCarrierCore/AmcCarrierBsa/Bsas", "${TPR_PREFIX}:SC_HXR", "${TPR_PREFIX}:SC_SXR", "${TPR_PREFIX}:SC_BSYD","${TPR_PREFIX}:SC_DIAG0")
+ 
+# BSAS rate control template
+# DEV is the DEVICE:AREA:LOCAL of an IOC.
+# There's a hidden ${GLOBAL} macro that defaults to TPG:SYS0:1. This matches the
+# dev TPG in B34 and also in production. If you are using a different TPG, you
+# need to redefine ${GLOBAL} with the correct prefix of the TPG.
+# Example: dbLoadRecords("db/bsasCtrl.db", "DEV=${TPR_PREFIX},PORT=bsasPort,GLOBAL=TPG:B15:1")
+# Below we are using the default TPG, so we don't need to provide GLOBAL.
+dbLoadRecords("db/bsasCtrl.db", "DEV=${TPR_PREFIX},PORT=bsasPort")
+ 
+# This database provides access to severity masks and allows enabling/disabling
+# each signal individually.
+# DEV is the DEVICE:AREA:LOCAL of an IOC.
+# SECN is used as part of the PV name. The combination of DEV and SECN macros must
+# be unique in the IOC. If you produce an identical pair of DEV and SECN more than
+# once, you will have duplicate PVs in the IOC.
+# BSAKEY must correspond with what was used with addBsa().
+dbLoadRecords("db/bsas.db", "DEV=${DEVICE1_PREFIX},PORT=bsasPort,BSAKEY=TMITAMC0,SECN=TMIT")
+dbLoadRecords("db/bsas.db", "DEV=${DEVICE1_PREFIX},PORT=bsasPort,BSAKEY=XFIXEDPAMC0,SECN=X")
+dbLoadRecords("db/bsas.db", "DEV=${DEVICE1_PREFIX},PORT=bsasPort,BSAKEY=YFIXEDPAMC0,SECN=Y")
+ 
+dbLoadRecords("db/bsas.db", "DEV=${DEVICE2_PREFIX},PORT=bsasPort,BSAKEY=TMITAMC1,SECN=TMIT")
+dbLoadRecords("db/bsas.db", "DEV=${DEVICE2_PREFIX},PORT=bsasPort,BSAKEY=XFIXEDPAMC1,SECN=X")
+dbLoadRecords("db/bsas.db", "DEV=${DEVICE2_PREFIX},PORT=bsasPort,BSAKEY=YFIXEDPAMC1,SECN=Y")
+ 
+ 
+# ===========================================
+#              BLD SETUP
+# ===========================================
+ 
+# make association with BSA channels: bldAssociateBsaChannels(<BSA port name>)
+bldAssociateBsaChannels("bsaPort")
+ 
+# bldAsynDriverConfigure ("<BLD  port name>", "<yaml path to BLD>", "<prefix for the PAYLOAD PV>")
+# The register path may be different from the example below. It depends
+# on the application. The example, though, will probably fit most applications.
+bldAsynDriverConfigure("bldPort", "mmio/AmcCarrierCore/AmcCarrierBsa/Bld", "${TPR_PREFIX}")
+ 
+# Give names for the signals that will participate on BLD.
+# These names are shown in the content of the PAYLOAD PV when someone uses
+# pvinfo ${TPR_PREFIX}:BLD_PAYLOAD
+bldChannelName("TMITAMC0",    "TMIT 123")
+bldChannelName("XFIXEDPAMC0", "X 123")
+bldChannelName("YFIXEDPAMC0", "Y 123")
+ 
+bldChannelName("TMITAMC1",    "TMIT 345")
+bldChannelName("XFIXEDPAMC1", "X 345")
+bldChannelName("YFIXEDPAMC1", "Y 345")
+     
+# BLD rate control template
+# DEV is the DEVICE:AREA:LOCAL of an IOC.
+# There's a hidden ${GLOBAL} macro that defaults to TPG:SYS0:1. This matches the
+# dev TPG in B34 and also in production. If you are using a different TPG, you
+# need to redefine ${GLOBAL} with the correct prefix of the TPG.
+# Example: dbLoadRecords("db/bldCtrl.db", "DEV=${TPR_PREFIX},PORT=bldPort,GLOBAL=TPG:B15:1")
+# Below we are using the default TPG, so we don't need to provide GLOBAL.
+dbLoadRecords("db/bldCtrl.db", "DEV=${TPR_PREFIX}, PORT=bldPort")
+ 
+# This database provides access to severity masks and allows enabling/disabling
+# each signal individually.
+# DEV is the DEVICE:AREA:LOCAL of an IOC.
+# SECN is used as part of the PV name. The combination of DEV and SECN macros must
+# be unique in the IOC. If you produce an identical pair of DEV and SECN more than
+# once, you will have duplicate PVs in the IOC.
+# BSAKEY must correspond with what was used with addBsa().
+dbLoadRecords("db/bld.db", "DEV=${DEVICE1_PREFIX},PORT=bldPort,BSAKEY=TMITAMC0,SECN=TMIT")
+dbLoadRecords("db/bld.db", "DEV=${DEVICE1_PREFIX},PORT=bldPort,BSAKEY=XFIXEDPAMC0,SECN=X")
+dbLoadRecords("db/bld.db", "DEV=${DEVICE1_PREFIX},PORT=bldPort,BSAKEY=YFIXEDPAMC0,SECN=Y")
+ 
+dbLoadRecords("db/bld.db", "DEV=${DEVICE2_PREFIX},PORT=bldPort,BSAKEY=TMITAMC1,SECN=TMIT")
+dbLoadRecords("db/bld.db", "DEV=${DEVICE2_PREFIX},PORT=bldPort,BSAKEY=XFIXEDPAMC1,SECN=X")
+dbLoadRecords("db/bld.db", "DEV=${DEVICE2_PREFIX},PORT=bldPort,BSAKEY=YFIXEDPAMC1,SECN=Y")
+ 
+ 
+# Increase the callback queue size for the record processing
+callbackSetQueueSize(12000)
+ 
+# Initialize the IOC and start processing records
+iocInit()

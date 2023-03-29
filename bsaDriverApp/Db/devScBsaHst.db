@@ -48,7 +48,7 @@ record(waveform, "$(DEV):$(SECN)RMSHST$(MDID)")
 #  thus, the PID history buffer will be per Edef
 #  and will provide the aliased name for per data source
 
-record(waveform, "$(DEV):PIDHST$(MDID)")
+record(waveform, "$(TPR):PIDHST$(MDID)")
 {
     field(DESC, "64bits PulseId")
     field(DTYP, "SCBSA")
@@ -60,5 +60,5 @@ record(waveform, "$(DEV):PIDHST$(MDID)")
 }
 
 
-alias("$(DEV):PIDHST$(MDID)", "$(DEV):$(SECN)PIDHST$(MDID)")
+alias("$(TPR):PIDHST$(MDID)", "$(DEV):$(SECN)PIDHST$(MDID)")
 

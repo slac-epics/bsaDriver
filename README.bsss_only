@@ -1,0 +1,192 @@
+BSSS is implemented as a part of bsaDriver in R2.0.0 or later.
+
+BSSS stands for Beam Synchronous Scalar Service. While BSA provides arrays with
+multiple values for each signal, BSSS collect one sample from the BSA array and
+updates the PVs in a configured frequency. Though, the PVs provided by BSSS
+are scalars.
+
+BSSS is completely tied to BSA. All the configuration of BSA buffers in the TPG
+will also affect BSSS. For example, if you configure BSA buffer 30 to collect
+data at 100 Hz, once you hit the button to start the BSA acquisition, the BSSS
+correspondent PV will update, too.
+
+Instructions for configuring BSSS:
+
+1. Automatically copy the list of BSA signals made previously with addBsa() and
+addSlaveBsa() to BSSS:
+
+Use the bsssAssociateBsaChannels to make the association with BSA channels.
+This command needs to be called anywhere after the bsaAsynDriverConfigure()
+command, already explained in the main README file.
+
+#  Initialize BSSS driver
+#  make association with BSA channels: bsssAssociateBsaChannels(<BSA port name>)
+bsssAssociateBsaChannels("bsaPort")
+
+*Remark*: the <BSA port name> should be the same string id which was used for 
+bsaAsynDriverConfigure()
+
+
+2. Configure BSSS driver with the following command
+
+# confiugre BSSS driver: bsssAsynDriverConfigure(<bsss port>, <register path>)
+bsssAsynDriverConfigure("bsssPort", "mmio/AmcCarrierCore/AmcCarrierBsa/Bsss")
+
+<bsss port> can be any string you see fit.
+
+*Remark*: the register path may be different from the example above. It depends
+on the application. The example, though, will probably fit most applications.
+
+
+3. Load up BSSS control database template in st.cmd
+This database provides:
+- a PV to stop the BSSS service locally.
+- PVs with diagnostic data from the firmware.
+- PVs used for timing filtering. These PVs are not meant to be altered locally
+and should not be shown to the user on the GUIs. These PVs are tied to the
+TPG support IOC application with the DOL and OMSL record fields.
+There's a hidden ${GLOBAL} macro that defaults to TPG:SYS0:1. This matches the
+dev TPG in B34 and also in production. If you are using a different TPG, you
+need to redefine ${GLOBAL} with the correct prefix of the TPG.
+Example: GLOBAL=TPG:B15:1
+
+Example:
+# BSSS Control/Monitoring PVs
+# ${TPR_PREFIX} can be, for example:
+# TPR:LI24:BP01:1
+dbLoadRecords("db/bsssCtrl.db", "DEV=${TPR_PREFIX},PORT=bsssPort")
+
+Here's how a few of the PVs will result with this example:
+
+TPR:LI24:BP01:1:BSSS_CTRL  -> enable/disable BSSS service locally
+TPR:LI24:BP01:1:BSSS_RATELIMIT  ->  controlled by the TPG support IOC
+
+
+4. load up BSSS Scalar PVs (for each channel data)
+
+Here is the structure of the template:
+
+  $(DEV):$(SECN)<n>          ; BSSS instantaneous scalar
+  $(DEV):$(SECN)PID<n>       ; pulse id 
+
+Macros:
+
+  $(DEV)         ; device PV name
+  $(SECN)        ; signal name as part of the PV name
+  $(BSAKEY)      ; BSA key. It must match the bsa key string in addBsa() or
+                   addSlaveBsa() explained in the README file. This macro is
+                   used in INP and OUT fields to connect with the device
+                   support code.
+  $(PORT)        ; asyn port name for the *BSSS* driver. Must match the port
+                   name used in the function bsssAsynDriverConfigure.
+
+  <n>            ; given instance number / name
+        - For BSSS buffer numbers for general use:
+        <n> = [21..49]
+
+        - For system buffers, it has two components:
+        <n> = <dest><freq>
+            <dest>
+                SCD = Diag0
+                SCL = Linac. This includes all bunches to BSY, HXR, and SXR.
+                SCB = BSYD
+                SCH = HXR
+                SCS = SXR
+
+            <freq>
+                1H = pre-programmed with 1Hz continuous acquisition
+                TH = pre-programmed with 10Hz continuous acquisition
+                HH = pre-programmed with 100Hz continuous acquisition
+
+            <n> will be the combination of all <dest> with all <freq>.
+            Examples: SCD1H, SCLTH, SCSHH, etc.
+
+Observe that the record names are almost identical to the BSA ones (check
+README.bsa_only). The only difference is that in BSA there's an additional
+HST string in the name.
+
+The BSA PVs are directly connected with the BSSS ones. For example:
+BPM:GUNB:123:TMITHST28 (BSA) => BPM:GUNB:123:TMIT28 (BSSS)
+
+You must use dbLoadRecords for bsss.db the same number of times you did with
+bsa.db (see README.bsa_only). Users of the BSA system expect to see a waveform
+from BSA and, also, the correspondent scalar from BSSS. If you provide less
+BSSS signals than BSA, this imbalance will be perceived as an error by the
+end user.
+
+Example: 
+
+Examples of prefixes:
+DEVICE1_PREFIX = BPM:GUNB:123
+DEVICE2_PREFIX = BPM:GUNB:345
+
+dbLoadRecords("db/bsss.db", "DEV=${DEVICE1_PREFIX},PORT=bsssPort,BSAKEY=TMITAMC0,SECN=TMIT")
+dbLoadRecords("db/bsss.db", "DEV=${DEVICE1_PREFIX},PORT=bsssPort,BSAKEY=XFIXEDPAMC0,SECN=X")
+dbLoadRecords("db/bsss.db", "DEV=${DEVICE1_PREFIX},PORT=bsssPort,BSAKEY=YFIXEDPAMC0,SECN=Y")
+
+dbLoadRecords("db/bsss.db", "DEV=${DEVICE2_PREFIX},PORT=bsssPort,BSAKEY=TMITAMC1,SECN=TMIT")
+dbLoadRecords("db/bsss.db", "DEV=${DEVICE2_PREFIX},PORT=bsssPort,BSAKEY=XFIXEDPAMC1,SECN=X")
+dbLoadRecords("db/bsss.db", "DEV=${DEVICE2_PREFIX},PORT=bsssPort,BSAKEY=YFIXEDPAMC1,SECN=Y")
+
+
+This is the result for the example above with BSA user buffer 31:
+BPM:GUNB:123:TMIT31    -> scalar data
+BPM:GUNB:123:TMITPID31 -> PID
+BPM:GUNB:123:X31    -> scalar data
+BPM:GUNB:123:XPID31 -> PID
+BPM:GUNB:123:Y31    -> scalar data
+BPM:GUNB:123:YPID31 -> PID
+BPM:GUNB:345:TMIT31    -> scalar data
+BPM:GUNB:345:TMITPID31 -> PID
+BPM:GUNB:345:X31    -> scalar data
+BPM:GUNB:345:XPID31 -> PID
+BPM:GUNB:345:Y31    -> scalar data
+BPM:GUNB:345:YPID31 -> PID
+
+This is the result for the example above with BSA system buffer SCL at 1 Hz:
+BPM:GUNB:123:TMITSCL1H    -> scalar data
+BPM:GUNB:123:TMITPIDSCL1H -> PID
+BPM:GUNB:123:XSCL1H    -> scalar data
+BPM:GUNB:123:XPIDSCL1H -> PID
+BPM:GUNB:123:YSCL1H    -> scalar data
+BPM:GUNB:123:YPIDSCL1H -> PID
+BPM:GUNB:345:TMITSCL1H    -> scalar data
+BPM:GUNB:345:TMITPIDSCL1H -> PID
+BPM:GUNB:345:XSCL1H    -> scalar data
+BPM:GUNB:345:XPIDSCL1H -> PID
+BPM:GUNB:345:YSCL1H    -> scalar data
+BPM:GUNB:345:YPIDSCL1H -> PID
+
+
+The database template loading can be located either before or after the driver 
+initialization.
+
+
+5. Simple Test
+
+Set up a BSA acquisition using the provided GUI from the TPG IOC application.
+The set would be fixed rate with 10 Hz, without filtering for destination.
+Configure it to collect 20,000 items.
+
+Let's say that your IOC has the PVs as described in the examples in item 3.
+
+$ camonitor -g 16  BPM:GUNB:123:TMIT31 BPM:GUNB:123:TMITPID31
+BPM:GUNB:123:TMITPID31     2022-01-18 17:33:27.608926 258461968689718  
+BPM:GUNB:123:TMIT31        2022-01-18 17:33:27.608926 53357  
+BPM:GUNB:123:TMITPID31     2022-01-18 17:33:27.706926 258461968780718  
+BPM:GUNB:123:TMIT31        2022-01-18 17:33:27.706926 53359  
+BPM:GUNB:123:TMITPID31     2022-01-18 17:33:27.804926 258461968871718  
+BPM:GUNB:123:TMIT31        2022-01-18 17:33:27.804926 53358  
+BPM:GUNB:123:TMITPID31     2022-01-18 17:33:27.902926 258461968962718  
+BPM:GUNB:123:TMIT31        2022-01-18 17:33:27.902926 53358  
+BPM:GUNB:123:TMITPID31     2022-01-18 17:33:28.000926 258461969053718  
+BPM:GUNB:123:TMIT31        2022-01-18 17:33:28.000926 53358  
+BPM:GUNB:123:TMITPID31     2022-01-18 17:33:28.098926 258461969144718  
+BPM:GUNB:123:TMIT31        2022-01-18 17:33:28.098926 53360  
+BPM:GUNB:123:TMITPID31     2022-01-18 17:33:28.196926 258461969235718  
+BPM:GUNB:123:TMIT31        2022-01-18 17:33:28.196926 53355  
+BPM:GUNB:123:TMITPID31     2022-01-18 17:33:28.294926 258461969326718  
+BPM:GUNB:123:TMIT31        2022-01-18 17:33:28.294926 53357  
+
+The timestamp must be aligned between data and PID.
+At 10 Hz rate, the PID interval between consecutive PID PVs must be 91,000.
