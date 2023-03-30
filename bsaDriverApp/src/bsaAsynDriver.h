@@ -256,6 +256,8 @@ public:
     int  bsaAsynDriverEnable(void);
     int  bsaAsynDriverDisable(void);
 
+    int bsaAsynDriverReport(int level);
+
     devBsaPvt_t *findPvt(char *key, char *param, int edef);
 
 
@@ -277,6 +279,10 @@ private:
 
 protected:
     int bsa_enable;
+    unsigned    pend_err;
+    unsigned    sum_uarray_err;
+    unsigned    uarray_err[MAX_BSA_ARRAY];
+
 //
 // parameter section for asynPortDriver,
 // just static parameter should be listed here
