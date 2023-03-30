@@ -463,9 +463,10 @@ void BsaPvArray::llrfCalcPhaseAmp(signed short i, signed short q, double& amp, d
 
 void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done)
 {
-    uint32_t mask;
-    uint32_t val, iVal, qVal;
-    double   amp, phase, quant1, quant2;
+    uint32_t     val; 
+    uint32_t     mask;
+    signed short iVal, qVal;
+    double       amp, phase, quant1, quant2;
 
     // Add channel data for the current BSA buffer to an array 
     static unsigned int storeIndex = 0;
@@ -511,14 +512,16 @@ void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done
                 case llrfPhase:
                     // Perform checks to ensure type validity
                     llrfPerformChecks(const_cast<Bsa::Pv*>(pv),const_cast<Bsa::Pv*>(pvN),bitSum);
+                    // Read all 32 bits
+                    val = (uint32_t)_rawChannelData[wordIndex]->mean;
                     // Extract lower 16 bits
-                    iVal = (uint32_t)_rawChannelData[wordIndex]->mean;
-                    mask = KEEP_LSB_16;iVal >>= bitSum;iVal &= mask;
+                    mask = KEEP_LSB_16; 
+                    iVal = static_cast<signed short>(val & mask);
                     // Extract upper 16 bits
-                    qVal = (uint32_t)_rawChannelData[wordIndex]->mean;
-                    mask = KEEP_LSB_16;qVal >>= BLOCK_WIDTH_16;qVal &= mask;
+                    qVal = static_cast<signed short>((val >> BLOCK_WIDTH_16) & mask);  
                     // Compute phase & amplitude
-                    llrfCalcPhaseAmp(static_cast<signed short>(iVal),static_cast<signed short>(qVal),amp,phase);                
+                    amp   = (!isnan(iVal) && !isnan(qVal))?sqrt(pow((double)iVal,2) + pow((double)qVal,2)):0.0;
+                    phase = (!isnan(iVal) && !isnan(qVal) && iVal != 0)?atan2((double)qVal, (double)iVal) * M_PI_DEGREES / M_PI:0.0;
                     // Append computed values to PVs
                     quant1 = (*type == llrfAmp)?amp:phase;
                     quant2 = (quant1 == amp   )?phase:amp;
