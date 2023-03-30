@@ -263,6 +263,8 @@ protected:
     unsigned    pend_err;
     unsigned    sum_uarray_err;
     unsigned    uarray_err[MAX_BSA_ARRAY];
+    unsigned    fault_cnt;
+    int         fault;
 
 //
 // parameter section for asynPortDriver,

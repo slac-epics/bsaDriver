@@ -42,6 +42,8 @@
 
 #define   NORM_INTV   (.1)
 #define   FAULT_INTV  (5.)
+#define   NORMAL      0
+#define   FAULT       1
 
 static const  char *driverName = "bsaAsynDriver";
 static char port_name[32];
@@ -531,6 +533,8 @@ bsaAsynDriver::bsaAsynDriver(const char *portName, const char *path_reg, const c
     SetupPvArray();
 
 
+    fault_cnt = 0;
+    fault = 0;
     pend_err = 0;
     sum_uarray_err = 0;
     for(int i = 0; i < MAX_BSA_ARRAY; i++) {
@@ -704,8 +708,17 @@ int bsaAsynDriver::BsaRetreivePoll(void)
 
         if((prev_pend_err != pend_err) || (prev_sum_uarray_err != sum_uarray_err)) {
             poll_intv = FAULT_INTV;
+
+            if(!fault) {
+                fault = FAULT;
+                fault_cnt++;
+            }
         } else {
             poll_intv = NORM_INTV;
+
+            if(fault) {
+                fault = NORMAL;
+            }
         }
 
     return 0;
@@ -728,6 +741,7 @@ int bsaAsynDriver::bsaAsynDriverReport(int level)
 
     if(!level) return 0;
 
+    printf("    bsa status: %s,   fault cnt: %d\n", (fault?"FAULT":"NORMAL"), fault_cnt); 
     printf("    pend error: %u,   update error: %u\n", pend_err, sum_uarray_err);
     for(int i = 0; i < MAX_BSA_ARRAY; i++) {
         if(uarray_err[i]) printf("\tarray update error (%d): %u\n", i, uarray_err[i]);
