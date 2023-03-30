@@ -524,6 +524,13 @@ bsaAsynDriver::bsaAsynDriver(const char *portName, const char *path_reg, const c
     SetupFields();
     SetupPvs();
     SetupPvArray();
+
+
+    pend_err = 0;
+    sum_uarray_err = 0;
+    for(int i = 0; 1 < MAX_BSA_ARRAY; i++) {
+        uarray_err[i] = 0;
+    }
 }
 
 #endif  /* HAVE_YAML */
@@ -658,7 +665,8 @@ int bsaAsynDriver::BsaRetreivePoll(void)
             try {
               pending = pProcessor->pending();
             } catch(...) {
-                printf("Bsa Poll: error detecting pProcessor->pending()\n");
+                // printf("Bsa Poll: error detecting pProcessor->pending()\n");
+                pend_err++;
             }
         else  return 0;
 
@@ -679,7 +687,9 @@ int bsaAsynDriver::BsaRetreivePoll(void)
                 }
             }
             } catch(...) {
-                printf("Bsa Poll: error detecting pProcessor->update()\n");
+                // printf("Bsa Poll: error detecting pProcessor->update()\n");
+                sum_uarray_err++;
+                uarray_err[i]++;
             }
 
         }
@@ -696,6 +706,19 @@ int bsaAsynDriver::bsaAsynDriverEnable(void)
 int bsaAsynDriver::bsaAsynDriverDisable(void)
 {
     bsa_enable = 0;
+    return 0;
+}
+
+int bsaAsynDriver::bsaAsynDriverReport(int level)
+{
+
+    if(!level) return 0;
+
+    printf("    pend error: %u,   update error: %u\n", pend_err, sum_uarray_err);
+    for(int i = 0; i < MAX_BSA_ARRAY; i++) {
+        if(uarray_err[i]) printf("\tarray update error (%d): %u\n", i, uarray_err[i]);
+    }
+
     return 0;
 }
 
@@ -1305,6 +1328,9 @@ static int bsaAsynDriverReport(int interest)
               (p->port && strlen(p->port))? p->port: "Unknown",
               p->pBsaDrv,
               (p->pBsaEllList)? ellCount(p->pBsaEllList): -1);
+
+        if(p->pBsaDrv) p->pBsaDrv->bsaAsynDriverReport(interest);
+
         p = (pDrvList_t *) ellNext(&p->node);
     }
 
