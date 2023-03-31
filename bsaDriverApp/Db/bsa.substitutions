@@ -3,6 +3,11 @@ file bsaLinearConversion.db {
             { _NOTHING_TODO_ }
 }
 
+file bsaStatus.db {
+    pattern { TPR }
+            { "\$(TPR=\$\(DEV\)\)" }
+}
+
 file devScBsaHst.db {
     pattern {  INST,  MDID,   MAXLENGTH,                TPR      }
 #

@@ -44,6 +44,8 @@ using namespace Bsa;
 
 #define   NORM_INTV   (.1)
 #define   FAULT_INTV  (5.)
+#define   NORMAL      0
+#define   FAULT       1
 
 static const  char *driverName = "bsaAsynDriver";
 static char port_name[32];
@@ -698,6 +700,8 @@ bsaAsynDriver::bsaAsynDriver(const char *portName, const char *path_reg, const c
     SetupPvArray();
 
 
+    fault_cnt = 0;
+    fault = 0;
     pend_err = 0;
     sum_uarray_err = 0;
     for(int i = 0; i < MAX_BSA_ARRAY; i++) {
@@ -717,6 +721,8 @@ void bsaAsynDriver::SetupAsynParams(void)
     char param_name[80];
 
     sprintf(param_name, enableString); createParam(param_name, asynParamInt32, &p_enable);
+    sprintf(param_name, faultCntString); createParam(param_name, asynParamInt32, &p_fault_cnt); setIntegerParam(p_fault_cnt, fault_cnt);
+    sprintf(param_name, statusString);   createParam(param_name, asynParamInt32, &p_status);    setIntegerParam(p_status,    fault);
 
     for(int i=0; i<MAX_BSA_ARRAY; i++) {
         sprintf(param_name, pidString,  i+START_BSA_ARRAY); createParam(param_name, asynParamInt64Array, &p_pid_UL[i]);
@@ -871,8 +877,22 @@ int bsaAsynDriver::BsaRetreivePoll(void)
 
         if((prev_pend_err != pend_err) || (prev_sum_uarray_err != sum_uarray_err)) {
             poll_intv = FAULT_INTV;
+
+            if(!fault) {
+                fault = FAULT;
+                fault_cnt++;
+                setIntegerParam(p_status, fault);
+                setIntegerParam(p_fault_cnt, fault_cnt);
+                callParamCallbacks();
+            }
         } else {
             poll_intv = NORM_INTV;
+
+            if(fault) {
+                fault = NORMAL;
+                setIntegerParam(p_status, fault);
+                callParamCallbacks();
+            }
         }
 
     return 0;
@@ -895,6 +915,7 @@ int bsaAsynDriver::bsaAsynDriverReport(int level)
 
     if(!level) return 0;
 
+    printf("    bsa status: %s,   fault cnt: %d\n", (fault?"FAULT":"NORMAL"), fault_cnt); 
     printf("    pend error: %u,   update error: %u\n", pend_err, sum_uarray_err);
     for(int i = 0; i < MAX_BSA_ARRAY; i++) {
         if(uarray_err[i]) printf("\tarray update error (%d): %u\n", i, uarray_err[i]);
