@@ -274,6 +274,8 @@ protected:
     int firstBsaParam;
     #define FIRST_BSA_PARAM    firstBsaParam
 #endif /* asyn version check, under 4.32 */
+    int p_fault_cnt;
+    int p_status;
     int p_pid_UL[MAX_BSA_ARRAY];      // asynInt32Array, RO
     int p_enable;
 #if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 | 32)
@@ -286,6 +288,8 @@ protected:
 #define NUM_BSA_DET_PARAMS ((int) (&LAST_BSA_PARAM - &FIRST_BSA_PARAM -1))
 #endif /* asyn version check, under 4.32 */
 
+#define faultCntString   "fault_cnt"
+#define statusString     "status"
 #define pidString     "BSAPID_%d"
 #define numString     "%s_BSANUM_%d"
 #define meanString    "%s_BSAMEAN_%d"

@@ -554,6 +554,8 @@ void bsaAsynDriver::SetupAsynParams(void)
     char param_name[80];
 
     sprintf(param_name, enableString); createParam(param_name, asynParamInt32, &p_enable);
+    sprintf(param_name, faultCntString); createParam(param_name, asynParamInt32, &p_fault_cnt);
+    sprintf(param_name, statusString);   createParam(param_name, asynParamInt32, &p_status);
 
     for(int i=0; i<MAX_BSA_ARRAY; i++) {
         sprintf(param_name, pidString,  i+START_BSA_ARRAY); createParam(param_name, asynParamInt64Array, &p_pid_UL[i]);
@@ -712,12 +714,17 @@ int bsaAsynDriver::BsaRetreivePoll(void)
             if(!fault) {
                 fault = FAULT;
                 fault_cnt++;
+                setIntegerParam(p_status, fault);
+                setIntegerParam(p_fault_cnt, fault_cnt);
+                callParamCallbacks();
             }
         } else {
             poll_intv = NORM_INTV;
 
             if(fault) {
                 fault = NORMAL;
+                setIntegerParam(p_status, fault);
+                callParamCallbacks();
             }
         }
 

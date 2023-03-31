@@ -1,0 +1,29 @@
+#
+#   epics 7 will merge these duplicatd PVs are in one instance
+#
+
+
+record(bi, "$(DEV):BSA_STATUS")
+{
+    field(DESC, "BSA Status")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT), 0) status")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "NORMAL")
+    field(ONAM, "FAULT")
+    field(ZSV,  "NO_ALARM")
+    field(OSV,  "MAJOR")
+    field(PINI, "YES")
+}
+
+
+
+record(longin, "$(DEV):BSA_ERRCNT")
+{
+    field(DESC, "BSA Fault Count")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT), 0) fault_cnt")
+    field(SCAN, "I/O Intr")
+    field(PINI, "YES")
+}
+
