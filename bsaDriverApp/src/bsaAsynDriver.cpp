@@ -527,11 +527,6 @@ bsaAsynDriver::bsaAsynDriver(const char *portName, const char *path_reg, const c
 
     _pBsaBridge = (void*) pProcessor->getHardware();
 
-    SetupAsynParams();
-    SetupFields();
-    SetupPvs();
-    SetupPvArray();
-
 
     fault_cnt = 0;
     fault = 0;
@@ -540,6 +535,14 @@ bsaAsynDriver::bsaAsynDriver(const char *portName, const char *path_reg, const c
     for(int i = 0; i < MAX_BSA_ARRAY; i++) {
         uarray_err[i] = 0;
     }
+
+
+    SetupAsynParams();
+    SetupFields();
+    SetupPvs();
+    SetupPvArray();
+
+
 }
 
 #endif  /* HAVE_YAML */
@@ -596,6 +599,7 @@ void bsaAsynDriver::SetupAsynParams(void)
     }
 
 
+    callParamCallbacks();
 }
 
 devBsaPvt_t * bsaAsynDriver::findPvt(char *key, char *param, int idx)
