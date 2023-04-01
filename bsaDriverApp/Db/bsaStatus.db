@@ -18,7 +18,7 @@ record(bi, "$(DEV):BSA_STATUS")
 
 
 
-record(longin, "$(DEV):BSA_ERRCNT")
+record(longin, "$(DEV):BSA_FLTCNT")
 {
     field(DESC, "BSA Fault Count")
     field(DTYP, "asynInt32")
