@@ -1,4 +1,8 @@
-record(bo, "$(DEV):BSA_ENABLE")
+#
+#   epics 7 will be merge duplicated PVs in a single instance
+#
+
+record(bo, "$(TPR):BSA_ENABLE")
 {
     field(DESC, "Bsa Enable")
     field(DTYP, "asynInt32")
