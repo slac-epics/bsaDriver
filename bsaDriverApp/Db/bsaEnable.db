@@ -10,5 +10,6 @@ record(bo, "$(TPR):BSA_ENABLE")
     field(ZNAM, "Disable")
     field(ONAM, "Enable")
     field(OMSL, "supervisory")
-    field(VAL,  "Enable")
+    field(VAL,  "1")
 }
+
