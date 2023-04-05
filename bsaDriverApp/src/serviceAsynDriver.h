@@ -92,12 +92,14 @@ typedef enum {
     llrfPhase_service
 } serviceDataType_t;
 
-static std::map<serviceDataType_t, int> channelBitMap = {{uint2_service,   BLOCK_WIDTH_2 },
-                                                         {uint16_service,  BLOCK_WIDTH_16},
-                                                         {int32_service,   BLOCK_WIDTH_32},
-                                                         {uint32_service,  BLOCK_WIDTH_32},
-                                                         {uint64_service,  BLOCK_WIDTH_64},
-                                                         {float32_service, BLOCK_WIDTH_32}};
+static std::map<serviceDataType_t, int> channelBitMap = {{uint2_service,     BLOCK_WIDTH_2 },
+                                                         {uint16_service,    BLOCK_WIDTH_16},
+                                                         {int32_service,     BLOCK_WIDTH_32},
+                                                         {uint32_service,    BLOCK_WIDTH_32},
+                                                         {uint64_service,    BLOCK_WIDTH_64},
+                                                         {float32_service,   BLOCK_WIDTH_32},
+                                                         {llrfAmp_service,   BLOCK_WIDTH_32},
+                                                         {llrfPhase_service, BLOCK_WIDTH_32}};
 
 static std::map<int, std::vector<int>> hwChannelUsage;
 

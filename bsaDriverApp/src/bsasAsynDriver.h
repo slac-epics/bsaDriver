@@ -69,12 +69,14 @@ typedef enum {
     llrfPhase_bsas
 } bsasDataType_t;
 
-static std::map<bsasDataType_t, int> bsasBitMap = {{uint2_bsas,   BLOCK_WIDTH_2 },
-                                                   {uint16_bsas,  BLOCK_WIDTH_16},
-                                                   {int32_bsas,   BLOCK_WIDTH_32},
-                                                   {uint32_bsas,  BLOCK_WIDTH_32},
-                                                   {uint64_bsas,  BLOCK_WIDTH_64},
-                                                   {float32_bsas, BLOCK_WIDTH_32}};
+static std::map<bsasDataType_t, int> bsasBitMap = {{uint2_bsas,     BLOCK_WIDTH_2 },
+                                                   {uint16_bsas,    BLOCK_WIDTH_16},
+                                                   {int32_bsas,     BLOCK_WIDTH_32},
+                                                   {uint32_bsas,    BLOCK_WIDTH_32},
+                                                   {uint64_bsas,    BLOCK_WIDTH_64},
+                                                   {float32_bsas,   BLOCK_WIDTH_32},
+                                                   {llrfAmp_bsas,   BLOCK_WIDTH_32},
+                                                   {llrfPhase_bsas, BLOCK_WIDTH_32}};
 
 static std::map<int, std::vector<int>> bsasHwChannelUsage;
 
