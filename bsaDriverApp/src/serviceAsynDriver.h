@@ -98,8 +98,8 @@ static std::map<serviceDataType_t, int> channelBitMap = {{uint2_service,     BLO
                                                          {uint32_service,    BLOCK_WIDTH_32},
                                                          {uint64_service,    BLOCK_WIDTH_64},
                                                          {float32_service,   BLOCK_WIDTH_32},
-                                                         {llrfAmp_service,   BLOCK_WIDTH_32},
-                                                         {llrfPhase_service, BLOCK_WIDTH_32}};
+                                                         {llrfAmp_service,   BLOCK_WIDTH_16},
+                                                         {llrfPhase_service, BLOCK_WIDTH_16}};
 
 static std::map<int, std::vector<int>> hwChannelUsage;
 
