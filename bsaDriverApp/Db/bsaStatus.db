@@ -3,7 +3,7 @@
 #
 
 
-record(bi, "$(DEV):BSA_STATUS")
+record(bi, "$(TPR):BSA_STATUS")
 {
     field(DESC, "BSA Status")
     field(DTYP, "asynInt32")
@@ -18,7 +18,7 @@ record(bi, "$(DEV):BSA_STATUS")
 
 
 
-record(longin, "$(DEV):BSA_FLTCNT")
+record(longin, "$(TPR):BSA_FLTCNT")
 {
     field(DESC, "BSA Fault Count")
     field(DTYP, "asynInt32")
