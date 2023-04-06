@@ -765,6 +765,100 @@ void serviceAsynDriver::printMap()
     }
 }
 
+float serviceAsynDriver::atan2_approximation1(float y, float x)
+{
+    const float ONEQTR_PI = M_PI / 4.0;
+    const float THRQTR_PI = 3.0 * M_PI / 4.0;
+    float r, angle;
+    float abs_y = fabs(y) + 1e-10f;      // kludge to prevent 0/0 condition
+    if ( x < 0.0f )
+    {
+        r = (x + abs_y) / (abs_y - x);
+        angle = THRQTR_PI;
+    }
+    else
+    {
+        r = (x - abs_y) / (x + abs_y);
+        angle = ONEQTR_PI;
+    }
+    angle += (0.1963f * r * r - 0.9817f) * r;
+    if ( y < 0.0f )
+        return( -angle );     // negate if in quad III or IV
+    else
+        return( angle );
+}
+
+float serviceAsynDriver::atan2_approximation2(float y, float x) 
+{
+    float abs_y = std::fabs(y) + 1e-10f;      // kludge to prevent 0/0 condition
+    float r = (x - copysign(abs_y, x)) / (abs_y + std::fabs(x));
+    float angle = M_PI/2.f - copysign(M_PI/4.f, x);
+
+    angle += (0.1963f * r * r - 0.9817f) * r;
+    return copysign(angle, y);
+}
+
+float serviceAsynDriver::atan2_approximation3( float y, float x )
+{
+    static const uint32_t sign_mask = 0x80000000;
+    static const float b = 0.596227f;
+
+    // Extract the sign bits
+    uint32_t ux_s  = sign_mask & (uint32_t &)x;
+    uint32_t uy_s  = sign_mask & (uint32_t &)y;
+
+    // Determine the quadrant offset
+    float q = (float)( ( ~ux_s & uy_s ) >> 29 | ux_s >> 30 );
+
+    // Calculate the arctangent in the first quadrant
+    float bxy_a = ::fabs( b * x * y );
+    float num = bxy_a + y * y;
+    float atan_1q =  num / ( x * x + bxy_a + num + (float).0001 );
+
+    // Translate it to the proper quadrant
+    uint32_t uatan_2q = (ux_s ^ uy_s) | (uint32_t &)atan_1q;
+    return (q + (float &)uatan_2q) * M_PI;
+} 
+
+float serviceAsynDriver::fastArcTan(float x) 
+{
+  return M_PI_4 * x - x * (fabs(x) - 1) * (0.2447 + 0.0663 * fabs(x));
+}
+
+float serviceAsynDriver::atan2_approximation4(float y, float x) 
+{
+    if (x >= 0) { // -pi/2 .. pi/2
+        if (y >= 0) { // 0 .. pi/2
+            if (y < x) { // 0 .. pi/4
+                return fastArcTan(y / x);
+            } 
+            else { // pi/4 .. pi/2
+                return M_PI_2 - fastArcTan(x / y);
+            }
+        } else {
+              if (-y < x) { // -pi/4 .. 0
+                  return fastArcTan(y / x);
+              } else { // -pi/2 .. -pi/4
+                  return -M_PI_2 - fastArcTan(x / y);
+              }
+        }
+    } else { // -pi..-pi/2, pi/2..pi
+        if (y >= 0) { // pi/2 .. pi
+            if (y < -x) { // pi*3/4 .. pi
+                return fastArcTan(y / x) + M_PI;
+            } else { // pi/2 .. pi*3/4
+                return M_PI_2 - fastArcTan(x / y);
+            }
+        } else { // -pi .. -pi/2
+            if (-y < -x) { // -pi .. -pi*3/4
+                return fastArcTan(y / x) - M_PI;
+            }else { // -pi*3/4 .. -pi/2
+                return -M_PI_2 - fastArcTan(x / y);
+            }
+        }
+    }
+}
+
 void serviceAsynDriver::llrfPerformChecks(const channelList_t * pv, const channelList_t * pvN, int bitIndex)
 {
     // Check if channel pointers are nullptr

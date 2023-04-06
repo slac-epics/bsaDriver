@@ -220,6 +220,13 @@ class serviceAsynDriver: asynPortDriver {
         serviceType_t serviceType;
         int           numMod;
 
+        // LLRF specific functions
+        float fastArcTan           (float x         );
+        float atan2_approximation1 (float y, float x);
+        float atan2_approximation2 (float y, float x);
+        float atan2_approximation3 (float y, float x);
+        float atan2_approximation4 (float y, float x);
+
     protected:
     
 #if (ASYN_VERSION <<8 | ASYN_REVISION) < (4<<8 | 32)
