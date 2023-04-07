@@ -850,7 +850,7 @@ void bsasAsynDriver::llrfPerformChecks(const bsasList_t * pv, const bsasList_t *
 void bsasAsynDriver::llrfCalcPhaseAmp(signed short i, signed short q, double& amp, double& phase)
 {
     // Calculate amplitude 
-    amp = (!isnan(i) && !isnan(q))?sqrt(pow(i,2) + pow(q,2)):0.0;
+    amp = (!isnan(i) && !isnan(q))?sqrt(i * i + q * q):0.0;
     // Calculate phase
     phase = (!isnan(i) && !isnan(q) && i != 0)?atan2((double)q, (double)i) * M_PI_DEGREES / M_PI:0.0;
 }
