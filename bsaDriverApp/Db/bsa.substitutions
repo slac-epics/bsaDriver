@@ -3,6 +3,12 @@ file bsaLinearConversion.db {
             { _NOTHING_TODO_ }
 }
 
+file bsaEnable.db {
+    pattern { TPR }
+            { "\$(TPR=\$\(DEV\)\)" }
+}
+
+
 file bsaStatus.db {
     pattern { TPR }
             { "\$(TPR=\$\(DEV\)\)" }

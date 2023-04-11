@@ -175,7 +175,20 @@ static int associateBsaChannels(const char *port_name)
     return 0;
 }
 
-static int bldChannelName(const char *channel_key, const char *channel_name)
+extern "C" {
+
+// Provide associate functions to cexp
+int bsssAssociateBsaChannels(const char *port_name)
+{ 
+    return associateBsaChannels(port_name);
+}
+
+int bldAssociateBsaChannels(const char *port_name)
+{ 
+    return associateBsaChannels(port_name);
+}
+
+int bldChannelName(const char *channel_key, const char *channel_name)
 {
 
   /* Implement EPICS driver initialization here */
@@ -203,6 +216,8 @@ static int bldChannelName(const char *channel_key, const char *channel_name)
 
     return 0;
 }
+
+} // extern "C"
 
 
 static void bsss_callback(void *pUsr, void *buf, unsigned size)
@@ -1173,6 +1188,29 @@ int serviceAsynDriverConfigure(const char *portName, const char *reg_path, const
     return 0;
 }
 
+extern "C" {
+
+// Add functions to cexp
+
+int bsssAsynDriverConfigure(const char *portName, const char *reg_path, const char *named_root)
+{
+    return serviceAsynDriverConfigure( portName,
+                                reg_path,
+                                named_root && strlen(named_root)? named_root : NULL,
+                                bsss,
+                                NULL );  /* BSSS call */
+}
+
+int bldAsynDriverConfigure(const char *portName, const char *reg_path, const char* pva_basename, const char *named_root)
+{
+    return serviceAsynDriverConfigure( portName,
+                                reg_path,
+                                named_root && strlen(named_root)? named_root : NULL,
+                                bld,
+                                pva_basename );  /* BLD call */
+}
+
+} // extern "C"
 
 static const iocshArg initArg0 = { "portName",                                           iocshArgString };
 static const iocshArg initArg1 = { "register path (which should be described in yaml):", iocshArgString };
