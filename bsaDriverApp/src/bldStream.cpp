@@ -32,6 +32,7 @@
 #include <epicsString.h>
 
 #include <yamlLoader.h>
+#include <perfMeasure.h>
 #include "bldStream.h"
 
 
@@ -290,8 +291,14 @@ static void listener(pDrvList_t *p)
     pBuff_t *np;
     uint8_t *bypass_buf = (uint8_t *) mallocMustSucceed(sizeof(uint8_t) * MAX_BUFF_SIZE, "bldStreamDriver: listener");
 
+    initPerfMeasure();
+    perfParm_ts *pPerf_listener = makePerfMeasure("listener", "listener loop");
+    perfParm_ts *pPerf_bsas = makePerfMeasure("bsas_qeuue", "queueing bsas");
+    perfParm_ts *pPerf_bsss = makePerfMeasure("bsss_queue", "queueing bsss");
+    perfParm_ts *pPerf_bld  = makePerfMeasure("bld_queue",  "queueing bld");
 
     while(true) {
+        startPerfMeasure(pPerf_listener);
         if(ellCount(p->free_list)) {
             epicsMutexLock(p->lock);
                 np = (pBuff_t *) ellFirst(p->free_list);
@@ -312,6 +319,7 @@ static void listener(pDrvList_t *p)
 
         if(listener_ready) {
         if(pu32[IDX_SERVICE_MASK]>>SERVICE_BITS == SERVICE_BSAS)  {   /* bsas */
+            startPerfMeasure(pPerf_bsas);
             qid = (p->bsas_count++) % MAX_BSASQ;
             p->p_last_bsas = (void *) np;
             np->type = bsas_packet;
@@ -320,8 +328,10 @@ static void listener(pDrvList_t *p)
                 p->bsasQ[qid].pend_cnt = epicsMessageQueuePending(p->bsasQueue[qid]);
                 if(p->bsasQ[qid].pend_cnt > p->bsasQ[qid].water_mark) p->bsasQ[qid].water_mark = p->bsasQ[qid].pend_cnt;
             }
+            endPerfMeasure(pPerf_bsas);
         }
         else if(pu32[IDX_SERVICE_MASK]>>SERVICE_BITS <= SERVICE_BSSS) { /* bsss, 0: Bsss0, 1: Bsss1 */
+            startPerfMeasure(pPerf_bsss);
             qid = (p->bsss_count++) % MAX_BSSSQ;
             if(pu32[IDX_SERVICE_MASK]>>SERVICE_BITS) p->p_last_bsss1 = (void *) np;
             else                                     p->p_last_bsss0 = (void *) np;
@@ -331,8 +341,10 @@ static void listener(pDrvList_t *p)
                 p->bsssQ[qid].pend_cnt = epicsMessageQueuePending(p->bsssQueue[qid]);
                 if(p->bsssQ[qid].pend_cnt > p->bsssQ[qid].water_mark) p->bsssQ[qid].water_mark = p->bsssQ[qid].pend_cnt;
             }
+            endPerfMeasure(pPerf_bsss);
         }
         else if(pu32[IDX_SERVICE_MASK]>>SERVICE_BITS == SERVICE_BLD) { /* bld */
+            startPerfMeasure(pPerf_bld);
             qid = (p->bld_count++) % MAX_BLDQ;
             p->p_last_bld = (void *) np;
             np->type = bld_packet;
@@ -341,6 +353,7 @@ static void listener(pDrvList_t *p)
                 p->bldQ[qid].pend_cnt = epicsMessageQueuePending(p->bldQueue[qid]);
                 if(p->bldQ[qid].pend_cnt > p->bldQ[qid].water_mark) p->bldQ[qid].water_mark = p->bldQ[qid].pend_cnt;
             }
+            endPerfMeasure(pPerf_bld);
         } else p->else_count++;  // something wrong, packet could not be specified
         } else {
             epicsMutexLock(p->lock);
@@ -349,7 +362,7 @@ static void listener(pDrvList_t *p)
         }  // if(listener_ready)
 
         p->read_count++;
-
+        endPerfMeasure(pPerf_listener);
     }
 }
 
@@ -359,6 +372,9 @@ static void bsssQTask(void *usrPvt)
     pDrvList_t  *p = q->p;
     int        qid = q->qid;
     pBuff_t   *np;
+
+    initPerfMeasure();
+    perfParm_ts *pPerf_bsss = makePerfMeasure("bsss_callback", "bsss_callback");
 
     while(true) {
         int msg = epicsMessageQueueReceive(p->bsssQueue[qid], (void *) &np, sizeof(np));
@@ -370,9 +386,11 @@ static void bsssQTask(void *usrPvt)
             continue;
         }
 
+        startPerfMeasure(pPerf_bsss);
         if(np->type == bsss_packet) {
             (p->bsss_callback)(p->pUsrBsss, (void *) np->buff, np->size);
         } else p->bsssQ[qid].overrun++;
+        endPerfMeasure(pPerf_bsss);
 
         epicsMutexLock(p->lock);
         ellAdd(p->free_list, &np->node);
@@ -387,6 +405,9 @@ static void bldQTask(void *usrPvt)
     int        qid = q->qid;
     pBuff_t   *np;
 
+    initPerfMeasure();
+    perfParm_ts *pPerf_bld = makePerfMeasure("bld_callback", "bld callback");
+
     while(true) {
         int msg = epicsMessageQueueReceive(p->bldQueue[qid], (void *) &np, sizeof(np));
         if(msg != sizeof(np)) {
@@ -397,9 +418,11 @@ static void bldQTask(void *usrPvt)
             continue;
         }
 
+        startPerfMeasure(pPerf_bld);
         if(np->type == bld_packet) {
             (p->bld_callback)(p->pUsrBld, (void *) np->buff, np->size);
         } else p->bldQ[qid].overrun++;
+        endPerfMeasure(pPerf_bld);
 
         epicsMutexLock(p->lock);
         ellAdd(p->free_list, &np->node);
@@ -414,6 +437,9 @@ static void bsasQTask(void *usrPvt)
     int        qid = q->qid;
     pBuff_t   *np;
 
+    initPerfMeasure();
+    perfParm_ts *pPerf_bsas = makePerfMeasure("bsas_callback", "bsas callback");
+
     while(true) {
         int msg = epicsMessageQueueReceive(p->bsasQueue[qid], (void *) &np, sizeof(np));
         if(msg != sizeof(np)) {
@@ -424,9 +450,11 @@ static void bsasQTask(void *usrPvt)
             continue;
         }
 
+        startPerfMeasure(pPerf_bsas);
         if(np->type == bsas_packet) {
             (p->bsas_callback)(p->pUsrBsas, (void *) np->buff, np->size);
         } else p->bsasQ[qid].overrun++;
+        endPerfMeasure(pPerf_bsas);
 
         epicsMutexLock(p->lock);
         ellAdd(p->free_list, &np->node);
