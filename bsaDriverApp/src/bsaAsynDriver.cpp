@@ -527,8 +527,7 @@ void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done
                     // Extract upper 16 bits
                     qVal = static_cast<signed short>((val >> BLOCK_WIDTH_16) & mask);  
                     // Compute phase & amplitude
-                    amp   = (!isnan(iVal) && !isnan(qVal))?sqrt(pow((double)iVal,2) + pow((double)qVal,2)):0.0;
-                    phase = (!isnan(iVal) && !isnan(qVal) && iVal != 0)?atan2((double)qVal, (double)iVal) * M_PI_DEGREES / M_PI:0.0;
+                    llrfCalcPhaseAmp(iVal, qVal, amp, phase);
                     // Append computed values to PVs
                     quant1 = (*type == llrfAmp)?amp:phase;
                     quant2 = (quant1 == amp   )?phase:amp;
