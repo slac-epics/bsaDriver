@@ -256,6 +256,20 @@ The database template loading can be located either before or after the driver
 initialization.
 
 
+=========== Consideration for NC/SC mode switching ===================
+
+The bsa drive provides the following PV to enable and disable the bsa polling
+
+$(TPR):SC_BSA_ENABLE 
+(0: Disable): BSA poll thread stops polling, we can use it for NC mode operation
+(1: Enable):  BSA poll thread poll BSA buffer status and process BSA history buffer PVs, we can use it for SC mode operation
+
+IOC engineer (ioc application) can have a logic to integrate the SC_BSA_ENABLE PV to the NC/SC mode switching.
+The default valuse is (1: Enable), the template doesn't support autosave and PINI==YES,
+Suppose, the PV should be controlled by the NC/SC mode switching in the ioc application.
+
+
+
 =========== Known issue ==========
 
 We've found out that sometimes the pProcessor->pending() and
