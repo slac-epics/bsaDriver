@@ -194,8 +194,23 @@ caput TPR:GUNB:BP01:1:BLD4_MULT_PORT 54000
 caput TPR:GUNB:BP01:1:BLD4_MULT_ADDR 239.255.4.3
 
 
-9. Simple test
---------------
+9. Configuration of jumbo frames for the network interface
+----------------------------------------------------------
+
+BLD relies on using jumbo frames to receive the data appropriately. As
+mentioned in item 6, there's a way to configure the packet size to make
+them fit standard MTU size, but this overloads the CPU and may make the system
+overall slow for other IOCs, too. Ideally, jumbo frames should be configured.
+
+Also keep in mind that the outgoing messages need to go to a network that is
+configured to support jumbo frames.
+
+The main README has a description on how to set jumbo frames in the cpu's 
+st.cmd.
+
+
+10. Simple test
+---------------
 
 Now you should be able to capture the outgoing BLD packets using tcpdump
 
@@ -216,4 +231,52 @@ example:
 $ pvinfo TPR:GUNB:BP01:1:BLD_PAYLOAD
 
 Remark: BLD PV names and descriptions are in the following link:
-https://confluence.slac.stanford.edu/pages/viewpage.action?spaceKey=~carolina&title=BLD+PVs
+https://confluence.slac.stanford.edu/pages/viewpage.action?spaceKey=~carolina&title=BLD+PV
+
+
+11. BLD packet contents
+-----------------------
+
+Multiple events can be packet together in the same message. 
+
+Incoming message from the ATCA to the cpu, has this format:
+
+First event in the packet:
+Timestamp (64b)
+PulseId (64b)
+ChannelMask  (32b) - Configured channel selection
+BLD Service mask (8b) - Configured timing filter number
+BSSS service mask (24b)
+ChannelX (32b) - Data from ENABLED channels only
+...
+ChannelY (32b) - Data from ENABLED channels only
+Severity mask(64b) - Bit mask of configured channels passing alarm severity
+
+Remainder of events in the packet:
+Delta Timestamp (20b)
+Delta PulseId (12b)
+Service mask(32b)
+ChannelX (32b)
+...
+ChannelY (32b)
+Severity mask (64b)
+
+
+Outgoing message from cpu to multicast network, has this format:
+
+First event in the packet (28 bytes + 4 * Channels):
+Timestamp (64b)
+PulseId (64b)
+Version/Size (32b) - Dynamic versioning (value increments when channel mask changes)
+Severity mask(64b) - Bit mask of configured channels passing alarm severity
+ChannelX (32b) - Data from ENABLED channels only
+...
+ChannelY (32b) - Data from ENABLED channels only
+
+Remainder of events in the packet (12 bytes + 4 * Channels):
+Delta Timestamp (20b)
+Delta PulseId (12b)
+Severity mask (64b)
+ChannelX (32b)
+...
+ChannelY (32b)

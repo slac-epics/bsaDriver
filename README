@@ -463,7 +463,8 @@ callbackSetQueueSize(12000)
 
 To check the status of the acquisition services engine. Although the driver is
 called bldStreamDriver, this is the driver that deals with all 4 services: BSA,
-BSSS, BSAS, and BLD. Use this command on the IOC shell:
+BSSS, BSAS, and BLD. Use this command on the IOC shell (if instead of 5 you use
+10, some of the counters will be reset):
 
 epics> dbior bldStreamDriver 5
 Driver: bldStreamDriver
@@ -619,7 +620,62 @@ accepted.
 
 
 *******************************************************************************
-***         7. Configuration of individual acquisition services             ***
+***  7. Configuration of RT priorities for SLAC protocols and network stack ***
+*******************************************************************************
+
+The 000TopLevel.yaml file must appropriately set the real-time priorities for
+the SLAC protocols used to communicate with the ATCA board. If the
+configuration is not set correctly, the IOC may crash when accessing the
+acquisition services.
+
+Check if the yaml file contains this information:
+connectionParameters:
+  udpPri:     &udpPri      80
+  udpThreads: &udpThreads   4
+  rssi: &rssiParams   
+    retransmissionTimeoutUS: 100000  
+    cumulativeAckTimeoutUS:   50000
+    threadPriority:             82
+
+Along the entire yaml you should see these configurations for the
+threadPriority of UDP and RSSI: 
+         UDP:
+           port: *udpPortNumber0
+           threadPriority: *udpPri
+         RSSI:
+           <<: *rssiParams
+           threadPriority: 81
+           inpQueueDepth: 32
+
+
+The cpu's st.cmd (previously known as "kernel-modules.cmd") must contain correct
+thread priorities and buffer size for the kernel network stack. This ensures
+that the network will not get stalled when the IOCs start to use a lot of CPU.
+Below is what is needed (in this example, eth5 is the interface connected to
+the ATCA crate). Each interface connected to the ATCA must have the priority
+thread set.
+
+# ==================================================================
+# escalating RT priority for network kernel threads (SCHED_FIFO, 84)
+# =================================================================                                                                         
+for PID in  $(ps -elF | grep eth5 | grep -v grep | awk '{print $4}'); do chrt -f -p 84 $PID ; done
+                                                                                                                                            
+# ======================================                                                                                                    
+# increasing receive buffer size to 10MB                                                                                                    
+# ======================================                                                                                                    
+sysctl -w net.core.rmem_default=10485760
+
+
+Also, for BLD to work properly, jumbo frames need to be configured for each of
+the participant network interfaces. This is also configured in the cpu's
+st.cmd:
+
+# Add jumbo frames to allow for proper BLD communication
+ifconfig eth5 mtu 9000 up
+
+
+*******************************************************************************
+***         8. Configuration of individual acquisition services             ***
 *******************************************************************************
 
 BSA, BSSS, BSAS, and BLD configuration are described in specific readme files:
@@ -631,7 +687,7 @@ BLD - README.bld_only
 
 
 *******************************************************************************
-***                        8. Example st.cmd                                ***
+***                        9. Example st.cmd                                ***
 *******************************************************************************
 
 An example st.cmd is available at README.example_st_cmd

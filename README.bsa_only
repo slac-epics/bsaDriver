@@ -256,6 +256,36 @@ The database template loading can be located either before or after the driver
 initialization.
 
 
+=========== Known issue ==========
+
+We've found out that sometimes the pProcessor->pending() and
+pProcessor->update() fails to acquire data from the firmware. The reason for
+this is still undiscovered in this version. When the IOC presents this fault,
+one or more BSA buffers keep with old data and usually the IOC can't recover
+from this condition. An IOC boot is required for it to recover.
+
+There are two ways to check if this fault condition happened:
+
+1. dbior bsaAsynDriver 1
+Driver: bsaAsynDriver
+named_root: root_0, port: bpmBsaPort, driver instace: 0x17727e0, number of BSA varibles: 8
+    bsa status: FAULT,   fault cnt: 156
+    pend error: 0,   update error: 4456
+        array update error (45): 4456
+
+The report in the example above shows that the fault happened 4456 times and
+the IOC transitioned from a normal status to a fault status 156 times. It also
+shows that the BSA buffer number in fail is #45. All other BSA buffers are
+running ok in this scenario.
+
+2. EPICS PVs:
+$(TPR):SC_BSA_STATUS -> Tells if the system is currently at a NORMAL or FAULT
+status.
+
+$(TPR):SC_BSA_FLTCNT -> Corresponds to the "fault cnt" number available with
+dbior described above. It is the number of times that the IOC transitioned from
+a normal status to a fault status.
+
 
 
 =========== Instructions below are only for timing system engineers ===========
