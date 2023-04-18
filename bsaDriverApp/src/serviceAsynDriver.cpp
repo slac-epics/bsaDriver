@@ -140,7 +140,7 @@ static int channelAdd(const char *channelKey, serviceDataType_t type, double *sl
     p->p_channelMask = -1;
     p->p_channelSevr = -1;
     for(unsigned int i = 0; i < NUM_EDEF_MAX; i++) {
-        p->p_channel[i] = -1;              /* initialize paramters with invalid */
+        p->p_channel[i] = -1;             /* initialize parameters with invalid */
         p->pkey_channel[i][0] = '\0';     /* initialize with a null string */
         p->pkey_channelPID[i][0] = '\0';  /* initialize with a null string */
         p->pidPv[i].dpvt = NULL;
@@ -913,6 +913,9 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
                              process_vPv(&plist->vPv[edef]);
                              // Assign quant2
                              if(!isnan(quant2)) quant2 = quant2 * (*plistN->pslope) + (*plistN->poffset);
+                             plistN->pidPv[edef].pid = pulse_id;
+                             plistN->pidPv[edef].time = _ts;
+                             process_pidPv(&plistN->pidPv[edef]);
                              plistN->vPv[edef].v = quant2;
                              plistN->vPv[edef].time = _ts;
                              process_vPv(&plistN->vPv[edef]);
@@ -957,7 +960,7 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
 
          // Increment channel pointer if we have an LLRF channel type
          if (plist->type == llrfAmp_service || plist->type == llrfPhase_service)
-             plist = (channelList_t *) ellNext(&plist->node);
+             plist = plistN;
          
          // Update bitSum counter
          bitSum += newBitsExtracted;
