@@ -258,7 +258,7 @@ initialization.
 
 =========== Consideration for NC/SC mode switching ===================
 
-The bsa drive provides the following PV to enable and disable the bsa polling
+The bsa driver provides the following PV to enable and disable the bsa polling
 
 $(TPR):SC_BSA_ENABLE 
 (0: Disable): BSA poll thread stops polling, we can use it for NC mode operation
@@ -268,6 +268,11 @@ IOC engineer (ioc application) can have a logic to integrate the SC_BSA_ENABLE P
 The default valuse is (1: Enable), the template doesn't support autosave and PINI==YES,
 Suppose, the PV should be controlled by the NC/SC mode switching in the ioc application.
 
+The bsa driver ioc shell command to enable and disable the bsa polling, 
+bsaAsynDriverDisable(["named root"]):    disable BSA polling
+bsaAsynDriverEnable(["named root"]):     enable  BSA polling
+
+These commmands can be used after calling bsaAsynDriverConfigure() or, also works during ioc operation after iocInit().
 
 
 =========== Known issue ==========
