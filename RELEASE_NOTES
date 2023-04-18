@@ -1,3 +1,12 @@
+R3.2.0    Apr 17, 2023, Kukhee Kim
+             - Fixed problem that floaded the IOC console with the messages
+                   error detecting pProcessor->pending()
+                   error detecting pProcessor->update()
+               In one month of tests the problem still happened twice and will
+               be addressed in a next release.
+             - The error message above is not print to the console anymore.
+               Now they can be accessed through a dbior report or PVs.
+
 R3.1.0    Mar 27, 2023, Kukhee Kim and Marcio Donadio
              - Improve bsa "per channel" template to allow multiple $(DEV)
                names in a single ioc. Allow multi-device iocs by adding a new
