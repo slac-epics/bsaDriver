@@ -861,7 +861,7 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
          channelList_t *plistN = (channelList_t *) ellNext(&plist->node);
 
          // Count newly extracted bits only once below, regardless of multiple EDEFs
-         unsigned newBitsExtracted;
+         unsigned newBitsExtracted = 0;
 
          // Now loop over all EDEFs
          for (unsigned int i = 0, svc_mask = 0x1; i < this->pService[mod]->getEdefNum(); i++, svc_mask <<= 1) {
