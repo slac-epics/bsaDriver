@@ -13,6 +13,8 @@
 #include <arpa/inet.h>
 #include <sstream>
 
+#include <chrono>
+#include <thread>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -911,6 +913,8 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
                              plist->vPv[edef].v = quant1;
                              plist->vPv[edef].time = _ts;
                              process_vPv(&plist->vPv[edef]);
+                             // Sleep to alleviate pressure on the record processing queue
+                             std::this_thread::sleep_for(std::chrono::microseconds(10));
                              // Assign quant2
                              if(!isnan(quant2)) quant2 = quant2 * (*plistN->pslope) + (*plistN->poffset);
                              plistN->pidPv[edef].pid = pulse_id;
