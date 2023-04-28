@@ -3,6 +3,7 @@
 < envPaths
  
 epicsEnvSet("TPR_PREFIX", "TPR:GUNB:BP01:1")
+epicsEnvSet("BSAS_PREFIX", "BSAS:GUNB:BP01:1")
 epicsEnvSet("DEVICE1_PREFIX", "BPM:GUNB:123")
 epicsEnvSet("DEVICE2_PREFIX", "BPM:GUNB:345")
  
@@ -136,16 +137,21 @@ bsasBaseName("YFIXEDPAMC2", "${DEVICE2_PREFIX}:Y")
 # on the application. The example, though, will probably fit most applications.
 # The ioc shell does NOT allow multiple-line input for a command,
 # thus, we need to list up all of the arguments in a single line.
-bsasAsynDriverConfigure("bsasPort", "mmio/AmcCarrierCore/AmcCarrierBsa/Bsas", "${TPR_PREFIX}:SC_HXR", "${TPR_PREFIX}:SC_SXR", "${TPR_PREFIX}:SC_BSYD","${TPR_PREFIX}:SC_DIAG0")
+# BSAS_PREFIX can be, for example:
+# BSAS:GUNB:BP01:1
+# Observe that the instance field must start with 1 and increment only if
+# the IOC connects to more than one carrier board. The order of the
+# elements is required by convention: SC_DIAG0, SC_BSYD, SC_HXR, SC_SXR.
+bsasAsynDriverConfigure("bsasPort", "mmio/AmcCarrierCore/AmcCarrierBsa/Bsas", "${BSAS_PREFIX}:SC_DIAG0", "${BSAS_PREFIX}:SC_BSYD", "${BSAS_PREFIX}:SC_HXR", "${BSAS_PREFIX}:SC_SXR")
  
 # BSAS rate control template
-# DEV is the DEVICE:AREA:LOCAL of an IOC.
+# BSAS is the BSAS_PREFIX (see above).
 # There's a hidden ${GLOBAL} macro that defaults to TPG:SYS0:1. This matches the
 # dev TPG in B34 and also in production. If you are using a different TPG, you
 # need to redefine ${GLOBAL} with the correct prefix of the TPG.
-# Example: dbLoadRecords("db/bsasCtrl.db", "DEV=${TPR_PREFIX},PORT=bsasPort,GLOBAL=TPG:B15:1")
+# Example: dbLoadRecords("db/bsasCtrl.db", "BSAS=${BSAS_PREFIX},PORT=bsasPort,GLOBAL=TPG:B15:1")
 # Below we are using the default TPG, so we don't need to provide GLOBAL.
-dbLoadRecords("db/bsasCtrl.db", "DEV=${TPR_PREFIX},PORT=bsasPort")
+dbLoadRecords("db/bsasCtrl.db", "BSAS=${BSAS_PREFIX},PORT=bsasPort")
  
 # This database provides access to severity masks and allows enabling/disabling
 # each signal individually.

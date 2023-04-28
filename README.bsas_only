@@ -183,14 +183,17 @@ devices the IOC is controlling. For example, a BPM IOC can have 2 devices with
 IOC with a single device.
 
 To handle all the cases we conventioned that the prefix for all NTTables will
-be the TPR prefix, which is unique for each IOC.
+be the BSAS prefix, which is unique for each IOC.
 
 # configure BSAS driver: bsasAsynDriverConfigure(<bsas port>, <register path>, <NTTable PV1>, <NTTable PV2>, <NTTable PV3>, <NTTable PV4>)
 # Remarks: the ioc shell does NOT allow multiple-line input for a command, 
 # thus, we need to list up all of the arguments in a single line.
-# TPR_PREFIX can be, for example:
-# TPR:GUNB:BP01:1
-bsasAsynDriverConfigure("bsasPort", "mmio/AmcCarrierCore/AmcCarrierBsa/Bsas", "${TPR_PREFIX}:SC_HXR", "${TPR_PREFIX}:SC_SXR", "${TPR_PREFIX}:SC_BSYD", "${TPR_PREFIX}:SC_DIAG0")
+# BSAS_PREFIX can be, for example:
+# BSAS:GUNB:BP01:1
+# Observe that the instance field must start with 1 and increment only if
+# the IOC connects to more than one carrier board. The order of the
+# elements is required by convention: SC_DIAG0, SC_BSYD, SC_HXR, SC_SXR.
+bsasAsynDriverConfigure("bsasPort", "mmio/AmcCarrierCore/AmcCarrierBsa/Bsas", "${BSAS_PREFIX}:SC_DIAG0", "${BSAS_PREFIX}:SC_BSYD", "${BSAS_PREFIX}:SC_HXR", "${BSAS_PREFIX}:SC_SXR")
 
 <bsas port> can be any string you see fit. You will use <bsas port> later on,
 so make sure you give it a meaningful name.
@@ -214,13 +217,15 @@ need to redefine ${GLOBAL} with the correct prefix of the TPG.
 Example: GLOBAL=TPG:B15:1
 
 # BSAS Destination/Rates Control PVs
-# TPR_PREFIX can be, for example:
-# TPR:GUNB:BP01:1
-dbLoadRecords("db/bsasCtrl.db", "DEV=${TPR_PREFIX},PORT=bsasPort")
+# BSAS_PREFIX can be, for example:
+# BSAS:GUNB:BP01:1
+# Observe that the instance field must start with 1 and increment only if
+# the IOC connects to more than one carrier board.
+dbLoadRecords("db/bsasCtrl.db", "BSAS=${BSAS_PREFIX},PORT=bsasPort")
 
 Here's how one of the PVs will result with this example:
 
-TPR:LI24:BP01:1:BSAS_LOCAL  ->  Disconnects from the global PVs from the TPG
+BSAS:LI24:BP01:1:BSAS_LOCAL ->  Disconnects from the global PVs from the TPG
                                 support IOC. This is to be used in case you
                                 want to test specific timing filters
                                 independent of what is configured in TPG.
@@ -276,18 +281,18 @@ $ pvlist <host>
 
 Example:
 khkim@lcls-dev3 ~ $ pvlist cpu-b084-sp18
-TPR:GUNB:BP01:1:SC_HXR
-TPR:GUNB:BP01:1:SC_SXR
-TPR:GUNB:BP01:1:SC_BSYD
-TPR:GUNB:BP01:1:SC_DIAG0
+BSAS:GUNB:BP01:1:SC_HXR
+BSAS:GUNB:BP01:1:SC_SXR
+BSAS:GUNB:BP01:1:SC_BSYD
+BSAS:GUNB:BP01:1:SC_DIAG0
 
 
 Check the PV structure:
 $ pvinfo <PV name>
 
 Example:
-khkim@lcls-dev3 ~ $ pvinfo TPR:GUNB:BP01:1:SC_HXR
-TPR:GUNB:BP01:1:SC_HXR
+khkim@lcls-dev3 ~ $ pvinfo BSAS:GUNB:BP01:1:SC_HXR
+BSAS:GUNB:BP01:1:SC_HXR
 Server: 134.79.217.42:5075
 Type:
     epics:nt/NTTable:1.0
@@ -328,7 +333,7 @@ Get data from the NTTable PV
 $ pvget <PV name>
 
 Example:
-  pvget TPR:GUNB:BP01:1:SC_HXR
+  pvget BSAS:GUNB:BP01:1:SC_HXR
 
 The result is too big to be added to this README, but the table structure was
-already explained in item1.
+already explained in item 1.
