@@ -1,3 +1,6 @@
+R3.2.1    May 8, 2023, Carolina B Mattison & Marcio Donadio
+	     -Updating macros to have BSAS as root PV name for the DEVICE instead of TPR name
+
 R3.2.0    Apr 17, 2023, Kukhee Kim
              - Fixed problem that floaded the IOC console with the messages
                    error detecting pProcessor->pending()

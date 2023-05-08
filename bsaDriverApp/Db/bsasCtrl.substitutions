@@ -1,25 +1,25 @@
 file disableGlobalPVs.db {
     pattern {   DEVICE,  SERVICE }
-            { "$(BSAS)",  "BSAS" }
+            { "BSAS:$(AREA):$(IOC_UNIT):$(IOC_INST)",  "BSAS" }
 }
 
 
 file bsasRateControl.db {
     pattern {   BSAS_BUFF, DRV_NUM,   CTRL_PV,       CTRL,    DEVICE,             GLOBAL            }
 #
-            {   "1",        "0",      "ACQ",       "acq",   "$(BSAS)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  }
-            {   "1",        "0",      "ADV",    "rowAdv",   "$(BSAS)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  } 
-            {   "1",        "0",      "TRST",  "tblReset",  "$(BSAS)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  }
+            {   "1",        "0",      "ACQ",       "acq",   "BSAS:$(AREA):$(IOC_UNIT):$(IOC_INST)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  }
+            {   "1",        "0",      "ADV",    "rowAdv",   "BSAS:$(AREA):$(IOC_UNIT):$(IOC_INST)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  } 
+            {   "1",        "0",      "TRST",  "tblReset",  "BSAS:$(AREA):$(IOC_UNIT):$(IOC_INST)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  }
 #
-            {   "2",        "1",      "ACQ",       "acq",   "$(BSAS)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  }
-            {   "2",        "1",      "ADV",    "rowAdv",   "$(BSAS)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  } 
-            {   "2",        "1",      "TRST",  "tblReset",  "$(BSAS)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  }
+            {   "2",        "1",      "ACQ",       "acq",   "BSAS:$(AREA):$(IOC_UNIT):$(IOC_INST)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  }
+            {   "2",        "1",      "ADV",    "rowAdv",   "BSAS:$(AREA):$(IOC_UNIT):$(IOC_INST)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  } 
+            {   "2",        "1",      "TRST",  "tblReset",  "BSAS:$(AREA):$(IOC_UNIT):$(IOC_INST)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  }
 #
-            {   "3",        "2",      "ACQ",       "acq",   "$(BSAS)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  }
-            {   "3",        "2",      "ADV",    "rowAdv",   "$(BSAS)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  } 
-            {   "3",        "2",      "TRST",  "tblReset",  "$(BSAS)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  }
+            {   "3",        "2",      "ACQ",       "acq",   "BSAS:$(AREA):$(IOC_UNIT):$(IOC_INST)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  }
+            {   "3",        "2",      "ADV",    "rowAdv",   "BSAS:$(AREA):$(IOC_UNIT):$(IOC_INST)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  } 
+            {   "3",        "2",      "TRST",  "tblReset",  "BSAS:$(AREA):$(IOC_UNIT):$(IOC_INST)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  }
 #
-            {   "4",        "3",      "ACQ",       "acq",   "$(BSAS)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  }
-            {   "4",        "3",      "ADV",    "rowAdv",   "$(BSAS)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  } 
-            {   "4",        "3",      "TRST",  "tblReset",  "$(BSAS)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  }
+            {   "4",        "3",      "ACQ",       "acq",   "BSAS:$(AREA):$(IOC_UNIT):$(IOC_INST)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  }
+            {   "4",        "3",      "ADV",    "rowAdv",   "BSAS:$(AREA):$(IOC_UNIT):$(IOC_INST)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  } 
+            {   "4",        "3",      "TRST",  "tblReset",  "BSAS:$(AREA):$(IOC_UNIT):$(IOC_INST)",  "\$\(GLOBAL=BSAS:SYS0:1\)"  }
 }  
