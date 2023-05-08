@@ -315,28 +315,34 @@ void BsaPv::append(unsigned n, double mean, double rms2)
     
     double __mean;
 
-    u.u32 = (uint32_t) mean;
 
     switch(*_p_type) {
         case uint2:
+            u.u32  = (uint32_t) mean;
             __mean = (double) u.u32;
             break;
         case uint16:
+            u.u32  = (uint32_t) mean;
             __mean = (double) u.u32;
             break;
         case int32:
+            u.i32  = (int32_t) mean;
             __mean = (double) u.i32;
             break;
         case uint32:
+            u.u32  = (uint32_t) mean;
             __mean = (double) u.u32;
             break;
         case float32:
+            u.f32  = (float) mean;
             __mean = (double) u.f32;
             break;
         case llrfPhase:
+            u.f32  = (float) mean;
             __mean = (double) u.f32;
             break;
         case llrfAmp:
+            u.f32  = (float) mean;
             __mean = (double) u.f32;
             break;
         default:
