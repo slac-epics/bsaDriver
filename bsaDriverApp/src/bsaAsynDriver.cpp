@@ -334,10 +334,10 @@ void BsaPv::append(unsigned n, double mean, double rms2)
             __mean = (double) u.f32;
             break;
         case llrfPhase:
-            __mean = (double) u.i32;
+            __mean = (double) u.f32;
             break;
         case llrfAmp:
-            __mean = (double) u.u32;
+            __mean = (double) u.f32;
             break;
         default:
            __mean = 0.;
