@@ -871,8 +871,9 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
                  plist->pidPv[edef].pid = pulse_id;
                  plist->pidPv[edef].time = _ts;
                  process_pidPv(&plist->pidPv[edef]);
+                 bool acceptSeverity = false; acceptSeverity = int((sevr_mask >> (hwChIndex*2)) & 0x3) <= GetChannelSevr(hwChIndex);
                  
-                 if(int((sevr_mask >> (hwChIndex*2)) & 0x3) <= GetChannelSevr(hwChIndex) ) {  // data update for valid mask
+                 if(acceptSeverity) {  // data update for valid mask
                      switch(plist->type){
                          case uint2_service:
                              // Read channel data
@@ -958,7 +959,8 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
                  }
 
                  // Assign the value
-                 if (plist->type != llrfAmp_service && plist->type != llrfPhase_service){
+                 if ((plist->type != llrfAmp_service && plist->type != llrfPhase_service) ||
+                     ((plist->type == llrfAmp_service || plist->type == llrfPhase_service) && !acceptSeverity)){
                      if(!isnan(val)) val = val * (*plist->pslope) + (*plist->poffset);
                      plist->vPv[edef].v = val;
                      plist->vPv[edef].time = _ts;
