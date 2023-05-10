@@ -69,6 +69,11 @@
 #define ENABLE  1
 #define DISABLE 0
 
+#define CHN_SEVERITY_NONE    0x0
+#define CHN_SEVERITY_MINOR   0x1
+#define CHN_SEVERITY_MAJOR   0x2
+#define CHN_SEVERITY_INVALID 0x3
+
 #define BLOCK_WIDTH_2   2
 #define BLOCK_WIDTH_16  16
 #define BLOCK_WIDTH_32  32

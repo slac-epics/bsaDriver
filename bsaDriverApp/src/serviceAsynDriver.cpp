@@ -577,11 +577,10 @@ void serviceAsynDriver::SetDest(int chn)
 
 void serviceAsynDriver::SetChannelSevr(int chn, int sevr)
 {
-    uint64_t mask = 0x3 << (chn*2);
+    uint64_t mask = (uint64_t)0x3 << (chn*2);
 
     channelSevr &= ~mask;
-    channelSevr |= (uint64_t(sevr) << (chn*2)) & mask;
-
+    channelSevr |= ((uint64_t)sevr << (chn*2)) & mask;
 }
 
 int serviceAsynDriver::GetChannelSevr(int chn)
@@ -872,7 +871,7 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
                  plist->pidPv[edef].pid = pulse_id;
                  plist->pidPv[edef].time = _ts;
                  process_pidPv(&plist->pidPv[edef]);
-
+                 
                  if(int((sevr_mask >> (hwChIndex*2)) & 0x3) <= GetChannelSevr(hwChIndex) ) {  // data update for valid mask
                      switch(plist->type){
                          case uint2_service:
@@ -951,8 +950,13 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
                              newBitsExtracted = 0;
                              break;
                      }
-                 } else val = NAN;  // put NAN for invalid mask
-                
+                 } 
+                 else 
+                 {
+                     val = NAN;   // NaN for invalid mask
+                     newBitsExtracted = BLOCK_WIDTH_32;
+                 }
+
                  // Assign the value
                  if (plist->type != llrfAmp_service && plist->type != llrfPhase_service){
                      if(!isnan(val)) val = val * (*plist->pslope) + (*plist->poffset);
