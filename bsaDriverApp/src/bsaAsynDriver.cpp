@@ -1003,7 +1003,7 @@ int createBsaList(const char *port_name)
     return 0;
 }
 
-int addBsa(const char *bsaKey, const char *bsaType, const char *keepAsInteger)
+int bsaAdd(const char *bsaKey, const char *bsaType, const char *keepAsInteger)
 {
     pDrvList_t *pl = find_drvLast();
 
@@ -1018,16 +1018,16 @@ int addBsa(const char *bsaKey, const char *bsaType, const char *keepAsInteger)
     }
 
 
-    bsaList_t *p = (bsaList_t *) mallocMustSucceed(sizeof(bsaList_t), "bsaDriver (addBsa)");
+    bsaList_t *p = (bsaList_t *) mallocMustSucceed(sizeof(bsaList_t), "bsaDriver (bsaAdd)");
     int i;
  
 
     if(!pl->pBsaEllList) {    /* initialize for once */
-         pl->pBsaEllList = (ELLLIST *) mallocMustSucceed(sizeof(ELLLIST), "bsaDriver(addBsa)");
+         pl->pBsaEllList = (ELLLIST *) mallocMustSucceed(sizeof(ELLLIST), "bsaDriver(bsaAdd)");
         ellInit(pl->pBsaEllList);
     }
 
-    p->pSlaveEllList = (ELLLIST *) mallocMustSucceed(sizeof(ELLLIST), "bsaDriver(addBsa)");
+    p->pSlaveEllList = (ELLLIST *) mallocMustSucceed(sizeof(ELLLIST), "bsaDriver(bsaAdd)");
     ellInit(p->pSlaveEllList);        //init. linked list for slave
 
     strcpy(p->bsa_name, bsaKey);
@@ -1052,7 +1052,7 @@ int addBsa(const char *bsaKey, const char *bsaType, const char *keepAsInteger)
     p->type = getBsaDataType(p->bsa_type);
 
     if(p->type == fault) {
-        printf("Error in addBsa(): could not add %s due to wrong type descriptor (%s)\n", bsaKey, bsaType);
+        printf("Error in bsaAdd(): could not add %s due to wrong type descriptor (%s)\n", bsaKey, bsaType);
         return 0;
     }
 
@@ -1112,7 +1112,7 @@ int addSlaveBsa(const char *bsaKey, const char *slaveKey, const char *bsaType)
 }
 
 
-static int _listBsa(ELLLIST *pBsaEllList)
+static int _bsaList(ELLLIST *pBsaEllList)
 {
     bsaList_t *p, *q;
     int       i = 0;
@@ -1137,14 +1137,14 @@ static int _listBsa(ELLLIST *pBsaEllList)
 }
 
 
-static int _listBsaAll(void)
+static int _bsaListAll(void)
 {
     pDrvList_t *p = (pDrvList_t *) ellFirst(pDrvEllList);
 
     while(p) {
         printf("Bsa Driver (named_root: %s, port: %s)\n",
                (p->named_root)?p->named_root: "Unknown", (p->port)?p->port: "Unknown");
-        if(p->pBsaEllList) _listBsa(p->pBsaEllList);
+        if(p->pBsaEllList) _bsaList(p->pBsaEllList);
         p = (pDrvList_t *) ellNext(&p->node);
     }
 
@@ -1152,7 +1152,7 @@ static int _listBsaAll(void)
 }
 
 
-static int _listBsaByName(const char *name)
+static int _bsaListByName(const char *name)
 {
 
     pDrvList_t *p = find_drvByPort(name);
@@ -1164,17 +1164,17 @@ static int _listBsaByName(const char *name)
 
     printf("Bsa Driver (named_root: %s, port: %s)\n",
            (p->named_root)?p->named_root: "Unknown", (p->port)?p->port: "Unknown");
-    if(p->pBsaEllList) _listBsa(p->pBsaEllList);
+    if(p->pBsaEllList) _bsaList(p->pBsaEllList);
 
     return 0;
 }
 
 
 
-int listBsa(const char *name = NULL)
+int bsaList(const char *name = NULL)
 {
-    if(name && strlen(name)) return _listBsaByName(name);
-    else                      return _listBsaAll();
+    if(name && strlen(name)) return _bsaListByName(name);
+    else                      return _bsaListAll();
 }
 
 static bsaList_t * findBsa(ELLLIST *pBsaEllList, const char *bsaKey)
@@ -1276,17 +1276,17 @@ static void createBsaCallFunc(const iocshArgBuf *args)
 }
 
 
-static const iocshArg addBsaArg0 = { "bsaKey", iocshArgString };
-static const iocshArg addBsaArg1 = { "bsaType", iocshArgString };
-static const iocshArg addBsaArg2 = { "keepAsInteger (optional)",iocshArgString };
-static const iocshArg * const addBsaArgs [] = { &addBsaArg0,
-                                                &addBsaArg1,
-                                                &addBsaArg2 };
-static const iocshFuncDef addBsaFuncDef = { "addBsa", 3, addBsaArgs };
-static void addBsaCallFunc(const iocshArgBuf *args)
+static const iocshArg bsaAddArg0 = { "bsaKey", iocshArgString };
+static const iocshArg bsaAddArg1 = { "bsaType", iocshArgString };
+static const iocshArg bsaAddArg2 = { "keepAsInteger (optional)",iocshArgString };
+static const iocshArg * const bsaAddArgs [] = { &bsaAddArg0,
+                                                &bsaAddArg1,
+                                                &bsaAddArg2 };
+static const iocshFuncDef bsaAddFuncDef = { "bsaAdd", 3, bsaAddArgs };
+static void bsaAddCallFunc(const iocshArgBuf *args)
 {
 
-    addBsa(args[0].sval, args[1].sval, (args[2].sval && strlen(args[2].sval))? args[2].sval: NULL);
+    bsaAdd(args[0].sval, args[1].sval, (args[2].sval && strlen(args[2].sval))? args[2].sval: NULL);
 }
 
 static const iocshArg addSlaveBsaArg0 = {"bsaKey",   iocshArgString};
@@ -1302,12 +1302,12 @@ static void addSlaveBsaCallFunc(const iocshArgBuf *args)
 }
 
 
-static const iocshArg listBsaArg0 = {"named_root or port (optional)", iocshArgString};
-static const iocshArg * const listBsaArgs[] = { &listBsaArg0 };
-static const iocshFuncDef listBsaFuncDef = { "listBsa", 1, listBsaArgs };
-static void listBsaCallFunc(const iocshArgBuf *args)
+static const iocshArg bsaListArg0 = {"named_root or port (optional)", iocshArgString};
+static const iocshArg * const bsaListArgs[] = { &bsaListArg0 };
+static const iocshFuncDef bsaListFuncDef = { "bsaList", 1, bsaListArgs };
+static void bsaListCallFunc(const iocshArgBuf *args)
 {
-    listBsa((args[0].sval && strlen(args[0].sval))? args[0].sval: NULL);
+    bsaList((args[0].sval && strlen(args[0].sval))? args[0].sval: NULL);
 }
 
 void bsaAsynDriverRegister(void)
@@ -1316,9 +1316,9 @@ void bsaAsynDriverRegister(void)
     iocshRegister(&bsaEnableFuncDef,   bsaEnableCallFunc);
     iocshRegister(&bsaDisableFuncDef,  bsaDisableCallFunc);
     iocshRegister(&createBsaFuncDef,   createBsaCallFunc);
-    iocshRegister(&addBsaFuncDef,      addBsaCallFunc);
+    iocshRegister(&bsaAddFuncDef,      bsaAddCallFunc);
     iocshRegister(&addSlaveBsaFuncDef, addSlaveBsaCallFunc);
-    iocshRegister(&listBsaFuncDef,     listBsaCallFunc);
+    iocshRegister(&bsaListFuncDef,     bsaListCallFunc);
 }
 
 epicsExportRegistrar(bsaAsynDriverRegister);
