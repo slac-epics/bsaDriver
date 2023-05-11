@@ -167,6 +167,7 @@ class serviceAsynDriver: asynPortDriver {
 
         char * pvaBaseName;
         uint64_t channelSevr;        
+        uint8_t  perEdefSevr[NUM_EDEF_MAX];
         void* pVoidsocketAPI[NUM_EDEF_MAX];
         uint32_t *bldPacketPayload;       
         uint32_t channelMask;
@@ -181,7 +182,9 @@ class serviceAsynDriver: asynPortDriver {
         void SetRate(int chn);
         void SetDest(int chn);
         void SetChannelSevr(int chn, int sevr);
+        void SetEdefSevr(int edef, int sevr);
         int  GetChannelSevr(int chn);
+        int  GetEdefSevr(int edef);
 
         serviceType_t serviceType;
         int           numMod;

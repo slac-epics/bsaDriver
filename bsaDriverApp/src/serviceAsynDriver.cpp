@@ -549,16 +549,29 @@ void serviceAsynDriver::SetDest(int chn)
 
 void serviceAsynDriver::SetChannelSevr(int chn, int sevr)
 {
-    uint64_t mask = 0x3 << (chn*2);
+    uint64_t mask = (uint64_t) 0x3 << (chn*2);
 
     channelSevr &= ~mask;
     channelSevr |= (uint64_t(sevr) << (chn*2)) & mask;
 
 }
 
+void serviceAsynDriver::SetEdefSevr(int edef, int sevr)
+{
+   uint8_t mask = 0x3;
+
+   perEdefSevr[edef] &= ~mask;
+   perEdefSevr[edef] |= sevr & mask;   
+}
+
 int serviceAsynDriver::GetChannelSevr(int chn)
 {
    return int((channelSevr >> (chn *2)) & 0x3);
+}
+
+int serviceAsynDriver::GetEdefSevr(int edef)
+{
+    return perEdefSevr[edef];
 }
 
 void serviceAsynDriver::MonitorStatus(void)
@@ -734,7 +747,7 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
                  plist->pidPv[edef].time = _ts;
                  process_pidPv(&plist->pidPv[edef]);
 
-                 if(int((sevr_mask >> (data_chn*2)) & 0x3) <= GetChannelSevr(data_chn) ) {  // data update for valid mask
+                 if(int((sevr_mask >> (data_chn*2)) & 0x3) <= GetEdefSevr(edef) ) {  // data update for valid mask
                      switch(plist->type){
                          case int32_service:
                              val = (double) (p_int32[index]);
