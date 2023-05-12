@@ -15,8 +15,8 @@ Macros:
 
   $(DEV)         ; device PV name
   $(SECN)        ; signal name as part of the PV name
-  $(BSAKEY)      ; BSA key. It must match the bsa key string in addBsa() or
-                   addSlaveBsa() explained in the README file. This macro is
+  $(BSAKEY)      ; BSA key. It must match the bsa key string in bsaAdd() or
+                   bsaAddSecondary() explained in the README file. This macro is
                    used in INP and OUT fields to connect with the device
                    support code.
   $(TPR)         ; an optional macro. If the IOC uses multiple different device
@@ -54,8 +54,8 @@ Macros:
 
 Example 1: using the same $(DEV) for some of the signals in the ioc.
 
-You don't need to load database records for all signals created with addBsa()
-or addSlaveBsa(). You can safely select only the set that makes sense for the
+You don't need to load database records for all signals created with bsaAdd()
+or bsaAddSecondary(). You can safely select only the set that makes sense for the
 IOC.
 
 Examples of prefix:

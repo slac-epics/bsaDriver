@@ -203,9 +203,9 @@ following jargon: "I need the ordered list of data that goes into the
 diagnostic bus, with the data type".
  
 bsaDriver provides the ioc shell command 
-addBsa(<BSA key>, <signal data type>)
+bsaAdd(<BSA key>, <signal data type>)
 
-You need to use addBsa for each of the BSA signals from the list provided by
+You need to use bsaAdd for each of the BSA signals from the list provided by
 the firmware engineer, in the same order as the list.
 
 <BSA key> can be any string you want to describe the signal.
@@ -214,16 +214,16 @@ the firmware engineer, in the same order as the list.
                            section of the README.
 
 Optionally, should the signal stay untouched (not scaled using slope/offset or
-casted to another type), a third parameter is passed to the addBsa function.
+casted to another type), a third parameter is passed to the bsaAdd function.
 This parameter is only used by BLD, not BSA/BSAS/BSSS. More about slope and
 offset will be explained later.
     - "0" (or empty) -> Allowed to apply slope/offset
     - "1" -> Do not touch
 
-*Important note!* Although the command is called addBsa, the configuration you
+*Important note!* Although the command is called bsaAdd, the configuration you
 make by using it is going to be used by all acquisition services.
 
-The driver also provides the IOC shell command "listBsa()" to print out the BSA
+The driver also provides the IOC shell command "bsaList()" to print out the BSA
 name list, so the IOC engineer can verify the BSA names loaded.
 
 Example of use of the bsaDriver functions:
@@ -232,24 +232,24 @@ Example of use of the bsaDriver functions:
 # ====================================
 # We need to add the status signals because they are the first ones, even if
 # they are not used by the acquisition services.
-addBsa("STATUSAMC0",       "uint32", 1)
-addBsa("STATUSAMC1",       "uint32", 1)
+bsaAdd("STATUSAMC0",       "uint32", 1)
+bsaAdd("STATUSAMC1",       "uint32", 1)
 # Add signals for BSA, BSSS, BSAS
-addBsa("TMITAMC0",         "int32")
-addBsa("TMITAMC1",         "int32")
-addBsa("XFIXEDPAMC0",      "int32")
-addBsa("XFIXEDPAMC1",      "int32")
-addBsa("YFIXEDPAMC0",      "int32")
-addBsa("YFIXEDPAMC1",      "int32")
+bsaAdd("TMITAMC0",         "int32")
+bsaAdd("TMITAMC1",         "int32")
+bsaAdd("XFIXEDPAMC0",      "int32")
+bsaAdd("XFIXEDPAMC1",      "int32")
+bsaAdd("YFIXEDPAMC0",      "int32")
+bsaAdd("YFIXEDPAMC1",      "int32")
 # Add signals for BLD
-addBsa("TMITFLOATAMC0",    "float32", 1)
-addBsa("TMITFLOATAMC1",    "float32", 1)
-addBsa("XFLOATPAMC0",      "float32", 1)
-addBsa("XFLOATPAMC1",      "float32", 1)
-addBsa("YFLOATPAMC0",      "float32", 1)
-addBsa("YFLOATPAMC1",      "float32", 1)
+bsaAdd("TMITFLOATAMC0",    "float32", 1)
+bsaAdd("TMITFLOATAMC1",    "float32", 1)
+bsaAdd("XFLOATPAMC0",      "float32", 1)
+bsaAdd("XFLOATPAMC1",      "float32", 1)
+bsaAdd("YFLOATPAMC0",      "float32", 1)
+bsaAdd("YFLOATPAMC1",      "float32", 1)
 
-sioc-b84-ts01> listBsa()
+sioc-b84-ts01> bsaList()
 Total 14 BSA(s) has(have) been registered
         0       STATUSAMC0, uint32
         1       STATUSAMC1, uint32
@@ -275,10 +275,10 @@ idea is that you can provide different conversions for each signal. Example:
 the signal related to the charge in the BCM could be presented as coulombs,
 nano coulombs, or number of electrons.
 
-After creating the parent BSA node using addBsa, create the child BSA node as
+After creating the parent BSA node using bsaAdd, create the child BSA node as
 the following:
 
-addSlaveBsa(<BSA key for parent>, <BSA key for child>, <data type>)
+bsaAddSecondary(<BSA key for parent>, <BSA key for child>, <data type>)
 
 - The "BSA key for parent" should exist before adding the child
 - The "BSA key for child" will be used as the BSAKEY database macro for
@@ -286,16 +286,16 @@ dbLoadRecords(). More about this will be explained in other README specific
 files.
 
 Example:
-addSlaveBsa("TMITAMC0", "TMIT0C0", "int32")
-addSlaveBsa("TMITAMC0", "TMIT0C1", "int32")
-addSlaveBsa("TMITAMC0", "TMIT0C2", "int32")
-addSlaveBsa("TMITAMC0", "TMIT0C3", "int32")
-addSlaveBsa("TMITAMC0", "TMIT0C4", "int32")
-addSlaveBsa("TMITAMC0", "TMIT0C5", "int32")
+bsaAddSecondary("TMITAMC0", "TMIT0C0", "int32")
+bsaAddSecondary("TMITAMC0", "TMIT0C1", "int32")
+bsaAddSecondary("TMITAMC0", "TMIT0C2", "int32")
+bsaAddSecondary("TMITAMC0", "TMIT0C3", "int32")
+bsaAddSecondary("TMITAMC0", "TMIT0C4", "int32")
+bsaAddSecondary("TMITAMC0", "TMIT0C5", "int32")
 
 In this example, we added 6 children BSAs for the TMITAMC0 BSA.
 
-listBsa()
+bsaList()
   Total 14 BSA(s) has(have) been registered
         0       STATUSAMC0, uint32
         1       STATUSAMC1, uint32
@@ -311,7 +311,7 @@ listBsa()
         5       XFIXEDPAMC1, int32
 etc.
 
-listBsa() command shows the parent node and its children nodes.
+bsaList() command shows the parent node and its children nodes.
 
 
 2.3.2 More about signal Data Types
@@ -405,7 +405,7 @@ Usually the signals arrive from the firmware as an integer number that needs
 to be converted to the correct engineering unit.
 
 The BSA database template provides slope and offset PVs for each BSA signal
-created by addBsa or addSlaveBsa (bsakey). These PVs affect all acquisition
+created by bsaAdd or bsaAddSecondary (bsakey). These PVs affect all acquisition
 services at the same time so the signal can be shown with the right unit
 everywhere.
 

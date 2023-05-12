@@ -35,25 +35,25 @@ cpswLoadConfigFile("${YAML_CONFIG_FILE}", "mmio", "")
 # ===========================================
  
 # add BSA - must be in the same order as in the diagnostic bus
-#addBsa(<BSA key>,       <signal type>)
+#bsaAdd(<BSA key>,       <signal type>)
 # We need to add the status signals because they are the first ones, even if
 # they are not used by the acquisition services.
-addBsa("STATUSAMC0",       "uint32", 1)
-addBsa("STATUSAMC1",       "uint32", 1)
+bsaAdd("STATUSAMC0",       "uint32", 1)
+bsaAdd("STATUSAMC1",       "uint32", 1)
 # Add signals for BSA, BSSS, BSAS
-addBsa("TMITAMC0",         "int32")
-addBsa("TMITAMC1",         "int32")
-addBsa("XFIXEDPAMC0",      "int32")
-addBsa("XFIXEDPAMC1",      "int32")
-addBsa("YFIXEDPAMC0",      "int32")
-addBsa("YFIXEDPAMC1",      "int32")
+bsaAdd("TMITAMC0",         "int32")
+bsaAdd("TMITAMC1",         "int32")
+bsaAdd("XFIXEDPAMC0",      "int32")
+bsaAdd("XFIXEDPAMC1",      "int32")
+bsaAdd("YFIXEDPAMC0",      "int32")
+bsaAdd("YFIXEDPAMC1",      "int32")
 # Add signals for BLD
-addBsa("TMITFLOATAMC0",    "float32", 1)
-addBsa("TMITFLOATAMC1",    "float32", 1)
-addBsa("XFLOATPAMC0",      "float32", 1)
-addBsa("XFLOATPAMC1",      "float32", 1)
-addBsa("YFLOATPAMC0",      "float32", 1)
-addBsa("YFLOATPAMC1",      "float32", 1)  
+bsaAdd("TMITFLOATAMC0",    "float32", 1)
+bsaAdd("TMITFLOATAMC1",    "float32", 1)
+bsaAdd("XFLOATPAMC0",      "float32", 1)
+bsaAdd("XFLOATPAMC1",      "float32", 1)
+bsaAdd("YFLOATPAMC0",      "float32", 1)
+bsaAdd("YFLOATPAMC1",      "float32", 1)  
  
 # bsaAsynDriverConfigure(<asyn port name for BSA>, <path for register space>, <path for dram space>)
 # The <path for register space> and <path for dram space> varies from application to application
@@ -62,7 +62,7 @@ bsaAsynDriverConfigure("bsaPort", "mmio/AmcCarrierCore/AmcCarrierBsa", "BsaRam/d
  
 # DEV is the DEVICE:AREA:LOCAL of an IOC.
 # The pair $(DEV) / $(SECN) must be unique, otherwise it will create duplicated PVs.
-# BSAKEY must correspond with what was used with addBsa().
+# BSAKEY must correspond with what was used with bsaAdd().
 dbLoadRecords("db/bsa.db", "DEV=${DEVICE1_PREFIX},TPR=${TPR_PREFIX},PORT=bsaPort,BSAKEY=TMITAMC0,SECN=TMIT")
 dbLoadRecords("db/bsa.db", "DEV=${DEVICE1_PREFIX},TPR=${TPR_PREFIX},PORT=bsaPort,BSAKEY=XFIXEDPAMC0,SECN=X")
 dbLoadRecords("db/bsa.db", "DEV=${DEVICE1_PREFIX},TPR=${TPR_PREFIX},PORT=bsaPort,BSAKEY=YFIXEDPAMC0,SECN=Y")
@@ -103,7 +103,7 @@ dbLoadRecords("db/bsssCtrl.db", "DEV=${TPR_PREFIX},PORT=bsssPort")
 # SECN is used as part of the PV name. The combination of DEV and SECN macros must
 # be unique in the IOC. If you produce an identical pair of DEV and SECN more than
 # once, you will have duplicate PVs in the IOC.
-# BSAKEY must correspond with what was used with addBsa().
+# BSAKEY must correspond with what was used with bsaAdd().
 dbLoadRecords("db/bsss.db", "DEV=${DEVICE1_PREFIX},PORT=bsssPort,BSAKEY=TMITAMC0,SECN=TMIT")
 dbLoadRecords("db/bsss.db", "DEV=${DEVICE1_PREFIX},PORT=bsssPort,BSAKEY=XFIXEDPAMC0,SECN=X")
 dbLoadRecords("db/bsss.db", "DEV=${DEVICE1_PREFIX},PORT=bsssPort,BSAKEY=YFIXEDPAMC0,SECN=Y")
@@ -122,7 +122,7 @@ bsasAssociateBsaChannels("bsaPort")
  
 # Configure the 2-D table header titles
 # bsasBaseName(<BSA key>, <signal_header>)
-# <BSA key> must correspond with what was used with addBsa().
+# <BSA key> must correspond with what was used with bsaAdd().
 # We've been conventioning to use the DEVICE_PREFIX macro to name header titles.
 bsasBaseName("TMITAMC1",    "${DEVICE1_PREFIX}:TMIT")
 bsasBaseName("XFIXEDPAMC1", "${DEVICE1_PREFIX}:X")
@@ -159,7 +159,7 @@ dbLoadRecords("db/bsasCtrl.db", "BSAS=${BSAS_PREFIX},PORT=bsasPort")
 # SECN is used as part of the PV name. The combination of DEV and SECN macros must
 # be unique in the IOC. If you produce an identical pair of DEV and SECN more than
 # once, you will have duplicate PVs in the IOC.
-# BSAKEY must correspond with what was used with addBsa().
+# BSAKEY must correspond with what was used with bsaAdd().
 dbLoadRecords("db/bsas.db", "DEV=${DEVICE1_PREFIX},PORT=bsasPort,BSAKEY=TMITAMC0,SECN=TMIT")
 dbLoadRecords("db/bsas.db", "DEV=${DEVICE1_PREFIX},PORT=bsasPort,BSAKEY=XFIXEDPAMC0,SECN=X")
 dbLoadRecords("db/bsas.db", "DEV=${DEVICE1_PREFIX},PORT=bsasPort,BSAKEY=YFIXEDPAMC0,SECN=Y")
@@ -207,7 +207,7 @@ dbLoadRecords("db/bldCtrl.db", "DEV=${TPR_PREFIX}, PORT=bldPort")
 # SECN is used as part of the PV name. The combination of DEV and SECN macros must
 # be unique in the IOC. If you produce an identical pair of DEV and SECN more than
 # once, you will have duplicate PVs in the IOC.
-# BSAKEY must correspond with what was used with addBsa().
+# BSAKEY must correspond with what was used with bsaAdd().
 dbLoadRecords("db/bld.db", "DEV=${DEVICE1_PREFIX},PORT=bldPort,BSAKEY=TMITAMC0,SECN=TMIT")
 dbLoadRecords("db/bld.db", "DEV=${DEVICE1_PREFIX},PORT=bldPort,BSAKEY=XFIXEDPAMC0,SECN=X")
 dbLoadRecords("db/bld.db", "DEV=${DEVICE1_PREFIX},PORT=bldPort,BSAKEY=YFIXEDPAMC0,SECN=Y")

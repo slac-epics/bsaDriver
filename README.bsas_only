@@ -23,7 +23,7 @@ for the BSAS service.
 There are multiple columns on the NTTable PV: timestamp-seconds, 
 timestamp-nanoseconds, pulse ID and one or more signal columns. The number of
 signal columns is configurable and is always a sub-set of the signals created
-with the addBsa() and addSlaveBsa() commands explained in the main README file.
+with the bsaAdd() and bsaAddSecondary() commands explained in the main README file.
 
 Each signal column is actually a group of 6 columns:
     .CNT: number of accumulated samples in the row
@@ -122,8 +122,8 @@ explanation, please check up the following slide deck:
 https://1drv.ms/p/s!AsH0Qpew48nUh7xfkO4-X_lMj48VmA?e=6Ea8FP
 
 
-3. Automatically copy the list of BSA signals made previously with addBsa() and
-addSlaveBsa() to BSAS:
+3. Automatically copy the list of BSA signals made previously with bsaAdd() and
+bsaAddSecondary() to BSAS:
 -------------------------------------------------------------------------------
 
 Use the bsasAssociateBsaChannels to make the association with BSA channels.
@@ -156,7 +156,7 @@ This is the command to configure the header titles:
  
 #  bsasBaseName(<BSA key>, <signal_header>)
 
-BSA key is the same key used in addBsa() or addSlaveBsa() commands as described
+BSA key is the same key used in bsaAdd() or bsaAddSecondary() commands as described
 in the main README file.
 
 Examples:

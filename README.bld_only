@@ -16,8 +16,8 @@ The BLD packets follow a well defined format and clients need to follow the
 same format when receiving data from the multicast network.
 
 
-2. Automatically copy the list of BSA signals made previously with addBsa() and
-addSlaveBsa() to BLD:
+2. Automatically copy the list of BSA signals made previously with bsaAdd() and
+bsaAddSecondary() to BLD:
 -------------------------------------------------------------------------------
 
 Use the bldAssociateBsaChannels to make the association with BSA channels.
@@ -61,7 +61,7 @@ on the application. The example, though, will probably fit most applications.
 ----------------------------------------------------
 
 By default, the signal names shown by the BLD_PAYLOAD PV use the BSA key as
-they were defined when using addBsa() and addSlaveBsa() (see the main README
+they were defined when using bsaAdd() and bsaAddSecondary() (see the main README
 file).
 
 If the default name is not adequate, another name can be configure with the
@@ -81,7 +81,7 @@ README is applied to the signals delivered by the BLD. To be clear, when
 configuring slope/offset for BSA, it will also affect BLD.
 
 If this is not a desired behavior, there's an optional third argument for the
-addBsa() command. If this argument is 1, BLD will ignore slope and offset. 
+bsaAdd() command. If this argument is 1, BLD will ignore slope and offset. 
 
 This was already explained in item 2.3 of the main README.
  
