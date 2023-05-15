@@ -282,6 +282,7 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
             this->pService[0] = new Bsss::BsssYaml(reg0_, BSSS0_NUM_EDEF);
             this->pService[1] = new Bsss::BsssYaml(reg1_, BSSS1_NUM_EDEF);
             this->numMod = NUM_BSSS_MOD;
+            for(int i = 0; i < NUM_EDEF_MAX; i++) SetEdefSevr(i, 2);  // set Major as a default severity filtering for BSSS 
             break;
     }
     serviceType = type;
