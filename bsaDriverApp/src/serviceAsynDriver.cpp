@@ -484,6 +484,7 @@ void serviceAsynDriver::SetupAsynParams(serviceType_t type)
 
         // set up dyanamic paramters
         for(unsigned int i = 0; i < (this->pService[0]->getEdefNum() + this->pService[1]->getEdefNum()); i++) {
+            sprintf(param_name, EDEFSEVR_STR, BSSS_STR, i+SCBSA_EDEF_START); createParam(param_name, asynParamInt32, &p_edefSevr[i]);
             channelList_t *p  = (channelList_t *) ellFirst(this->pChannelEllList);
             while(p) {
                 sprintf(param_name, BSSSPV_STR,  p->channel_key, i); createParam(param_name, asynParamFloat64, &p->p_channel[i]);    strcpy(p->pkey_channel[i],    param_name);
@@ -706,6 +707,16 @@ asynStatus serviceAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
         pService[0]->setRateLimit((uint32_t) value);
         pService[1]->setRateLimit((uint32_t) value);
         goto done;
+    }
+
+    if(serviceType = bsss) {
+        for(int i = 0; i < (this->pService[0]->getEdefNum() + this->pService[1]->getEdefNum()); i++) {
+            if(function == p_edefSevr[i]) {
+                SetEdefSevr(i, value);
+                goto done;
+            }
+        }
+
     }
 
     done:
