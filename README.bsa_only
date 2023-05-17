@@ -65,7 +65,7 @@ dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=TMITAMC0,SE
 dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=XFIXEDPAMC0,SECN=X")
 dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=YFIXEDPAMC0,SECN=Y")
 
-# TMITAMC0 as the parent signal with 6 dependent children BSAs
+# TMITAMC0 as the primary signal with 6 dependent secondary BSAs
 dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=TMIT0C0,SECN=TMITC0")
 dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=TMIT0C1,SECN=TMITC1")
 dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=TMIT0C2,SECN=TMITC2")

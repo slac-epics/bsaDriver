@@ -267,21 +267,21 @@ Total 14 BSA(s) has(have) been registered
         13      YFLOATPAMC1, float32
 
 
-2.3.1 Adding dependent children BSA names for the driver
+2.3.1 Adding dependent secondary BSA names for the driver
 
-The children BSA shares BSA data source with the parent. The children can have
-different data conversion or separate slope and offset from the parent BSA. The
-idea is that you can provide different conversions for each signal. Example:
-the signal related to the charge in the BCM could be presented as coulombs,
-nano coulombs, or number of electrons.
+The secondary BSA node shares BSA data source with the primary. The
+secondaries can have different data conversion or separate slope and offset
+from the primary BSA. The idea is that you can provide different conversions for
+each signal. Example: the signal related to the charge in the BCM could be
+presented as coulombs, nano coulombs, or number of electrons.
 
-After creating the parent BSA node using bsaAdd, create the child BSA node as
+After creating the primary BSA node using bsaAdd, create the secondary BSA node as
 the following:
 
-bsaAddSecondary(<BSA key for parent>, <BSA key for child>, <data type>)
+bsaAddSecondary(<BSA key for primary>, <BSA key for secondary>, <data type>)
 
-- The "BSA key for parent" should exist before adding the child
-- The "BSA key for child" will be used as the BSAKEY database macro for
+- The "BSA key for primary" should exist before adding the secondary
+- The "BSA key for secondart" will be used as the BSAKEY database macro for
 dbLoadRecords(). More about this will be explained in other README specific
 files.
 
@@ -293,25 +293,25 @@ bsaAddSecondary("TMITAMC0", "TMIT0C3", "int32")
 bsaAddSecondary("TMITAMC0", "TMIT0C4", "int32")
 bsaAddSecondary("TMITAMC0", "TMIT0C5", "int32")
 
-In this example, we added 6 children BSAs for the TMITAMC0 BSA.
+In this example, we added 6 secondary BSAs for the TMITAMC0 BSA.
 
 bsaList()
   Total 14 BSA(s) has(have) been registered
         0       STATUSAMC0, uint32
         1       STATUSAMC1, uint32
         2       TMITAMC0, int32
-                +----- slave node 0     TMIT0C0, int32
-                +----- slave node 1     TMIT0C1, int32
-                +----- slave node 2     TMIT0C2, int32
-                +----- slave node 3     TMIT0C3, int32
-                +----- slave node 4     TMIT0C4, int32
-                +----- slave node 5     TMIT0C5, int32
+                +----- secondary node 0     TMIT0C0, int32
+                +----- secondary node 1     TMIT0C1, int32
+                +----- secondary node 2     TMIT0C2, int32
+                +----- secondary node 3     TMIT0C3, int32
+                +----- secondary node 4     TMIT0C4, int32
+                +----- secondary node 5     TMIT0C5, int32
         3       TMITAMC1, int32
         4       XFIXEDPAMC0, int32
         5       XFIXEDPAMC1, int32
 etc.
 
-bsaList() command shows the parent node and its children nodes.
+bsaList() command shows the primary node and its secondary nodes.
 
 
 2.3.2 More about signal Data Types
