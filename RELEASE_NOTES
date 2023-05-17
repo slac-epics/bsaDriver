@@ -1,5 +1,13 @@
+R4.0.0    May 16, 2023, Mike Skoufis
+	     - Changed the name of multiple functions so the string "bsa" comes
+               as the first characters of the IOC shell function names. This
+               way, when using the IOC shell "help" command, the bsa related
+               functions are grouped together.
+             - This change breaks compatibility with previous versions and IOCs
+               using it will require a change in the st.cmd.
+
 R3.2.1    May 8, 2023, Carolina B Mattison & Marcio Donadio
-	     -Updating macros to have BSAS as root PV name for the DEVICE instead of TPR name
+	     - Updating macros to have BSAS as root PV name for the DEVICE instead of TPR name
 
 R3.2.0    Apr 17, 2023, Kukhee Kim
              - Fixed problem that floaded the IOC console with the messages
