@@ -506,19 +506,32 @@ void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done
             
             // Get the data type of the PV (32-bit or less)
             bsaDataType_t *type  = pv->get_p_type();
-            
+    
+            // Flag when NaN should be appended
+            bool appendNAN = false;
+
             // Partition 32-bit data and distribute to new PVs as needed
             switch(*type){
                 case uint2:
                     // Extract the 2-bit block
-                    val = (uint32_t)_rawChannelData[wordIndex]->mean;
-                    mask = KEEP_LSB_2;val >>= bitSum;val &= mask;
+                    if (!isnan(_rawChannelData[wordIndex]->mean))
+                    {
+                        val = (uint32_t)_rawChannelData[wordIndex]->mean;
+                        mask = KEEP_LSB_2;val >>= bitSum;val &= mask;
+                    }
+                    else
+                        appendNAN = true;
                     bitSum += BLOCK_WIDTH_2;
                     break; 
                 case uint16:
                     // Extract the 16-bit block
-                    val = (uint32_t)_rawChannelData[wordIndex]->mean;
-                    mask = KEEP_LSB_16;val >>= bitSum;val &= mask;
+                    if (!isnan(_rawChannelData[wordIndex]->mean))
+                    {
+                        val = (uint32_t)_rawChannelData[wordIndex]->mean;
+                        mask = KEEP_LSB_16;val >>= bitSum;val &= mask;
+                    }
+                    else
+                        appendNAN = true;
                     bitSum += BLOCK_WIDTH_16;
                     break;
                 case llrfAmp:
@@ -526,17 +539,26 @@ void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done
                     // Perform checks to ensure type validity
                     llrfPerformChecks(const_cast<Bsa::Pv*>(pv),const_cast<Bsa::Pv*>(pvN),bitSum);
                     // Read all 32 bits
-                    val = (uint32_t)_rawChannelData[wordIndex]->mean;
-                    // Extract lower 16 bits
-                    mask = KEEP_LSB_16; 
-                    iVal = static_cast<signed short>(val & mask);
-                    // Extract upper 16 bits
-                    qVal = static_cast<signed short>((val >> BLOCK_WIDTH_16) & mask);  
-                    // Compute phase & amplitude
-                    llrfCalcPhaseAmp(iVal, qVal, amp, phase);
-                    // Append computed values to PVs
-                    quant1 = (*type == llrfAmp)?amp:phase;
-                    quant2 = (quant1 == amp   )?phase:amp;
+                    if (!isnan(_rawChannelData[wordIndex]->mean))
+                    {
+                        val = (uint32_t)_rawChannelData[wordIndex]->mean;
+                        // Extract lower 16 bits
+                        mask = KEEP_LSB_16; 
+                        iVal = static_cast<signed short>(val & mask);
+                        // Extract upper 16 bits
+                        qVal = static_cast<signed short>((val >> BLOCK_WIDTH_16) & mask);  
+                        // Compute phase & amplitude
+                        llrfCalcPhaseAmp(iVal, qVal, amp, phase);
+                        // Append computed values to PVs
+                        quant1 = (*type == llrfAmp)?amp:phase;
+                        quant2 = (quant1 == amp   )?phase:amp;
+                    }
+                    else
+                    {
+                        quant1 = NAN;
+                        quant2 = NAN;
+                    }
+                        appendNAN = true;
                     pv->append  (_rawChannelData[wordIndex]->n, 
                                   quant1,
                                  _rawChannelData[wordIndex]->rms2);
@@ -551,13 +573,20 @@ void BsaPvArray::procChannelData(unsigned n, double mean, double rms2, bool done
                 case float32:
                 default:
                     // Send data as is (no partition required)
-                    val = (uint32_t)_rawChannelData[wordIndex]->mean;
+                    if (!isnan(_rawChannelData[wordIndex]->mean))
+                        val = (uint32_t)_rawChannelData[wordIndex]->mean;
+                    else
+                        appendNAN = true;
                     bitSum += BLOCK_WIDTH_32;
             }
             // Append the value to the corresponding PV history
-            if (*type != llrfAmp && *type != llrfPhase)
+            if (*type != llrfAmp && *type != llrfPhase && !appendNAN)
                 pv->append(_rawChannelData[wordIndex]->n, 
                            (double)val, 
+                           _rawChannelData[wordIndex]->rms2);
+            else if (*type != llrfAmp && *type != llrfPhase && appendNAN)
+                pv->append(_rawChannelData[wordIndex]->n, 
+                           NAN, 
                            _rawChannelData[wordIndex]->rms2);
             
             // Check if the 32-bit boundary has been violated
