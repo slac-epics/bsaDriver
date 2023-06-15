@@ -710,7 +710,7 @@ asynStatus serviceAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
         goto done;
     }
 
-    if(serviceType = bsss) {
+    if(serviceType == bsss) {
         for(int i = 0; i < (this->pService[0]->getEdefNum() + this->pService[1]->getEdefNum()); i++) {
             if(function == p_edefSevr[i]) {
                 SetEdefSevr(i, value);
