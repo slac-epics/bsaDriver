@@ -563,7 +563,7 @@ void serviceAsynDriver::SetEdefSevr(int edef, int sevr)
    uint8_t mask = 0x3;
 
    perEdefSevr[edef] &= ~mask;
-   perEdefSevr[edef] |= sevr & mask;   
+   perEdefSevr[edef] |= (uint8_t)sevr & mask;   
 }
 
 int serviceAsynDriver::GetChannelSevr(int chn)
