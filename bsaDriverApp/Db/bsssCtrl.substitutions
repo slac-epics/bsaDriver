@@ -5,7 +5,7 @@ file serviceControl.db {
 
 file bsssRateLimit.db {
     pattern {   DEVICE,   SERVICE,      GLOBAL }
-            { "$(DEV)" ,  "BSSS",  "\$\(GLOBAL=TPG:SYS0:1\)"}
+            { "$(DEV)" ,  "BSSS",  "\$\(GLOBAL=BSSS:SYS0:1\)"}
 }
 
 file serviceStatus.db {
@@ -17,56 +17,56 @@ file serviceStatus.db {
 
 file bsssPerEdefSevr.db {
     pattern {     DEVICE,     SERVICE,       BSA,     EDEF,                        GLOBAL }
-            {   "$(DEV)",      "BSSS",      "21",      "21",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "22",      "22",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "23",      "23",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "24",      "24",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "25",      "25",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "26",      "26",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "27",      "27",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "28",      "28",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "29",      "29",     "\$\(GLOBAL=TPG:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "21",      "21",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "22",      "22",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "23",      "23",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "24",      "24",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "25",      "25",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "26",      "26",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "27",      "27",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "28",      "28",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "29",      "29",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
 #
-            {   "$(DEV)",      "BSSS",      "30",      "30",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "31",      "31",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "32",      "32",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "33",      "33",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "34",      "34",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "35",      "35",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "36",      "36",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "37",      "37",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "38",      "38",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "39",      "39",     "\$\(GLOBAL=TPG:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "30",      "30",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "31",      "31",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "32",      "32",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "33",      "33",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "34",      "34",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "35",      "35",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "36",      "36",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "37",      "37",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "38",      "38",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "39",      "39",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
 #
-            {   "$(DEV)",      "BSSS",      "40",      "40",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "41",      "41",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "42",      "42",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "43",      "43",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "44",      "44",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "45",      "45",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "46",      "46",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "47",      "47",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "48",      "48",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "49",      "49",     "\$\(GLOBAL=TPG:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "40",      "40",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "41",      "41",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "42",      "42",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "43",      "43",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "44",      "44",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "45",      "45",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "46",      "46",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "47",      "47",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "48",      "48",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "49",      "49",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
 #
-            {   "$(DEV)",      "BSSS",      "50",   "SCD1H",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "51",   "SCDTH",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "52",   "SCDHH",     "\$\(GLOBAL=TPG:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "50",   "SCD1H",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "51",   "SCDTH",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "52",   "SCDHH",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
 #
-            {   "$(DEV)",      "BSSS",      "53",   "SCL1H",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "54",   "SCLTH",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "55",   "SCLHH",     "\$\(GLOBAL=TPG:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "53",   "SCL1H",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "54",   "SCLTH",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "55",   "SCLHH",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
 #
-            {   "$(DEV)",      "BSSS",      "56",   "SCB1H",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "57",   "SCBTH",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "58",   "SCBHH",     "\$\(GLOBAL=TPG:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "56",   "SCB1H",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "57",   "SCBTH",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "58",   "SCBHH",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
 #
-            {   "$(DEV)",      "BSSS",      "59",   "SCH1H",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "60",   "SCHTH",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "61",   "SCHHH",     "\$\(GLOBAL=TPG:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "59",   "SCH1H",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "60",   "SCHTH",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "61",   "SCHHH",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
 #
-            {   "$(DEV)",      "BSSS",      "62",   "SCS1H",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "63",   "SCSTH",     "\$\(GLOBAL=TPG:SYS0:1\)"}
-            {   "$(DEV)",      "BSSS",      "64",   "SCSHH",     "\$\(GLOBAL=TPG:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "62",   "SCS1H",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "63",   "SCSTH",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
+            {   "$(DEV)",      "BSSS",      "64",   "SCSHH",     "\$\(GLOBAL=BSSS:SYS0:1\)"}
 }
 
