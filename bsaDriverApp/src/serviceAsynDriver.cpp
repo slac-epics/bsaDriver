@@ -562,7 +562,7 @@ void serviceAsynDriver::SetEdefSevr(int edef, int sevr)
 {
    uint8_t mask = 0x3;
 
-   perEdefSevr[edef] &= ~mask;
+   perEdefSevr[edef] = 0x0;
    perEdefSevr[edef] |= (uint8_t)sevr & mask;   
 }
 
