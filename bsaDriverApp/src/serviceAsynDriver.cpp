@@ -173,6 +173,12 @@ static int associateBsaChannels(const char *port_name)
     return 0;
 }
 
+static int channelGetSevr(int sevrMask, int chn)
+{
+   return int((sevrMask >> (chn *2)) & 0x3);
+}
+
+
 extern "C" {
 
 // Provide associate functions to cexp
@@ -558,7 +564,7 @@ void serviceAsynDriver::SetChannelSevr(int chn, int sevr)
 
 int serviceAsynDriver::GetChannelSevr(int chn)
 {
-   return int((channelSevr >> (chn *2)) & 0x3);
+   return channelGetSevr(channelSevr, chn);
 }
 
 void serviceAsynDriver::MonitorStatus(void)
@@ -807,6 +813,9 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
     
     uint32_t consumedSize = sizeof(bldAxiStreamHeader_t);
     do{
+        int channelSevrMaskIndices[NUM_CHANNELS_MAX];
+        int numChannels = 0;
+        memset(channelSevrMaskIndices, 0, sizeof(channelSevrMaskIndices));
     
         for (plist = (channelList_t *) ellFirst(pChannelEllList), dataIndex = 0, data_chn = 0;
             plist!=NULL;
@@ -842,11 +851,27 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
 
             dataIndex++; /* Increment dataIndex only if not skipping */
             consumedSize += 4;
+
+            /* Store bit indices to firmware packet severity, so we can build a mask for the BLD packet later */
+            channelSevrMaskIndices[numChannels] = data_chn;
+            ++numChannels;
         }
 
         sevr_mask    = *(uint64_t*) (buf + dataIndex + IDX_DATA);
-        bldPacketPayload[severityMaskAddrL] = *(buf + dataIndex + IDX_DATA);
-        bldPacketPayload[severityMaskAddrH] = *(buf + dataIndex + IDX_DATA + 1);
+
+        /* Build a new severity mask accounting for channels we skipped */
+        uint64_t newMask = 0;
+        for (int chan = 0; chan < numChannels; ++chan)
+        {
+            const int shift = 2 * chan;
+            newMask |= (channelGetSevr(sevr_mask, channelSevrMaskIndices[chan]) << shift) & (0b11<<shift);
+        }
+
+        bldPacketPayload[severityMaskAddrL] = *(uint32_t*)&newMask;
+        bldPacketPayload[severityMaskAddrH] = *((uint32_t*)&newMask+1);
+
+        /*bldPacketPayload[severityMaskAddrL] = *(buf + dataIndex + IDX_DATA);*/
+        /*bldPacketPayload[severityMaskAddrH] = *(buf + dataIndex + IDX_DATA + 1);*/
 
         consumedSize += sizeof(sevr_mask);
 
