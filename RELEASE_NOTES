@@ -1,3 +1,15 @@
+R4.0.0-pre01   Aug 01 2023 - Mike Skoufis, Kukhee Kim, Jeremy Lorelli
+	       - The original implementation of the severity filters for BSSS had
+                 them configured per channel. BSA, instead, has the filter made
+                 by buffer (EDEF). As BSSS is now tied to BSA, we needed a way
+                 to control the severity filter per buffer. (Kukhee and Mike)
+               - BLD channel selection can be dinamically changed in run time.
+                 When deactivating channels, they stop being sent to the
+                 multicast network. The severity masks, showing the severity
+                 for each channel was not changed accordingly and so, when
+                 a channel was deactivated the mapping between channel list
+                 and severity list was lost. (Jeremy Lorelli)
+
 R4.0.0    May 16, 2023, Mike Skoufis
 	     - Changed the name of multiple functions so the string "bsa" comes
                as the first characters of the IOC shell function names. This
