@@ -37,6 +37,8 @@
 #define BSSS0_NUM_EDEF       28   // BSSS0 module covers 28 EDEFs
 #define BSSS1_NUM_EDEF       16   // BSSS1 module covers 16 EDEFs
 
+#define SCBSA_EDEF_START     21
+
 #define NUM_BSSS_DATA_MAX    31
 #define NUM_CHANNELS_MAX     31
 #define NUM_EDEF_MAX         64
@@ -167,6 +169,7 @@ class serviceAsynDriver: asynPortDriver {
 
         char * pvaBaseName;
         uint64_t channelSevr;        
+        uint8_t  perEdefSevr[NUM_EDEF_MAX];
         void* pVoidsocketAPI[NUM_EDEF_MAX];
         uint32_t *bldPacketPayload;       
         uint32_t channelMask;
@@ -181,7 +184,9 @@ class serviceAsynDriver: asynPortDriver {
         void SetRate(int chn);
         void SetDest(int chn);
         void SetChannelSevr(int chn, int sevr);
+        void SetEdefSevr(int edef, int sevr);
         int  GetChannelSevr(int chn);
+        int  GetEdefSevr(int edef);
 
         serviceType_t serviceType;
         int           numMod;
@@ -211,6 +216,7 @@ class serviceAsynDriver: asynPortDriver {
 
         // Rate Limit BSSS specific
         int p_rateLimitBsss;
+        int p_edefSevr[NUM_EDEF_MAX];
 
         // Service Rate Controls
         int p_edefEnable[NUM_EDEF_MAX];
@@ -257,6 +263,7 @@ class serviceAsynDriver: asynPortDriver {
 #define ENABLE_STR              "%s_enable"
 #define CHANNELMASK_STR         "%s_channelMask_%s"
 #define CHANNELSEVR_STR         "%s_channelSevr_%s"
+#define EDEFSEVR_STR            "%s_edefSevr_%d"
 
 
 #define EDEFENABLE_STR        "%s_edefEnable_%d"

@@ -288,6 +288,7 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
             this->pService[0] = new Bsss::BsssYaml(reg0_, BSSS0_NUM_EDEF);
             this->pService[1] = new Bsss::BsssYaml(reg1_, BSSS1_NUM_EDEF);
             this->numMod = NUM_BSSS_MOD;
+            for(int i = 0; i < NUM_EDEF_MAX; i++) SetEdefSevr(i, 2);  // set Major as a default severity filtering for BSSS 
             break;
     }
     serviceType = type;
@@ -490,6 +491,7 @@ void serviceAsynDriver::SetupAsynParams(serviceType_t type)
 
         // set up dyanamic paramters
         for(unsigned int i = 0; i < (this->pService[0]->getEdefNum() + this->pService[1]->getEdefNum()); i++) {
+            sprintf(param_name, EDEFSEVR_STR, BSSS_STR, i+SCBSA_EDEF_START); createParam(param_name, asynParamInt32, &p_edefSevr[i]);
             channelList_t *p  = (channelList_t *) ellFirst(this->pChannelEllList);
             while(p) {
                 sprintf(param_name, BSSSPV_STR,  p->channel_key, i); createParam(param_name, asynParamFloat64, &p->p_channel[i]);    strcpy(p->pkey_channel[i],    param_name);
@@ -555,16 +557,29 @@ void serviceAsynDriver::SetDest(int chn)
 
 void serviceAsynDriver::SetChannelSevr(int chn, int sevr)
 {
-    uint64_t mask = 0x3 << (chn*2);
+    uint64_t mask = (uint64_t) 0x3 << (chn*2);
 
     channelSevr &= ~mask;
     channelSevr |= (uint64_t(sevr) << (chn*2)) & mask;
 
 }
 
+void serviceAsynDriver::SetEdefSevr(int edef, int sevr)
+{
+   uint8_t mask = 0x3;
+
+   perEdefSevr[edef] = 0x0;
+   perEdefSevr[edef] |= (uint8_t)sevr & mask;   
+}
+
 int serviceAsynDriver::GetChannelSevr(int chn)
 {
    return channelGetSevr(channelSevr, chn);
+}
+
+int serviceAsynDriver::GetEdefSevr(int edef)
+{
+    return perEdefSevr[edef];
 }
 
 void serviceAsynDriver::MonitorStatus(void)
@@ -701,6 +716,16 @@ asynStatus serviceAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
         goto done;
     }
 
+    if(serviceType == bsss) {
+        for(int i = 0; i < (this->pService[0]->getEdefNum() + this->pService[1]->getEdefNum()); i++) {
+            if(function == p_edefSevr[i]) {
+                SetEdefSevr(i, value);
+                goto done;
+            }
+        }
+
+    }
+
     done:
     callParamCallbacks();
     return status;
@@ -740,7 +765,7 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
                  plist->pidPv[edef].time = _ts;
                  process_pidPv(&plist->pidPv[edef]);
 
-                 if(int((sevr_mask >> (data_chn*2)) & 0x3) <= GetChannelSevr(data_chn) ) {  // data update for valid mask
+                 if(int((sevr_mask >> (data_chn*2)) & 0x3) <= GetEdefSevr(edef) ) {  // data update for valid mask
                      switch(plist->type){
                          case int32_service:
                              val = (double) (p_int32[index]);
