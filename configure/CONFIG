@@ -27,3 +27,30 @@ ifdef T_A
  -include $(TOP)/configure/CONFIG_SITE.$(EPICS_HOST_ARCH).$(T_A)
 endif
 
+# Test for required *_LIB and *_INCLUDE directories
+ifdef T_A
+ifeq ($(wildcard $(CPSW_FRAMEWORK_LIB)/*),)
+$(error CPSW_FRAMEWORK_LIB Not found: $(CPSW_FRAMEWORK_LIB))
+endif
+ifeq ($(wildcard $(CPSW_FRAMEWORK_INCLUDE)/*),)
+$(error CPSW_FRAMEWORK_INCLUDE Not found: $(CPSW_FRAMEWORK_INCLUDE))
+endif
+ifeq ($(wildcard $(YAML_LIB)/*),)
+$(error YAML_LIB Not found: $$(YAML_LIB))
+endif
+ifeq ($(wildcard $(YAML_INCLUDE)/*),)
+$(error YAML_INCLUDE Not found: $$(YAML_INCLUDE))
+endif
+ifeq ($(wildcard $(BOOST_LIB)/*),)
+$(error BOOST_LIB Not found: $$(BOOST_LIB))
+endif
+ifeq ($(wildcard $(BOOST_INCLUDE)/*),)
+$(error BOOST_INCLUDE Not found: $$(BOOST_INCLUDE))
+endif
+ifeq ($(wildcard $(BSA_LIB)/*),)
+$(error BSA_LIB Not found: $$(BSA_LIB))
+endif
+ifeq ($(wildcard $(BSA_INCLUDE)/*),)
+$(error BSA_INCLUDE Not found: $$(BSA_INCLUDE))
+endif
+endif
