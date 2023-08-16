@@ -151,7 +151,7 @@ static int channelAdd(const char *channelKey, serviceDataType_t type, double *sl
     p->pslope  = slope;
     p->poffset = offset;
     p->doNotTouch = doNotTouch;
-
+    memset(p->channel_name, '\0', STR_SIZE);
     ellAdd(pl->pChannelEllList, &p->node);
     return 0;
 }
@@ -390,15 +390,15 @@ void serviceAsynDriver::initPVA()
         if ((mask & channelMask) == 0)
             continue;
 
-        if (plist->channel_name == NULL)
+        if (strlen(plist->channel_name) == 0)
             name = plist->channel_key;
         else
             name = plist->channel_name;
 
         if (plist->doNotTouch == 1)
-            value += {pvxs::Member(pvxs::TypeCode::UInt32A, name)};    
+            value += {pvxs::Member(pvxs::TypeCode::UInt32, name)};
         else
-            value += {pvxs::Member(pvxs::TypeCode::Float32, name)};    
+            value += {pvxs::Member(pvxs::TypeCode::Float32, name)};
         labels.push_back(name);        
     }
 
