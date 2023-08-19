@@ -670,7 +670,7 @@ typedef struct __attribute__((packed)) {
 
 }
 
-static void show_bld_buffer(void *p, unsigned size)
+static void show_bld_buffer(void *p, unsigned size, bool print_channel_content)
 {
 
     typedef struct __attribute__((__packed__)) {
@@ -691,7 +691,8 @@ static void show_bld_buffer(void *p, unsigned size)
     bldAxiStreamComplementaryHeader_t * compHeader;
     uint64_t severityMask;
     uint32_t consumedWords = 0;
-    int channelsFound = 0;
+    uint32_t data_position = 0;
+    int  channelsFound = 0;
     const uint8_t wordSize = 4;
 
     if ((header->serviceMask >> SERVICE_BITS) != SERVICE_BLD )
@@ -710,10 +711,8 @@ static void show_bld_buffer(void *p, unsigned size)
     printf("\t\t channel mask     :         %8x\n", header->channelMask);
     printf("\t\t service mask     :         %8x\n", header->serviceMask);    
 
-
-
-    consumedWords += sizeof(bldAxiStreamHeader_t)/4;
-    
+    // Check for active channels in the channel mask. Active == 1.
+    // Count number of active channels.
     for (uint32_t channel_mask_it=0x1 ; channel_mask_it != 0x0; channel_mask_it<<= 1)
     {
         if (header->channelMask & channel_mask_it)
@@ -721,22 +720,41 @@ static void show_bld_buffer(void *p, unsigned size)
     }
 
     printf("\t\t Chan. data found :               %d\n", channelsFound); 
-    consumedWords += channelsFound;
     
+    // Move buffer pointer after the header. This is the region where the
+    // channel data is.
+    consumedWords += sizeof(bldAxiStreamHeader_t)/wordSize;
+    data_position = consumedWords;
+
+    // Move buffer pointer to the position of the severity mask.
+    consumedWords += channelsFound;
     severityMask =  *((uint64_t *) (buff + consumedWords));
     printf("\t\t Severity mask    : %16lx\n", severityMask);
 
+    // Print channel data content, if requested.
+    if (print_channel_content) {
+        uint32_t channel_data;
+        printf("\t\t Channel data     :\n");
+        for (int iii = 0; iii < channelsFound; ++iii) {
+            channel_data = *(uint32_t *)(buff + data_position + iii);
+            printf("\t\t\t Channel %d = %#08x -> %d dec\n", iii, channel_data, channel_data);
+        }
+    }
+
+    // Move buffer pointer after the severity mask, where the additional packet
+    // event starts.
     consumedWords += sizeof(severityMask)/wordSize;
-    const uint32_t amendedEventSize = sizeof(bldAxiStreamComplementaryHeader_t) + channelsFound*wordSize + sizeof(severityMask);
+    // Calculate size of each additional event packet: header + data + severity mask.
+    const uint32_t appendedEventSize = sizeof(bldAxiStreamComplementaryHeader_t) + channelsFound*wordSize + sizeof(severityMask);
 
     while (consumedWords*wordSize < size)
     {
-        if (consumedWords*wordSize + amendedEventSize > size){
+        if (consumedWords*wordSize + appendedEventSize > size){
             printf("\t\t Anomaly detected: Last event data corrupt\n");
             return;
         }
         else
-            printf("\t\t Amended event data\n");
+            printf("\t\t Appended event data\n");
 
         compHeader = (bldAxiStreamComplementaryHeader_t *) (buff + consumedWords);
         
@@ -745,9 +763,20 @@ static void show_bld_buffer(void *p, unsigned size)
         printf("\t\t\t Service mask     : %8x\n", compHeader->serviceMask);
 
         consumedWords += sizeof(bldAxiStreamComplementaryHeader_t)/wordSize + channelsFound;
-
         severityMask =  *((uint64_t *) (buff + consumedWords));
         printf("\t\t\t Severity mask    : %16lx\n", severityMask);
+
+        data_position = consumedWords - channelsFound;
+
+        // Print channel data content, if requested.
+        if (print_channel_content) {
+            uint32_t channel_data;
+            printf("\t\t\t Channel data     :\n");
+            for (int iii = 0; iii < channelsFound; ++iii) {
+                channel_data = *(uint32_t *)(buff + data_position + iii);
+                printf("\t\t\t\t Channel %d = %#08x -> %d dec\n", iii, channel_data, channel_data);
+            }
+        }
 
         consumedWords += sizeof(severityMask)/wordSize;
     } 
@@ -856,7 +885,8 @@ static int bldStreamDriverReport(int interest)
             if(np) show_bsas_buffer(np->buff, np->size);
 
             np = (pBuff_t *) p->p_last_bld;
-            if(np) show_bld_buffer(np->buff, np->size);
+            // If interest is > 15, print channel data content
+            if(np) show_bld_buffer(np->buff, np->size, interest>=15);
         }
 
         p = (pDrvList_t *) ellNext(&p->node);
