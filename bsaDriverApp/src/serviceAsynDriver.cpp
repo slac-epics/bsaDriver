@@ -910,12 +910,14 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
         severityMaskAddrL = multicastIndex++;
         severityMaskAddrH = multicastIndex++;
 
-        /* Override data type pointers */
-        p_uint32    = (uint32_t *) (compHeader + sizeof(bldMulticastPacketComplementaryHeader_t));
-        p_int32     = (int32_t *) (compHeader + sizeof(bldMulticastPacketComplementaryHeader_t));
-        p_float32   = (float*) (compHeader + sizeof(bldMulticastPacketComplementaryHeader_t));
-
+        // Move pointer after the complementary event header, where the data resides.
         consumedSize += sizeof(bldAxiStreamComplementaryHeader_t);
+
+        /* Override data type pointers */
+        p_uint32    = (uint32_t*) (buf + (consumedSize)/4);
+        p_int32     = (int32_t*) (buf + (consumedSize)/4);
+        p_float32   = (float*) (buf + (consumedSize)/4);
+
     } while (consumedSize < size);
 
     for (uint32_t mask = 0xF & (header->serviceMask), it = 0; mask != 0x0; mask >>= 1, it++)
