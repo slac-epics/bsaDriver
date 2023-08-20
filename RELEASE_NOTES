@@ -1,12 +1,4 @@
-R4.0.0-pre02   Aug 08 2023 - Marcio Donadio
-               - Using yamlLoader/R2.3.5.
-	       - Added support for RHEL7. Before, we were building only for
-                 LinuxRT.
-               - Added checks with error messages in build-time in case
-                 packages are missing.
-               - Now it buids in PCDS environment.
-
-R4.0.0-pre01   Aug 01 2023 - Mike Skoufis, Kukhee Kim, Jeremy Lorelli
+R4.1.0         May 16, 2023, Mike Skoufis, Kukhee Kim, Jeremy Lorelli, Marcio Donadio
 	       - The original implementation of the severity filters for BSSS had
                  them configured per channel. BSA, instead, has the filter made
                  by buffer (EDEF). As BSSS is now tied to BSA, we needed a way
@@ -17,6 +9,16 @@ R4.0.0-pre01   Aug 01 2023 - Mike Skoufis, Kukhee Kim, Jeremy Lorelli
                  for each channel was not changed accordingly and so, when
                  a channel was deactivated the mapping between channel list
                  and severity list was lost. (Jeremy Lorelli)
+               - BLD driver was reading a wrong memory position in the
+                 message received from the firmware, when building the
+                 multicast packet. It could cause segmentation fault,
+                 too. (Marcio Donadio)
+               - Using yamlLoader/R2.3.5. (Marcio Donadio)
+	       - Added support for RHEL7. Before, we were building only for
+                 LinuxRT. (Marcio Donadio)
+               - Added checks with error messages in build-time in case
+                 packages are missing. (Marcio Donadio)
+               - Now it buids in PCDS environment. (Marcio Donadio)
 
 R4.0.0    May 16, 2023, Mike Skoufis
 	     - Changed the name of multiple functions so the string "bsa" comes
