@@ -1,3 +1,9 @@
+R4.2.0         Sep 18, 2023, Kukhee Kim
+               - build against timing/bsa R2.6.0
+                 to improve for:
+                  - Throw exceptions for memory fetch attempts out of range.  Catch and abort BSA readout
+                  -  more traps for pointer errors
+
 R4.1.0         Aug 20, 2023, Mike Skoufis, Kukhee Kim, Jeremy Lorelli, Marcio Donadio
 	       - The original implementation of the severity filters for BSSS had
                  them configured per channel. BSA, instead, has the filter made
