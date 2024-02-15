@@ -12,8 +12,8 @@ correspondent PV will update, too.
 
 Instructions for configuring BSSS:
 
-1. Automatically copy the list of BSA signals made previously with addBsa() and
-addSlaveBsa() to BSSS:
+1. Automatically copy the list of BSA signals made previously with bsaAdd() and
+bsaAddSecondary() to BSSS:
 
 Use the bsssAssociateBsaChannels to make the association with BSA channels.
 This command needs to be called anywhere after the bsaAsynDriverConfigure()
@@ -73,8 +73,8 @@ Macros:
 
   $(DEV)         ; device PV name
   $(SECN)        ; signal name as part of the PV name
-  $(BSAKEY)      ; BSA key. It must match the bsa key string in addBsa() or
-                   addSlaveBsa() explained in the README file. This macro is
+  $(BSAKEY)      ; BSA key. It must match the bsa key string in bsaAdd() or
+                   bsaAddSecondary() explained in the README file. This macro is
                    used in INP and OUT fields to connect with the device
                    support code.
   $(PORT)        ; asyn port name for the *BSSS* driver. Must match the port

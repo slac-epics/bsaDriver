@@ -15,8 +15,8 @@ Macros:
 
   $(DEV)         ; device PV name
   $(SECN)        ; signal name as part of the PV name
-  $(BSAKEY)      ; BSA key. It must match the bsa key string in addBsa() or
-                   addSlaveBsa() explained in the README file. This macro is
+  $(BSAKEY)      ; BSA key. It must match the bsa key string in bsaAdd() or
+                   bsaAddSecondary() explained in the README file. This macro is
                    used in INP and OUT fields to connect with the device
                    support code.
   $(TPR)         ; an optional macro. If the IOC uses multiple different device
@@ -54,8 +54,8 @@ Macros:
 
 Example 1: using the same $(DEV) for some of the signals in the ioc.
 
-You don't need to load database records for all signals created with addBsa()
-or addSlaveBsa(). You can safely select only the set that makes sense for the
+You don't need to load database records for all signals created with bsaAdd()
+or bsaAddSecondary(). You can safely select only the set that makes sense for the
 IOC.
 
 Examples of prefix:
@@ -65,7 +65,7 @@ dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=TMITAMC0,SE
 dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=XFIXEDPAMC0,SECN=X")
 dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=YFIXEDPAMC0,SECN=Y")
 
-# TMITAMC0 as the parent signal with 6 dependent children BSAs
+# TMITAMC0 as the primary signal with 6 dependent secondary BSAs
 dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=TMIT0C0,SECN=TMITC0")
 dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=TMIT0C1,SECN=TMITC1")
 dbLoadRecords("db/bsa.db", "DEV=${DEVICE_PREFIX},PORT=bsaPort,BSAKEY=TMIT0C2,SECN=TMITC2")
@@ -255,6 +255,55 @@ TPR:GUNB:BP01:1:PIDHSTFLTB3
 The database template loading can be located either before or after the driver 
 initialization.
 
+
+=========== Consideration for NC/SC mode switching ===================
+
+The bsa driver provides the following PV to enable and disable the bsa polling
+
+$(TPR):SC_BSA_ENABLE 
+(0: Disable): BSA poll thread stops polling, we can use it for NC mode operation
+(1: Enable):  BSA poll thread poll BSA buffer status and process BSA history buffer PVs, we can use it for SC mode operation
+
+IOC engineer (ioc application) can have a logic to integrate the SC_BSA_ENABLE PV to the NC/SC mode switching.
+The default valuse is (1: Enable), the template doesn't support autosave and PINI==YES,
+Suppose, the PV should be controlled by the NC/SC mode switching in the ioc application.
+
+The bsa driver ioc shell command to enable and disable the bsa polling, 
+bsaAsynDriverDisable(["named root"]):    disable BSA polling
+bsaAsynDriverEnable(["named root"]):     enable  BSA polling
+
+These commmands can be used after calling bsaAsynDriverConfigure() or, also works during ioc operation after iocInit().
+
+
+=========== Known issue ==========
+
+We've found out that sometimes the pProcessor->pending() and
+pProcessor->update() fails to acquire data from the firmware. The reason for
+this is still undiscovered in this version. When the IOC presents this fault,
+one or more BSA buffers keep with old data and usually the IOC can't recover
+from this condition. An IOC boot is required for it to recover.
+
+There are two ways to check if this fault condition happened:
+
+1. dbior bsaAsynDriver 1
+Driver: bsaAsynDriver
+named_root: root_0, port: bpmBsaPort, driver instace: 0x17727e0, number of BSA varibles: 8
+    bsa status: FAULT,   fault cnt: 156
+    pend error: 0,   update error: 4456
+        array update error (45): 4456
+
+The report in the example above shows that the fault happened 4456 times and
+the IOC transitioned from a normal status to a fault status 156 times. It also
+shows that the BSA buffer number in fail is #45. All other BSA buffers are
+running ok in this scenario.
+
+2. EPICS PVs:
+$(TPR):SC_BSA_STATUS -> Tells if the system is currently at a NORMAL or FAULT
+status.
+
+$(TPR):SC_BSA_FLTCNT -> Corresponds to the "fault cnt" number available with
+dbior described above. It is the number of times that the IOC transitioned from
+a normal status to a fault status.
 
 
 

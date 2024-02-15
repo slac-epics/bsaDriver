@@ -3,6 +3,9 @@ TOP=../..
 include $(TOP)/configure/CONFIG
 
 USR_CXXFLAGS += -DHAVE_YAML
+# C++11 required for PVXS
+USR_CXXFLAGS += -std=c++11
+USR_CFLAGS += -std=c++11
 
 # Uncomment to use with gdb
 #USR_CXXFLAGS += -g3 -O0
@@ -28,7 +31,9 @@ INC += bldStream.h
 DBD += bsaAsynDriver.dbd
 DBD += syslogConfigure.dbd
 
-ifeq ($(T_A),linuxRT-x86_64)
+# Command below commented out because we are now building for RHEL7.
+# endif was also commented. 
+#ifeq ($(T_A),linuxRT-x86_64)
 LIBRARY_IOC = bsaDriver
 
 bsaDriver_DBD += bsaAsynDriver.dbd
@@ -52,7 +57,7 @@ bsaDriver_LIBS += yamlLoader
 bsaDriver_LIBS += pvxs
 bsaDriver_LIbS += pvxsIoc
 bsaDriver_LIBS += $(EPICS_BASE_IOC_LIBS)
-endif
+#endif
 
 
 

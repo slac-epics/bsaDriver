@@ -155,7 +155,7 @@ static int channelAdd(const char *channelKey, serviceDataType_t type, double *sl
     p->pslope  = slope;
     p->poffset = offset;
     p->doNotTouch = doNotTouch;
-
+    memset(p->channel_name, '\0', STR_SIZE);
     ellAdd(pl->pChannelEllList, &p->node);
     return 0;
 }
@@ -176,6 +176,12 @@ static int associateBsaChannels(const char *port_name)
 
     return 0;
 }
+
+static int channelGetSevr(int sevrMask, int chn)
+{
+   return int((sevrMask >> (chn *2)) & 0x3);
+}
+
 
 extern "C" {
 
@@ -284,6 +290,7 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
             this->pService[0] = new Bsss::BsssYaml(reg0_, BSSS0_NUM_EDEF);
             this->pService[1] = new Bsss::BsssYaml(reg1_, BSSS1_NUM_EDEF);
             this->numMod = NUM_BSSS_MOD;
+            for(int i = 0; i < NUM_EDEF_MAX; i++) SetEdefSevr(i, 2);  // set Major as a default severity filtering for BSSS 
             break;
     }
     serviceType = type;
@@ -291,7 +298,7 @@ serviceAsynDriver::serviceAsynDriver(const char *portName, const char *reg_path,
     channelSevr = 0;
 
     // Initialize hardware/software channel map
-    for (int i = 0; i < HW_CHANNELS; i++)
+    for (int i = 0; i < NUM_CHANNELS_MAX; i++)
         hwChannelUsage[i] = {};
 
     int i = 0;
@@ -411,15 +418,15 @@ void serviceAsynDriver::initPVA()
         if ((mask & channelMask) == 0)
             continue;
 
-        if (plist->channel_name == NULL)
+        if (strlen(plist->channel_name) == 0)
             name = plist->channel_key;
         else
             name = plist->channel_name;
 
         if (plist->doNotTouch == 1)
-            value += {pvxs::Member(pvxs::TypeCode::UInt32A, name)};    
+            value += {pvxs::Member(pvxs::TypeCode::UInt32, name)};
         else
-            value += {pvxs::Member(pvxs::TypeCode::Float32, name)};    
+            value += {pvxs::Member(pvxs::TypeCode::Float32, name)};
         labels.push_back(name);        
     }
 
@@ -512,6 +519,7 @@ void serviceAsynDriver::SetupAsynParams(serviceType_t type)
 
         // set up dyanamic paramters
         for(unsigned int i = 0; i < (this->pService[0]->getEdefNum() + this->pService[1]->getEdefNum()); i++) {
+            sprintf(param_name, EDEFSEVR_STR, BSSS_STR, i+SCBSA_EDEF_START); createParam(param_name, asynParamInt32, &p_edefSevr[i]);
             channelList_t *p  = (channelList_t *) ellFirst(this->pChannelEllList);
             while(p) {
                 sprintf(param_name, BSSSPV_STR,  p->channel_key, i); createParam(param_name, asynParamFloat64, &p->p_channel[i]);    strcpy(p->pkey_channel[i],    param_name);
@@ -577,15 +585,28 @@ void serviceAsynDriver::SetDest(int chn)
 
 void serviceAsynDriver::SetChannelSevr(int chn, int sevr)
 {
-    uint64_t mask = (uint64_t)0x3 << (chn*2);
+    uint64_t mask = (uint64_t) 0x3 << (chn*2);
 
     channelSevr &= ~mask;
     channelSevr |= ((uint64_t)sevr << (chn*2)) & mask;
 }
 
+void serviceAsynDriver::SetEdefSevr(int edef, int sevr)
+{
+   uint8_t mask = 0x3;
+
+   perEdefSevr[edef] = 0x0;
+   perEdefSevr[edef] |= (uint8_t)sevr & mask;   
+}
+
 int serviceAsynDriver::GetChannelSevr(int chn)
 {
-   return int((channelSevr >> (chn *2)) & 0x3);
+   return channelGetSevr(channelSevr, chn);
+}
+
+int serviceAsynDriver::GetEdefSevr(int edef)
+{
+    return perEdefSevr[edef];
 }
 
 void serviceAsynDriver::MonitorStatus(void)
@@ -763,6 +784,16 @@ asynStatus serviceAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
         goto done;
     }
 
+    if(serviceType == bsss) {
+        for(int i = 0; i < (this->pService[0]->getEdefNum() + this->pService[1]->getEdefNum()); i++) {
+            if(function == p_edefSevr[i]) {
+                SetEdefSevr(i, value);
+                goto done;
+            }
+        }
+
+    }
+
     done:
     callParamCallbacks();
     return status;
@@ -770,7 +801,7 @@ asynStatus serviceAsynDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
 
 void serviceAsynDriver::printMap()
 {
-    for(int i=0;i<HW_CHANNELS;i++)
+    for(int i=0;i<NUM_CHANNELS_MAX;i++)
     {
         printf("| %d | -> ",i);
         for(auto x:hwChannelUsage[i])
@@ -871,7 +902,8 @@ void serviceAsynDriver::bsssCallback(void *p, unsigned size)
                  plist->pidPv[edef].pid = pulse_id;
                  plist->pidPv[edef].time = _ts;
                  process_pidPv(&plist->pidPv[edef]);
-                 bool acceptSeverity = false; acceptSeverity = int((sevr_mask >> (hwChIndex*2)) & 0x3) <= GetChannelSevr(hwChIndex);
+                 
+                 bool acceptSeverity = false; acceptSeverity = int((sevr_mask >> (hwChIndex*2)) & 0x3) <= GetEdefSevr(edef);
                  
                  if(acceptSeverity) {  // data update for valid mask
                      switch(plist->type){
@@ -1037,6 +1069,9 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
     
     uint32_t consumedSize = sizeof(bldAxiStreamHeader_t);
     do{
+        int channelSevrMaskIndices[NUM_CHANNELS_MAX];
+        int numChannels = 0;
+        memset(channelSevrMaskIndices, 0, sizeof(channelSevrMaskIndices));
     
         for (plist = (channelList_t *) ellFirst(pChannelEllList), dataIndex = 0, data_chn = 0;
             plist!=NULL;
@@ -1072,11 +1107,24 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
 
             dataIndex++; /* Increment dataIndex only if not skipping */
             consumedSize += 4;
+
+            /* Store bit indices to firmware packet severity, so we can build a mask for the BLD packet later */
+            channelSevrMaskIndices[numChannels] = data_chn;
+            ++numChannels;
         }
 
         sevr_mask    = *(uint64_t*) (buf + dataIndex + IDX_DATA);
-        bldPacketPayload[severityMaskAddrL] = *(buf + dataIndex + IDX_DATA);
-        bldPacketPayload[severityMaskAddrH] = *(buf + dataIndex + IDX_DATA + 1);
+
+        /* Build a new severity mask accounting for channels we skipped */
+        uint64_t newMask = 0;
+        for (int chan = 0; chan < numChannels; ++chan)
+        {
+            const uint64_t shift = 2 * chan;
+            newMask |= (uint64_t(channelGetSevr(sevr_mask, channelSevrMaskIndices[chan])) << shift) & (0x3ul<<shift);
+        }
+
+        bldPacketPayload[severityMaskAddrL] = newMask & 0xFFFFFFFF;
+        bldPacketPayload[severityMaskAddrH] = (newMask & 0xFFFFFFFF00000000) >> 32;
 
         consumedSize += sizeof(sevr_mask);
 
@@ -1093,12 +1141,14 @@ void serviceAsynDriver::bldCallback(void *p, unsigned size)
         severityMaskAddrL = multicastIndex++;
         severityMaskAddrH = multicastIndex++;
 
-        /* Override data type pointers */
-        p_uint32    = (uint32_t *) (compHeader + sizeof(bldMulticastPacketComplementaryHeader_t));
-        p_int32     = (int32_t *) (compHeader + sizeof(bldMulticastPacketComplementaryHeader_t));
-        p_float32   = (float*) (compHeader + sizeof(bldMulticastPacketComplementaryHeader_t));
-
+        // Move pointer after the complementary event header, where the data resides.
         consumedSize += sizeof(bldAxiStreamComplementaryHeader_t);
+
+        /* Override data type pointers */
+        p_uint32    = (uint32_t*) (buf + (consumedSize)/4);
+        p_int32     = (int32_t*) (buf + (consumedSize)/4);
+        p_float32   = (float*) (buf + (consumedSize)/4);
+
     } while (consumedSize < size);
 
     for (uint32_t mask = 0xF & (header->serviceMask), it = 0; mask != 0x0; mask >>= 1, it++)
