@@ -1,5 +1,6 @@
 R4.2.0-1.0     Feb 15, 2024, Michael Skoufis
                - LLRF BSA updates
+               - Use timing/bsa package R2.6.0-1.0
 
 R4.2.0         Sep 18, 2023, Kukhee Kim
                - build against timing/bsa R2.6.0
