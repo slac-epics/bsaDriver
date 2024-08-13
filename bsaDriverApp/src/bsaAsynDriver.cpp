@@ -880,7 +880,18 @@ int bsaAsynDriverConfigure(const char *portName, const char *ipString)
         p = (bsaList_t *) ellNext(&p->node);
     }  /* calculate total number of dynamic parameters */
 
-    pBsaDrv = new bsaAsynDriver(portName, ipString, i);
+	try {
+    	pBsaDrv = new bsaAsynDriver(portName, ipString, i);
+	}
+	catch(const CPSWError& e) {
+		printf("bsaAsynDriverConfigure: error while creating bsaAsynDriver: %s\n", e.getInfo().c_str());
+		return -1;
+	}
+	catch(...) {
+		printf("bsaAsynDriverConfigure: error while creating bsaAsynDriver: Unknown error\n");
+		return -1;
+	}
+
     strcpy(port_name, portName);
     strcpy(ip_string, ipString);
     strcpy(reg_path_string, "not applicable");
@@ -946,8 +957,8 @@ int bsaAsynDriverEnable(const char *idString)
     }
 
 
-    printf("failt to enable BSA due to the bsaAsynDriver never been initialized.\n");
-    return 0;
+    printf("failed to enable BSA due to the bsaAsynDriver never been initialized.\n");
+    return -1;
 }
 
 int bsaAsynDriverDisable(const char *idString)
@@ -966,8 +977,8 @@ int bsaAsynDriverDisable(const char *idString)
     }
 
 
-    printf("fail to disable BSA due to the bsaAsynDriver never been initialized.\n");
-    return 0;
+    printf("failed to disable BSA due to the bsaAsynDriver never been initialized.\n");
+    return -1;
 }
 
 
@@ -995,7 +1006,7 @@ int bsaCreateList(const char *port_name)
 
     if(pl) {
         printf("Bsa List (port: %s) already exists\n", port_name);
-        return 0;
+        return -1;
     }
 
     prep_drvByPort(port_name);
@@ -1053,7 +1064,7 @@ int bsaAdd(const char *bsaKey, const char *bsaType, const char *keepAsInteger)
 
     if(p->type == fault) {
         printf("Error in bsaAdd(): could not add %s due to wrong type descriptor (%s)\n", bsaKey, bsaType);
-        return 0;
+        return -1;
     }
 
     ellAdd(pl->pBsaEllList, &p->node);
@@ -1103,7 +1114,7 @@ int bsaAddSecondary(const char *bsaKey, const char *slaveKey, const char *bsaTyp
 
     if(p->type == fault) {
         printf("Error in bsaAddSecondary(): could not add %s into %s due to wrong type descriptor (%s)\n", slaveKey, bsaKey, bsaType);
-        return 0;
+        return -1;
     }
 
     ellAdd(p->pSlaveEllList, &q->node);
@@ -1255,7 +1266,7 @@ static const iocshArg * const enableArgs[] = { &enableArg0 };
 static const iocshFuncDef bsaEnableFuncDef  = { "bsaAsynDriverEnable",  1, enableArgs};
 static void bsaEnableCallFunc(const iocshArgBuf *args)
 {
-    bsaAsynDriverEnable( (args[0].sval && strlen(args[0].sval))? args[0].sval: NULL);
+    iocshSetError(bsaAsynDriverEnable( (args[0].sval && strlen(args[0].sval))? args[0].sval: NULL));
 }
 
 static const iocshArg disableArg0 = {"portName or named_string (optional)", iocshArgString };
@@ -1263,7 +1274,7 @@ static const iocshArg * const disableArgs [] = { &disableArg0 };
 static const iocshFuncDef bsaDisableFuncDef = { "bsaAsynDriverDisable", 1, disableArgs };
 static void bsaDisableCallFunc(const iocshArgBuf *args)
 {
-    bsaAsynDriverDisable((args[0].sval && strlen(args[0].sval))? args[0].sval: NULL);
+    iocshSetError(bsaAsynDriverDisable((args[0].sval && strlen(args[0].sval))? args[0].sval: NULL));
 }
 
 
@@ -1272,7 +1283,7 @@ static const iocshArg * const createArgs [] = { &createArg0 };
 static const iocshFuncDef bsaCreateFuncDef = {"bsaCreateList", 1, createArgs};
 static void bsaCreateCallFunc(const iocshArgBuf *args)
 {
-    bsaCreateList((args[0].sval && strlen(args[0].sval))? args[0].sval: NULL);
+    iocshSetError(bsaCreateList((args[0].sval && strlen(args[0].sval))? args[0].sval: NULL));
 }
 
 
@@ -1286,7 +1297,7 @@ static const iocshFuncDef bsaAddFuncDef = { "bsaAdd", 3, bsaAddArgs };
 static void bsaAddCallFunc(const iocshArgBuf *args)
 {
 
-    bsaAdd(args[0].sval, args[1].sval, (args[2].sval && strlen(args[2].sval))? args[2].sval: NULL);
+    iocshSetError(bsaAdd(args[0].sval, args[1].sval, (args[2].sval && strlen(args[2].sval))? args[2].sval: NULL));
 }
 
 static const iocshArg bsaAddSecondaryArg0 = {"bsaKey",   iocshArgString};
@@ -1298,7 +1309,7 @@ static const iocshArg * const bsaAddSecondaryArgs [] = { &bsaAddSecondaryArg0,
 static const iocshFuncDef bsaAddSecondaryFuncDef = {"bsaAddSecondary", 3, bsaAddSecondaryArgs};
 static void bsaAddSecondaryCallFunc(const iocshArgBuf *args)
 {
-    bsaAddSecondary(args[0].sval, args[1].sval, args[2].sval);
+    iocshSetError(bsaAddSecondary(args[0].sval, args[1].sval, args[2].sval));
 }
 
 

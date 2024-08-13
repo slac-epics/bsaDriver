@@ -170,12 +170,12 @@ static int bsasPVName(const char *bsasKey, const char *pv_name)
 
     if(!pl) {
         printf("No BSAS data channel list is available\n");
-        return 0;
+        return -1;
     }
 
     if(!pl->pBsasEllList) {
         printf("Internal issue on the BSAS data channe list\n");
-        return 0;
+        return -1;
     }
 
     bsasList_t *p = (bsasList_t *) ellFirst(pl->pBsasEllList);
@@ -186,12 +186,12 @@ static int bsasPVName(const char *bsasKey, const char *pv_name)
 
     if(!p) {
         printf("Could not find the BSAS name: (%s)\n", bsasKey);
-        return 0;
+        return -1;
     }
 
     if(p->pv_name[0]) {
         printf("The BSAS (%s) already has PV name(%s)\n", p->bsas_name, p->pv_name);
-        return 0;
+        return -1;
     }
 
     sprintf(p->pv_name,   "%s",     pv_name);
@@ -405,9 +405,9 @@ inline void edefNTTbl::swing(void)
 int edefNTTbl::checkUpdate(int table_count)
 {
 
-    if(this->table_count == -1) this->table_count = table_count;
-    else
-    if(this->table_count != table_count) {
+    if(this->table_count == -1)
+		this->table_count = table_count;
+    else if(this->table_count != table_count) {
           this->table_count = table_count;
           return -1; 
     }
@@ -908,7 +908,7 @@ int bsasAsynDriverConfigure(const char *portName, const char *reg_path,
         return -1;
     }
 
-    pl->named_root = (named_root && strlen(named_root))? epicsStrDup(named_root): cpswGetRootName();
+    pl->named_root = (named_root && strlen(named_root)) ? epicsStrDup(named_root): cpswGetRootName();
 
     if(!pl->pBsasEllList) return -1;
 
@@ -922,16 +922,27 @@ int bsasAsynDriverConfigure(const char *portName, const char *reg_path,
     }    /* calculate number of dynamic parameters */
 
 
-    pl->port_name = epicsStrDup(portName);
-    pl->reg_path  = epicsStrDup(reg_path);
-    pl->pBsasDrv  = new bsasAsynDriver(portName, reg_path, i, pl->pBsasEllList,
+	try {
+    	pl->pBsasDrv  = new bsasAsynDriver(portName, reg_path, i, pl->pBsasEllList,
                                        ntTable_name1,
                                        ntTable_name2,
                                        ntTable_name3,
                                        ntTable_name4,
                                        pl->named_root);
+	}
+	catch(const CPSWError& e) {
+		printf("bsasAsynDriverConfigure: error while creating driver: %s\n", e.getInfo().c_str());
+	}
+	catch(...) {
+		printf("bsasAsynDriverConfigure: error while creating driver: Unknown\n");
+	}
 
-    return 0;
+	free(pl->port_name);
+	free(pl->reg_path);
+    pl->port_name = epicsStrDup(portName);
+    pl->reg_path  = epicsStrDup(reg_path);
+    
+	return 0;
 }
 
 
@@ -952,13 +963,14 @@ static const iocshArg *const initArgs[] = { &initArg0,
 static const iocshFuncDef initFuncDef = {"bsasAsynDriverConfigure", 7, initArgs};
 static void initCallFunc(const iocshArgBuf *args)
 {
-    bsasAsynDriverConfigure(args[0].sval,                                                   /* port name */
+    int result = bsasAsynDriverConfigure(args[0].sval,                                      /* port name */
                             args[1].sval,                                                   /* register path */
                             args[2].sval,                                                   /* NTTable name 1 */
                             args[3].sval,                                                   /* NTTable name 2 */
                             args[4].sval,                                                   /* NTTable name 3 */
                             args[5].sval,                                                   /* NTTable name 4 */
                             (args[6].sval && strlen(args[6].sval))? args[6].sval: NULL);    /* named root */
+	iocshSetError(result);
 }
 
 static const iocshArg associateArg0 = {"bsa port", iocshArgString};
@@ -966,7 +978,7 @@ static const iocshArg * const associateArgs[] = { &associateArg0 };
 static const iocshFuncDef associateFuncDef = {"bsasAssociateBsaChannels", 1, associateArgs};
 static void associateCallFunc(const iocshArgBuf *args)
 {
-    associateBsaChannels(args[0].sval);
+    iocshSetError(associateBsaChannels(args[0].sval));
 }
 
 
@@ -977,7 +989,7 @@ static const iocshArg *const baseNameArgs[] = { &baseNameArg0,
 static const iocshFuncDef baseNameFuncDef = {"bsasBaseName", 2, baseNameArgs};
 static void baseNameCallFunc(const iocshArgBuf *args)
 {
-    bsasPVName(args[0].sval, args[1].sval);
+    iocshSetError(bsasPVName(args[0].sval, args[1].sval));
 }
 
 

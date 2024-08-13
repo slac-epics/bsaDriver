@@ -69,7 +69,7 @@ typedef struct {
 static void init_drvList(void)
 {
     if(!pDrvEllList) {
-        pDrvEllList = (ELLLIST *) mallocMustSucceed(sizeof(ELLLIST), "serviceAsynDriver(init_drvList)");
+        pDrvEllList = (ELLLIST *) callocMustSucceed(1, sizeof(ELLLIST), "serviceAsynDriver(init_drvList)");
         ellInit(pDrvEllList);
     }
     return;
@@ -100,7 +100,7 @@ static pDrvList_t *find_drvByPort(const char *port_name)
 static int prep_drvAnonimous(void)
 {
     init_drvList();
-    pDrvList_t *p = (pDrvList_t *) mallocMustSucceed(sizeof(pDrvList_t), "serviceAsynDriver(prep_drvAnonimous)");
+    pDrvList_t *p = (pDrvList_t *) callocMustSucceed(1, sizeof(pDrvList_t), "serviceAsynDriver(prep_drvAnonimous)");
 
     p->named_root = NULL;
     p->port_name  = NULL;
@@ -206,12 +206,12 @@ int bldChannelName(const char *channel_key, const char *channel_name)
     pDrvList_t *p = (pDrvList_t *) ellFirst(pDrvEllList);
 
     while(p) {
-        if(p->pServiceDrv->getServiceType() == bld) break;
+        if(p->pServiceDrv && p->pServiceDrv->getServiceType() == bld) break;
         p = (pDrvList_t *) ellNext(&p->node);
     }    
 
     /* Found BLD driver. Create PVA */
-    if (p != NULL)
+    if (p != NULL && p->pServiceDrv)
         p->pServiceDrv->addBldChannelName(channel_key, channel_name);
     else {
         printf("Error: No BLD driver found. Must instantiate driver first.\n");
@@ -988,8 +988,12 @@ int serviceAsynDriverConfigure(const char *portName, const char *reg_path, const
     if(!pl) {
         pl = find_drvLast();
         if(pl) {
-            if(!pl->port_name && !pl->named_root && !pl->pServiceDrv) pl->port_name = epicsStrDup(portName);
-            else pl = NULL;
+            if (!pl->port_name && !pl->named_root && !pl->pServiceDrv) {
+				pl->port_name = epicsStrDup(portName);
+			}
+            else {
+				pl = NULL;
+			}
         }
     }
     if(!pl) {
@@ -997,9 +1001,9 @@ int serviceAsynDriverConfigure(const char *portName, const char *reg_path, const
         return -1;
     }
 
-    pl->named_root = (named_root && strlen(named_root))?epicsStrDup(named_root): cpswGetRootName();
-
     if(!pl->pChannelEllList) return -1;
+
+	pl->named_root = (named_root && strlen(named_root)) ? epicsStrDup(named_root): cpswGetRootName();
 
     int i = 0;
     channelList_t *p = (channelList_t *) ellFirst(pl->pChannelEllList);
@@ -1013,12 +1017,27 @@ int serviceAsynDriverConfigure(const char *portName, const char *reg_path, const
         printf("BLD driver pva_basename is NULL. Please add basename.\n");
         return -1;
     }
-
-    pl->port_name = epicsStrDup(portName);
+	
+	free(pl->port_name);
+	free(pl->reg_path);
+	pl->port_name = epicsStrDup(portName);
     pl->reg_path  = epicsStrDup(reg_path);
-    pl->pServiceDrv  = new serviceAsynDriver(portName, reg_path, i, pl->pChannelEllList, type, pl->named_root, pva_basename);
+	pl->pServiceDrv = NULL;
 
-    return 0;
+	/* serviceAsynDriver's constructor may throw */
+	try {
+    	pl->pServiceDrv  = new serviceAsynDriver(portName, reg_path, i, pl->pChannelEllList, type, pl->named_root, pva_basename);
+	}
+	catch(const CPSWError& e) {
+		printf("serviceAsynDriverConfigure: error encountered while creating driver: %s\n", e.getInfo().c_str());
+		return -1;
+	}
+	catch(...) {
+		printf("serviceAsynDriverConfigure: error encountered while creating driver: Unknown error\n");
+		return -1;
+	}
+
+	return 0;
 }
 
 extern "C" {
@@ -1055,11 +1074,12 @@ static const iocshFuncDef bsssInitFuncDef = { "bsssAsynDriverConfigure", 3, init
 static void bsssInitCallFunc(const iocshArgBuf *args)
 {
  
-    serviceAsynDriverConfigure(args[0].sval,  /* port name */
+    int result = serviceAsynDriverConfigure(args[0].sval,  /* port name */
                                args[1].sval,  /* register path */
                               (args[2].sval && strlen(args[2].sval))? args[2].sval: NULL, /* named_root */
                                bsss,
                                NULL );  /* BSSS call */
+	iocshSetError(result);
 }
 
 static const iocshArg initBldArg0 = { "portName",                                           iocshArgString };
@@ -1074,12 +1094,13 @@ static const iocshFuncDef bldInitFuncDef = { "bldAsynDriverConfigure", 4, initBl
 static void bldInitCallFunc(const iocshArgBuf *args)
 {
  
-    serviceAsynDriverConfigure(args[0].sval,  /* port name */
+    int result = serviceAsynDriverConfigure(args[0].sval,  /* port name */
                                args[1].sval,  /* register path */
                                (args[3].sval && strlen(args[3].sval))? args[3].sval: NULL, /* named_root */
                                bld,
                                args[2].sval  /* bld PVA basename */
                                );  /* BLD call */ 
+	iocshSetError(result);
 }
 
 
@@ -1090,7 +1111,7 @@ static const iocshFuncDef bldAssociateFuncDef =  { "bldAssociateBsaChannels", 1,
 
 static void associateCallFunc(const iocshArgBuf *args)
 {
-    associateBsaChannels(args[0].sval);
+    iocshSetError(associateBsaChannels(args[0].sval));
 }
 
 static const iocshArg bldChannelNameArg0 = { "bsaKey",      iocshArgString };
@@ -1100,7 +1121,7 @@ static const iocshArg * const bldChannelNameArgs [] = { &bldChannelNameArg0,
 static const iocshFuncDef bldChannelNameFuncDef = { "bldChannelName", 2, bldChannelNameArgs };
 static void bldChannelNameCallFunc(const iocshArgBuf *args)
 {
-    bldChannelName(args[0].sval, args[1].sval);
+    iocshSetError(bldChannelName(args[0].sval, args[1].sval));
 }
 
 void serviceAsynDriverRegister(void)
@@ -1166,12 +1187,12 @@ static int serviceAsynDriverInitialize(void)
                       (EPICSTHREADFUNC) serviceMonitorPoll, 0);
 
     while(p) {
-        if(p->pServiceDrv->getServiceType() == bld) break;
+        if(p->pServiceDrv && p->pServiceDrv->getServiceType() == bld) break;
         p = (pDrvList_t *) ellNext(&p->node);
     }    
 
     /* Found BLD driver. Create PVA */
-    if (p != NULL)
+    if (p != NULL && p->pServiceDrv)
         p->pServiceDrv->initPVA();
 
     return 0;
