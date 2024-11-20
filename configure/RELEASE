@@ -22,8 +22,8 @@
 # ==========================================================
 #
 
-YAMLLOADER_MODULE_VERSION=R2.3.5
-ASYN_MODULE_VERSION=R4.39-1.0.1
+YAMLLOADER_MODULE_VERSION=R2.3.7
+ASYN_MODULE_VERSION=R4.39-1.0.2
 PVXS_MODULE_VERSION=R0.3.1-0.0.1
 
 # ==========================================================
