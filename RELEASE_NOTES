@@ -1,3 +1,8 @@
+R4.2.2         Jan 24, 2024, Jeremy Lorelli
+               - Upgrade to yamlLoader/R2.3.8
+               - Upgrade to cpsw/R4.5.2, timing/bsa/R2.6.0
+               - Remove hardcoded PACKAGE_SITE_TOP
+
 R4.2.1         Nov 19, 2024, Marcio Donadio
                - Upgraded modules to asyn/R4.39-1.0.2 yamlLoader/R2.3.7
 
