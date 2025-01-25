@@ -22,9 +22,9 @@
 # ==========================================================
 #
 
-YAMLLOADER_MODULE_VERSION=R2.3.7
+YAMLLOADER_MODULE_VERSION=R2.3.8
 ASYN_MODULE_VERSION=R4.39-1.0.2
-PVXS_MODULE_VERSION=R0.3.1-0.0.1
+PVXS_MODULE_VERSION=R1.2.2-0.2.0
 
 # ==========================================================
 # Define module paths using pattern
